@@ -18,11 +18,10 @@ export type MenuData = {
   products: Product[];
 };
 
-export const MENU_STORAGE_KEY = "mavi-balon-menu-v1";
+export const MENU_STORAGE_KEY = "mavi-balon-menu-v2";
 export const MENU_UPDATED_EVENT = "mavi-balon-menu-updated";
 
-const img = (id: string) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`;
+const img = (file: string) => `/products/${file}`;
 
 export const defaultMenu: MenuData = {
   categories: [
@@ -38,7 +37,7 @@ export const defaultMenu: MenuData = {
       name: "Klasik Hamburger",
       description: "Izgara köfte, marul, domates, turşu ve ev sosu.",
       price: 280,
-      image: img("photo-1568901346375-23c9450c58cd"),
+      image: img("klasik-burger.jpg"),
       categoryId: "hamburger",
     },
     {
@@ -46,7 +45,7 @@ export const defaultMenu: MenuData = {
       name: "Cheeseburger",
       description: "Erimiş cheddar, köfte, soğan ve özel sos.",
       price: 310,
-      image: img("photo-1550547660-d9450f859349"),
+      image: img("cheese-burger.jpg"),
       categoryId: "hamburger",
     },
     {
@@ -54,7 +53,7 @@ export const defaultMenu: MenuData = {
       name: "Double Mavi Burger",
       description: "Çift köfte, çift cheddar, çıtır soğan.",
       price: 390,
-      image: img("photo-1572802419224-296b0aeee0d9"),
+      image: img("double-burger.jpg"),
       categoryId: "hamburger",
     },
     {
@@ -62,7 +61,7 @@ export const defaultMenu: MenuData = {
       name: "Antakya Dürüm",
       description: "İnce lavaş, bol et, sumak soğanı ve acılı sos.",
       price: 270,
-      image: img("photo-1529006557810-274b0b6db27d"),
+      image: img("antakya-durum.jpg"),
       categoryId: "doner",
     },
     {
@@ -70,7 +69,7 @@ export const defaultMenu: MenuData = {
       name: "Porsiyon Döner",
       description: "Pilav veya lavaş yanında Antakya usulü döner.",
       price: 340,
-      image: img("photo-1603360946369-dc9bb6258143"),
+      image: img("antakya-porsiyon.jpg"),
       categoryId: "doner",
     },
     {
@@ -78,7 +77,7 @@ export const defaultMenu: MenuData = {
       name: "Broast Porsiyon",
       description: "Çıtır kaplamalı tavuk, salata ve sos ile.",
       price: 320,
-      image: img("photo-1626082927389-6cd097cdc6ec"),
+      image: img("broast-porsiyon.jpg"),
       categoryId: "broast",
     },
     {
@@ -86,7 +85,7 @@ export const defaultMenu: MenuData = {
       name: "Broast Kanat",
       description: "Baharatlı çıtır kanat, 8 parça.",
       price: 290,
-      image: img("photo-1527477396000-e27163b481c2"),
+      image: img("broast-kanat.jpg"),
       categoryId: "broast",
     },
     {
@@ -94,7 +93,7 @@ export const defaultMenu: MenuData = {
       name: "Arjantin Patatesi (Küçük)",
       description: "Baharatlı dilim patates, özel sos.",
       price: 140,
-      image: img("photo-1573080496219-bb080dd4f877"),
+      image: img("arjantin-kucuk.jpg"),
       categoryId: "patates",
     },
     {
@@ -102,7 +101,7 @@ export const defaultMenu: MenuData = {
       name: "Arjantin Patatesi (Büyük)",
       description: "Paylaşımlık porsiyon, cheddar ve sos ile.",
       price: 210,
-      image: img("photo-1630384060421-43617ea75be2"),
+      image: img("arjantin-buyuk.jpg"),
       categoryId: "patates",
     },
     {
@@ -110,7 +109,7 @@ export const defaultMenu: MenuData = {
       name: "Kola",
       description: "Soğuk kutu kola, 330 ml.",
       price: 55,
-      image: img("photo-1629203851122-3726ecdf080e"),
+      image: img("kola.jpg"),
       categoryId: "icecek",
     },
     {
@@ -118,7 +117,7 @@ export const defaultMenu: MenuData = {
       name: "Ayran",
       description: "Ev yapımı kıvamında soğuk ayran.",
       price: 40,
-      image: img("photo-1623065427902-21dd6dc8f144"),
+      image: img("ayran.jpg"),
       categoryId: "icecek",
     },
   ],

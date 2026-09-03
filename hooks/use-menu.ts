@@ -24,10 +24,6 @@ function subscribe(onStoreChange: () => void) {
   };
 }
 
-function noopSubscribe() {
-  return () => {};
-}
-
 let snapshotRaw = "__uninitialized__";
 let snapshotMenu: MenuData = defaultMenu;
 
@@ -43,14 +39,8 @@ function getServerSnapshot(): MenuData {
   return defaultMenu;
 }
 
-function useHydrated() {
-  return useSyncExternalStore(noopSubscribe, () => true, () => false);
-}
-
 export function useMenu() {
-  const hydrated = useHydrated();
-  const stored = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const menu = hydrated ? stored : null;
+  const menu = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const updateMenu = useCallback((next: MenuData | ((current: MenuData) => MenuData)) => {
     const base = loadMenu();
@@ -58,9 +48,5 @@ export function useMenu() {
     saveMenu(resolved);
   }, []);
 
-  const refresh = useCallback(() => {
-    window.dispatchEvent(new Event(MENU_UPDATED_EVENT));
-  }, []);
-
-  return { menu, ready: menu !== null, updateMenu, refresh };
+  return { menu, ready: true, updateMenu };
 }

@@ -1,12 +1,15 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { BalloonMark } from "@/components/balloon-mark";
 
 export function SiteHeader({
   eyebrow = "Dijital menü",
   compact = false,
+  actions,
 }: {
   eyebrow?: string;
   compact?: boolean;
+  actions?: ReactNode;
 }) {
   return (
     <header className={compact ? "px-4 py-5" : "px-4 pb-6 pt-8 sm:pt-10"}>
@@ -22,6 +25,7 @@ export function SiteHeader({
             </h1>
           </div>
         </Link>
+        {actions}
       </div>
     </header>
   );

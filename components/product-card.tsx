@@ -1,8 +1,14 @@
 import { formatPrice, type Product } from "@/lib/menu";
 
-export function ProductCard({ product }: { product: Product }) {
-  return (
-    <article className="overflow-hidden rounded-2xl bg-[oklch(0.22_0.04_250)] ring-1 ring-white/10">
+export function ProductCard({
+  product,
+  onSelect,
+}: {
+  product: Product;
+  onSelect?: (product: Product) => void;
+}) {
+  const inner = (
+    <>
       <div className="relative aspect-[4/3] bg-[oklch(0.18_0.04_250)]">
         {product.image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -18,7 +24,7 @@ export function ProductCard({ product }: { product: Product }) {
         )}
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[oklch(0.22_0.04_250)] to-transparent" />
       </div>
-      <div className="space-y-2 px-4 pb-4 pt-1">
+      <div className="space-y-2 px-4 pb-4 pt-1 text-left">
         <div className="flex items-start justify-between gap-3">
           <h3 className="font-heading text-lg leading-tight text-white">
             {product.name}
@@ -33,18 +39,24 @@ export function ProductCard({ product }: { product: Product }) {
           </p>
         ) : null}
       </div>
-    </article>
+    </>
   );
-}
 
-export function ProductCardSkeleton() {
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        onClick={() => onSelect(product)}
+        className="overflow-hidden rounded-2xl bg-[oklch(0.22_0.04_250)] text-left ring-1 ring-white/10 transition hover:ring-sky-300/50"
+      >
+        {inner}
+      </button>
+    );
+  }
+
   return (
-    <div className="overflow-hidden rounded-2xl bg-[oklch(0.22_0.04_250)] ring-1 ring-white/10">
-      <div className="aspect-[4/3] animate-pulse bg-white/5" />
-      <div className="space-y-2 px-4 py-4">
-        <div className="h-5 w-2/3 animate-pulse rounded bg-white/8" />
-        <div className="h-4 w-full animate-pulse rounded bg-white/6" />
-      </div>
-    </div>
+    <article className="overflow-hidden rounded-2xl bg-[oklch(0.22_0.04_250)] ring-1 ring-white/10">
+      {inner}
+    </article>
   );
 }

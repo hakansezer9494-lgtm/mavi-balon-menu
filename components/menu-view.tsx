@@ -3,34 +3,51 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { BalloonField } from "@/components/balloon-mark";
-import { ProductCard, ProductCardSkeleton } from "@/components/product-card";
+import { ProductCard } from "@/components/product-card";
 import { SiteHeader } from "@/components/site-header";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useMenu } from "@/hooks/use-menu";
+import { formatPrice, type Product } from "@/lib/menu";
 import { cn } from "@/lib/utils";
 
 export function MenuView() {
-  const { menu, ready } = useMenu();
+  const { menu } = useMenu();
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [selected, setSelected] = useState<Product | null>(null);
 
-  const categories = menu?.categories ?? [];
+  const categories = menu.categories;
   const products = useMemo(() => {
-    if (!menu) return [];
     if (activeCategory === "all") return menu.products;
     return menu.products.filter((product) => product.categoryId === activeCategory);
   }, [activeCategory, menu]);
 
-  const emptyCategories = ready && categories.length === 0;
-  const emptyProducts = ready && products.length === 0;
+  const emptyCategories = categories.length === 0;
+  const emptyProducts = products.length === 0;
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
       <BalloonField />
-      <SiteHeader />
+      <SiteHeader
+        actions={
+          <Link
+            href="/yonetim"
+            className="rounded-full bg-sky-400 px-3 py-2 text-sm font-medium text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+          >
+            Yönetim
+          </Link>
+        }
+      />
 
       <div className="relative mx-auto w-full max-w-5xl px-4">
         <p className="max-w-xl text-sm leading-relaxed text-sky-100/70 sm:text-base">
-          Hamburger, Antakya döner, broast ve Arjantin patatesi. QR okutun,
-          menüyü açın, siparişinizi masadan verin.
+          Hamburger, Antakya döner, broast ve Arjantin patatesi. Ürüne dokunun,
+          fotoğrafı ve fiyatı büyüsün.
         </p>
 
         <div className="mt-6 flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -51,13 +68,7 @@ export function MenuView() {
       </div>
 
       <main className="relative mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-        {!ready ? (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-            <ProductCardSkeleton />
-          </div>
-        ) : emptyCategories ? (
+        {emptyCategories ? (
           <EmptyState
             title="Kategori henüz yok"
             body="Menü kategorileri yönetim panelinden oluşturulabilir."
@@ -70,7 +81,11 @@ export function MenuView() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product) => (
-              <ProductCard key={product.id} product={product} />
+              <ProductCard
+                key={product.id}
+                product={product}
+                onSelect={setSelected}
+              />
             ))}
           </div>
         )}
@@ -87,6 +102,36 @@ export function MenuView() {
           </Link>
         </p>
       </footer>
+
+      <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="overflow-hidden bg-[oklch(0.2_0.04_250)] p-0 text-white sm:max-w-md">
+          {selected ? (
+            <>
+              {selected.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={selected.image}
+                  alt={selected.name}
+                  className="h-56 w-full object-cover"
+                />
+              ) : null}
+              <div className="space-y-2 p-4">
+                <DialogHeader>
+                  <DialogTitle className="font-heading text-2xl text-white">
+                    {selected.name}
+                  </DialogTitle>
+                  <DialogDescription className="text-sky-100/70">
+                    {selected.description || "Mavi Balon menü ürünü"}
+                  </DialogDescription>
+                </DialogHeader>
+                <p className="text-2xl font-semibold text-sky-200">
+                  {formatPrice(selected.price)}
+                </p>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

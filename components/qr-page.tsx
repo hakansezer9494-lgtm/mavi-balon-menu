@@ -5,7 +5,8 @@ import Link from "next/link";
 import { QRCodeSVG } from "qrcode.react";
 import { BalloonField } from "@/components/balloon-mark";
 import { SiteHeader } from "@/components/site-header";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 function subscribe() {
   return () => {};
@@ -44,12 +45,18 @@ export function QrPage() {
         <p className="mt-4 break-all text-xs text-sky-100/50">{url}</p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-2">
-          <Button render={<Link href="/" />} className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300">
+          <Link
+            href="/"
+            className={cn(
+              buttonVariants({ variant: "default" }),
+              "bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+            )}
+          >
             Menüyü aç
-          </Button>
-          <Button render={<Link href="/yonetim" />} variant="outline">
+          </Link>
+          <Link href="/yonetim" className={cn(buttonVariants({ variant: "outline" }))}>
             Yönetim
-          </Button>
+          </Link>
         </div>
       </main>
     </div>

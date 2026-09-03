@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { BalloonField } from "@/components/balloon-mark";
 import { SiteHeader } from "@/components/site-header";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -250,12 +251,12 @@ export function AdminPanel() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button render={<Link href="/" />} variant="outline">
+            <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
               Menüyü gör
-            </Button>
-            <Button render={<Link href="/qr" />} variant="outline">
+            </Link>
+            <Link href="/qr" className={cn(buttonVariants({ variant: "outline" }))}>
               QR kod
-            </Button>
+            </Link>
             <Button variant="ghost" onClick={() => setResetOpen(true)}>
               Örneği yükle
             </Button>

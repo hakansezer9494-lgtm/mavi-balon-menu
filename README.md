@@ -98,9 +98,12 @@ Tarayıcıda sırayla açın:
 
 | Ne yapmak istiyorsunuz | Nereye gidin |
 | --- | --- |
-| Müşteri menüsü | `/` |
-| Masa QR yazdırma | `/qr` |
+| Müşteri menüsü (QR) | `/` |
+| İşletme portali | `/portal` |
+| Masa QR yazdırma | `/qr` veya portal |
 | Kategori, fotoğraf, fiyat | `/yonetim` (şifre ile) |
+
+Müşteri menüsünde yönetim butonu yoktur. İşletme için `/portal` adresini yer imlerine ekleyin.
 
 Fiyat değişince sadece `/yonetim` yeterli. QR’ı yeniden basmanıza gerek yok.
 

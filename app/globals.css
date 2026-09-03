@@ -135,3 +135,11 @@
     font-family: var(--font-heading), ui-serif, Georgia, serif;
   }
 }
+
+@media print {
+  body {
+    background: white !important;
+    background-image: none !important;
+    color: #0b1f3a !important;
+  }
+}

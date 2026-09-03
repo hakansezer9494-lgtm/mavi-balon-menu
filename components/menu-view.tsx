@@ -13,11 +13,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useMenu } from "@/hooks/use-menu";
-import { formatPrice, type Product } from "@/lib/menu";
+import { formatPrice, type MenuData, type Product } from "@/lib/menu";
 import { cn } from "@/lib/utils";
 
-export function MenuView() {
-  const { menu } = useMenu();
+export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
+  const { menu } = useMenu(initialMenu);
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selected, setSelected] = useState<Product | null>(null);
 

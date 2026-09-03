@@ -1,52 +1,83 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   defaultMenu,
-  loadMenu,
-  MENU_STORAGE_KEY,
   MENU_UPDATED_EVENT,
-  saveMenu,
   type MenuData,
 } from "@/lib/menu";
 
-function subscribe(onStoreChange: () => void) {
-  const onStorage = (event: StorageEvent) => {
-    if (event.key === MENU_STORAGE_KEY || event.key === null) {
-      onStoreChange();
+async function fetchMenu() {
+  const response = await fetch("/api/menu", { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Menü okunamadı.");
+  }
+  return (await response.json()) as MenuData;
+}
+
+export function useMenu(initialMenu: MenuData = defaultMenu) {
+  const [menu, setMenu] = useState<MenuData>(initialMenu);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const refresh = useCallback(async () => {
+    try {
+      const next = await fetchMenu();
+      setMenu(next);
+    } catch {
+      // keep the last good menu on the screen
     }
-  };
-  window.addEventListener("storage", onStorage);
-  window.addEventListener(MENU_UPDATED_EVENT, onStoreChange);
-  return () => {
-    window.removeEventListener("storage", onStorage);
-    window.removeEventListener(MENU_UPDATED_EVENT, onStoreChange);
-  };
-}
-
-let snapshotRaw = "__uninitialized__";
-let snapshotMenu: MenuData = defaultMenu;
-
-function getSnapshot() {
-  const raw = window.localStorage.getItem(MENU_STORAGE_KEY) ?? "";
-  if (raw === snapshotRaw) return snapshotMenu;
-  snapshotRaw = raw;
-  snapshotMenu = loadMenu();
-  return snapshotMenu;
-}
-
-function getServerSnapshot(): MenuData {
-  return defaultMenu;
-}
-
-export function useMenu() {
-  const menu = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-
-  const updateMenu = useCallback((next: MenuData | ((current: MenuData) => MenuData)) => {
-    const base = loadMenu();
-    const resolved = typeof next === "function" ? next(base) : next;
-    saveMenu(resolved);
   }, []);
 
-  return { menu, updateMenu };
+  useEffect(() => {
+    const onUpdate = () => {
+      void refresh();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void refresh();
+      }
+    };
+    const timer = window.setInterval(() => {
+      void refresh();
+    }, 8000);
+
+    window.addEventListener(MENU_UPDATED_EVENT, onUpdate);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener(MENU_UPDATED_EVENT, onUpdate);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refresh]);
+
+  const updateMenu = useCallback(
+    async (next: MenuData | ((current: MenuData) => MenuData)) => {
+      const resolved = typeof next === "function" ? next(menu) : next;
+      setMenu(resolved);
+      setSaving(true);
+      setSaveError("");
+      try {
+        const response = await fetch("/api/menu", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(resolved),
+        });
+        if (!response.ok) {
+          throw new Error("Menü kaydedilemedi.");
+        }
+        const saved = (await response.json()) as MenuData;
+        setMenu(saved);
+        window.dispatchEvent(new Event(MENU_UPDATED_EVENT));
+      } catch {
+        setSaveError("Kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin.");
+        await refresh();
+      } finally {
+        setSaving(false);
+      }
+    },
+    [menu, refresh]
+  );
+
+  return { menu, updateMenu, saving, saveError, refresh };
 }

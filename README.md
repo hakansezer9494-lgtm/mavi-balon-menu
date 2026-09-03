@@ -1,61 +1,42 @@
 # Mavi Balon Dijital Menü
 
-QR kod ile açılan dijital menü. Misafirler ürün fotoğrafı ve fiyatı görür; siz yönetim panelinden kategori, ürün, fotoğraf ve fiyat eklersiniz.
+QR kod ile açılan dijital menü. Yönetimden kaydettiğiniz kategori, fotoğraf ve fiyat sunucuya yazılır; müşteri menüsü aynı listeyi gösterir.
 
 ## İşletmede kullanma
 
-Üç adım: menüyü doldur, internete koy, QR’ı bas.
+### 1. İçeriği güncelleyin
 
-### 1. Menüyü doldurun
+`/yonetim` sayfasından kategori ekleyin, ürün fotoğrafı ve fiyat girin. Kayıt `data/menu.json` dosyasına gider. Misafir menüsü birkaç saniye içinde yenilenir; sayfayı yenilemek de yeter.
 
-1. `npm install` ve `npm run dev`
-2. [http://127.0.0.1:43123/yonetim](http://127.0.0.1:43123/yonetim) adresini açın
-3. Kategori ekleyin (Hamburger, Antakya Döner, Broast, …)
-4. Her ürüne fotoğraf, isim ve fiyat girin
-5. [http://127.0.0.1:43123](http://127.0.0.1:43123) üzerinden menüyü kontrol edin
+### 2. Siteyi yayınlayın
 
-Yönetimdeki değişiklikler **bu tarayıcıda** saklanır. Müşterinin telefonu sizin bilgisayarınızdaki listeyi görmez. Yayına almadan önce ürünleri buradan netleştirin; yayındaki herkes örnek veya sizin sabitlediğiniz menüyü görür.
+Müşteri telefonu `localhost` açamaz. Menünün sürekli çalışan bir adresi olmalı.
 
-### 2. Siteyi internete yayınlayın
+Bu proje **dosyaya yazar**. Sunucu açık kaldığı sürece (`npm run dev` veya `npm start`) güncellemeler kalır.
 
-Müşteri telefonu `localhost` veya `127.0.0.1` açamaz. Menünün herkesin gireceği bir adresi olmalı (örnek: `https://mavibalon.vercel.app`).
-
-[Vercel](https://vercel.com) ile (ücretsiz hesap yeter):
+Kendi sunucu / VPS:
 
 ```bash
-npm i -g vercel
-vercel
-```
-
-Komut bir canlı URL verir. O URL’yi tarayıcıda açıp menünün göründüğünü kontrol edin.
-
-Kendi sunucunuz varsa:
-
-```bash
+npm install
 npm run build
 npm start
 ```
 
-Sunucuyu `0.0.0.0` ve 80/443 üzerinden yayınlayın; mümkünse bir alan adı bağlayın.
+80 veya 443 portunu ve bir alan adını bağlayın. `/yonetim` ile fiyat değiştirin; QR aynı kalır, menü güncellenir.
 
-### 3. QR’ı yazdırıp masaya koyun
+Vercel gibi geçici diskli servislerde kayıt bir süre sonra silinebilir. Canlı menü için bu uygulamayı sürekli açık bir sunucuda çalıştırın.
 
-1. Canlı sitede `/qr` sayfasını açın (örnek: `https://sizin-adresiniz/qr`)
-2. Kodun altındaki adres `https://...` olmalı; `127.0.0.1` ise henüz yayında değilsiniz
-3. **Yazdır** deyin, A5 veya kare kart olarak masaya / kapıya yapıştırın
-4. Kendi telefonunuzla okutup menünün açıldığını deneyin
+### 3. QR’ı yazdırın
 
-Bir QR yeter; tüm masalara aynı kodu basabilirsiniz.
+Yayındaki sitede `/qr` açın, adres `https://` ile başlamalı, **Yazdır** deyin. Tüm masalara aynı kod yeter.
 
-## Günlük kullanım
+## Sayfalar
 
-| Ne yapmak istiyorsunuz | Nereye gidin |
+| Sayfa | Adres |
 | --- | --- |
 | Müşteri menüsü | `/` |
-| Masa QR’si | `/qr` |
-| Kategori, fotoğraf, fiyat | `/yonetim` |
-
-Fiyat veya ürün değişince yönetimden kaydedin. Yayındaki menünün her telefonda aynı kalması için ürünleri proje dosyasına işleyip yeniden yayınlamak gerekir; aksi halde yalnızca sizin tarayıcınız güncellenir.
+| Masa QR | `/qr` |
+| Yönetim | `/yonetim` |
 
 ## Yerel geliştirme
 
@@ -64,4 +45,4 @@ npm install
 npm run dev
 ```
 
-Tarayıcı: [http://127.0.0.1:43123](http://127.0.0.1:43123)
+[http://127.0.0.1:43123](http://127.0.0.1:43123)

@@ -1,0 +1,119 @@
+{
+  "categories": [
+    {
+      "id": "hamburger",
+      "name": "Hamburger",
+      "sortOrder": 0
+    },
+    {
+      "id": "doner",
+      "name": "Antakya Döner",
+      "sortOrder": 1
+    },
+    {
+      "id": "broast",
+      "name": "Broast",
+      "sortOrder": 2
+    },
+    {
+      "id": "patates",
+      "name": "Arjantin Patatesi",
+      "sortOrder": 3
+    },
+    {
+      "id": "icecek",
+      "name": "İçecekler",
+      "sortOrder": 4
+    }
+  ],
+  "products": [
+    {
+      "id": "klasik-burger",
+      "name": "Klasik Hamburger",
+      "description": "Izgara köfte, marul, domates, turşu ve ev sosu.",
+      "price": 280,
+      "image": "/products/klasik-burger.jpg",
+      "categoryId": "hamburger"
+    },
+    {
+      "id": "cheese-burger",
+      "name": "Cheeseburger",
+      "description": "Erimiş cheddar, köfte, soğan ve özel sos.",
+      "price": 310,
+      "image": "/products/cheese-burger.jpg",
+      "categoryId": "hamburger"
+    },
+    {
+      "id": "double-burger",
+      "name": "Double Mavi Burger",
+      "description": "Çift köfte, çift cheddar, çıtır soğan.",
+      "price": 390,
+      "image": "/products/double-burger.jpg",
+      "categoryId": "hamburger"
+    },
+    {
+      "id": "antakya-durum",
+      "name": "Antakya Dürüm",
+      "description": "İnce lavaş, bol et, sumak soğanı ve acılı sos.",
+      "price": 270,
+      "image": "/products/antakya-durum.jpg",
+      "categoryId": "doner"
+    },
+    {
+      "id": "antakya-porsiyon",
+      "name": "Porsiyon Döner",
+      "description": "Pilav veya lavaş yanında Antakya usulü döner.",
+      "price": 340,
+      "image": "/products/antakya-porsiyon.jpg",
+      "categoryId": "doner"
+    },
+    {
+      "id": "broast-porsiyon",
+      "name": "Broast Porsiyon",
+      "description": "Çıtır kaplamalı tavuk, salata ve sos ile.",
+      "price": 320,
+      "image": "/products/broast-porsiyon.jpg",
+      "categoryId": "broast"
+    },
+    {
+      "id": "broast-kanat",
+      "name": "Broast Kanat",
+      "description": "Baharatlı çıtır kanat, 8 parça.",
+      "price": 290,
+      "image": "/products/broast-kanat.jpg",
+      "categoryId": "broast"
+    },
+    {
+      "id": "arjantin-kucuk",
+      "name": "Arjantin Patatesi (Küçük)",
+      "description": "Baharatlı dilim patates, özel sos.",
+      "price": 140,
+      "image": "/products/arjantin-kucuk.jpg",
+      "categoryId": "patates"
+    },
+    {
+      "id": "arjantin-buyuk",
+      "name": "Arjantin Patatesi (Büyük)",
+      "description": "Paylaşımlık porsiyon, cheddar ve sos ile.",
+      "price": 210,
+      "image": "/products/arjantin-buyuk.jpg",
+      "categoryId": "patates"
+    },
+    {
+      "id": "kola",
+      "name": "Kola",
+      "description": "Soğuk kutu kola, 330 ml.",
+      "price": 55,
+      "image": "/products/kola.jpg",
+      "categoryId": "icecek"
+    },
+    {
+      "id": "ayran",
+      "name": "Ayran",
+      "description": "Ev yapımı kıvamında soğuk ayran.",
+      "price": 40,
+      "image": "/products/ayran.jpg",
+      "categoryId": "icecek"
+    }
+  ]
+}

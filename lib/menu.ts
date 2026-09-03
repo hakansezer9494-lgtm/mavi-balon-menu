@@ -18,7 +18,6 @@ export type MenuData = {
   products: Product[];
 };
 
-export const MENU_STORAGE_KEY = "mavi-balon-menu-v2";
 export const MENU_UPDATED_EVENT = "mavi-balon-menu-updated";
 
 const img = (file: string) => `/products/${file}`;
@@ -123,39 +122,49 @@ export const defaultMenu: MenuData = {
   ],
 };
 
-function isMenuData(value: unknown): value is MenuData {
+export function isMenuData(value: unknown): value is MenuData {
   if (!value || typeof value !== "object") return false;
   const data = value as MenuData;
-  return Array.isArray(data.categories) && Array.isArray(data.products);
-}
-
-export function loadMenu(): MenuData {
-  if (typeof window === "undefined") return defaultMenu;
-  try {
-    const raw = window.localStorage.getItem(MENU_STORAGE_KEY);
-    if (!raw) return structuredClone(defaultMenu);
-    const parsed = JSON.parse(raw) as unknown;
-    if (!isMenuData(parsed)) return structuredClone(defaultMenu);
-    return {
-      categories: [...parsed.categories].sort(
-        (a, b) => a.sortOrder - b.sortOrder
-      ),
-      products: parsed.products,
-    };
-  } catch {
-    return structuredClone(defaultMenu);
+  if (!Array.isArray(data.categories) || !Array.isArray(data.products)) {
+    return false;
   }
+  return (
+    data.categories.every(
+      (category) =>
+        typeof category?.id === "string" &&
+        typeof category?.name === "string" &&
+        typeof category?.sortOrder === "number"
+    ) &&
+    data.products.every(
+      (product) =>
+        typeof product?.id === "string" &&
+        typeof product?.name === "string" &&
+        typeof product?.description === "string" &&
+        typeof product?.price === "number" &&
+        typeof product?.image === "string" &&
+        typeof product?.categoryId === "string"
+    )
+  );
 }
 
-export function saveMenu(data: MenuData) {
-  const normalized: MenuData = {
+export function normalizeMenu(data: MenuData): MenuData {
+  return {
     categories: [...data.categories]
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .map((category, index) => ({ ...category, sortOrder: index })),
-    products: data.products,
+      .map((category, index) => ({
+        id: category.id,
+        name: category.name.trim(),
+        sortOrder: index,
+      })),
+    products: data.products.map((product) => ({
+      id: product.id,
+      name: product.name.trim(),
+      description: product.description.trim(),
+      price: product.price,
+      image: product.image,
+      categoryId: product.categoryId,
+    })),
   };
-  window.localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(normalized));
-  window.dispatchEvent(new Event(MENU_UPDATED_EVENT));
 }
 
 export function formatPrice(price: number) {

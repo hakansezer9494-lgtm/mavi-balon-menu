@@ -39,6 +39,7 @@ import {
   formatPrice,
   newId,
   type Category,
+  type MenuData,
   type Product,
 } from "@/lib/menu";
 
@@ -59,8 +60,8 @@ const emptyProductForm = (categoryId = ""): ProductForm => ({
   image: "",
 });
 
-export function AdminPanel() {
-  const { menu, updateMenu } = useMenu();
+export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
+  const { menu, updateMenu, saving, saveError } = useMenu(initialMenu);
   const [categoryName, setCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState("");
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -246,8 +247,15 @@ export function AdminPanel() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="max-w-xl text-sm text-sky-100/70">
-              Kategori oluşturun, ürün fotoğrafı ve fiyat ekleyin. Değişiklikler
-              bu tarayıcıda saklanır; menü anında güncellenir.
+              Kategori, fotoğraf ve fiyat buradan kaydedilir. QR menüsü tüm
+              telefonlarda aynı listeyi gösterir.
+            </p>
+            <p className="mt-2 text-xs text-sky-200/70">
+              {saving
+                ? "Kaydediliyor…"
+                : saveError
+                  ? saveError
+                  : "Kayıtlar QR menüsüne yansır."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

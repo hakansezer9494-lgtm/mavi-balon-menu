@@ -34,16 +34,20 @@ export async function setStoredAdminPasswordHash(password: string) {
 }
 
 export async function verifyAdminPassword(password: string) {
+  const envPassword = process.env.ADMIN_PASSWORD?.trim();
+  if (envPassword && safeEqualText(password, envPassword)) {
+    return true;
+  }
+
   const storedHash = await getStoredAdminPasswordHash();
   if (storedHash) {
     return verifyPasswordHash(password, storedHash);
   }
 
-  const envPassword = process.env.ADMIN_PASSWORD?.trim();
   if (!envPassword) {
     return process.env.NODE_ENV !== "production";
   }
-  return safeEqualText(password, envPassword);
+  return false;
 }
 
 export async function adminPasswordConfigured() {

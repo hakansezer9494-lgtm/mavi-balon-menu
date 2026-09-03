@@ -661,9 +661,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">Şifre değiştir</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Yeni şifre Turso’da saklanır. Vercel’deki ADMIN_PASSWORD yalnızca
-              ilk giriş / yedek içindir; panelden değiştirdikten sonra yeni şifre
-              geçerli olur.
+              Yeni şifre kaydedilir. Vercel’deki ADMIN_PASSWORD her zaman yedek
+              giriş olarak da çalışır.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid max-w-md gap-3">

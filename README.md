@@ -1,34 +1,54 @@
 # Mavi Balon Dijital Menü
 
-QR kod ile açılan dijital menü. Yönetimden kaydettiğiniz kategori, fotoğraf ve fiyat sunucuya yazılır; müşteri menüsü aynı listeyi gösterir.
+QR ile açılan dijital menü. Yönetimden kaydettiğiniz kategori, fotoğraf ve fiyat Turso’da saklanır; Vercel’deki müşteri menüsü aynı listeyi gösterir. Tasarım değişince `git push` yeter.
 
-## İşletmede kullanma
+## Yol 1: Vercel + Turso (önerilen)
 
-### 1. İçeriği güncelleyin
+### A. Turso hesabı
 
-`/yonetim` sayfasından kategori ekleyin, ürün fotoğrafı ve fiyat girin. Kayıt `data/menu.json` dosyasına gider. Misafir menüsü birkaç saniye içinde yenilenir; sayfayı yenilemek de yeter.
-
-### 2. Siteyi yayınlayın
-
-Müşteri telefonu `localhost` açamaz. Menünün sürekli çalışan bir adresi olmalı.
-
-Bu proje **dosyaya yazar**. Sunucu açık kaldığı sürece (`npm run dev` veya `npm start`) güncellemeler kalır.
-
-Kendi sunucu / VPS:
+1. [turso.tech](https://turso.tech) üzerinden ücretsiz hesap açın
+2. Veritabanı oluşturun, örneğin `mavi-balon`
+3. URL ve token alın:
 
 ```bash
-npm install
-npm run build
-npm start
+turso db create mavi-balon
+turso db show mavi-balon --url
+turso db tokens create mavi-balon
 ```
 
-80 veya 443 portunu ve bir alan adını bağlayın. `/yonetim` ile fiyat değiştirin; QR aynı kalır, menü güncellenir.
+### B. Vercel’e yayın
 
-Vercel gibi geçici diskli servislerde kayıt bir süre sonra silinebilir. Canlı menü için bu uygulamayı sürekli açık bir sunucuda çalıştırın.
+1. [vercel.com](https://vercel.com) hesabı açın, bu repoyu Import edin
+2. Project → Settings → Environment Variables:
 
-### 3. QR’ı yazdırın
+| Değişken | Değer |
+| --- | --- |
+| `TURSO_DATABASE_URL` | Turso URL |
+| `TURSO_AUTH_TOKEN` | Turso token |
+| `ADMIN_PASSWORD` | Sizin belirlediğiniz yönetim şifresi |
 
-Yayındaki sitede `/qr` açın, adres `https://` ile başlamalı, **Yazdır** deyin. Tüm masalara aynı kod yeter.
+3. Deploy edin. Size `https://....vercel.app` adresi gelir.
+
+### C. Menüyü doldurun
+
+1. `https://SIZIN-ADRES.vercel.app/yonetim` açın
+2. `ADMIN_PASSWORD` ile giriş yapın
+3. Kategori / fotoğraf / fiyat ekleyin — kayıt Turso’ya gider
+4. `https://SIZIN-ADRES.vercel.app` müşteri menüsüdür
+5. `/qr` sayfasından **Yazdır** → masaya yapıştırın
+
+Sonraki tasarım değişiklikleri: kodu güncelleyip push edin. Vercel yeniden yayınlar; menü içeriği Turso’da kalır.
+
+## Yerel geliştirme
+
+```bash
+cp .env.example .env.local
+# Turso yoksa boş bırakın; data/menu.json kullanılır
+npm install
+npm run dev
+```
+
+[http://127.0.0.1:43123](http://127.0.0.1:43123)
 
 ## Sayfalar
 
@@ -36,13 +56,4 @@ Yayındaki sitede `/qr` açın, adres `https://` ile başlamalı, **Yazdır** de
 | --- | --- |
 | Müşteri menüsü | `/` |
 | Masa QR | `/qr` |
-| Yönetim | `/yonetim` |
-
-## Yerel geliştirme
-
-```bash
-npm install
-npm run dev
-```
-
-[http://127.0.0.1:43123](http://127.0.0.1:43123)
+| Yönetim (şifreli) | `/yonetim` |

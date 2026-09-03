@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { adminPasswordConfigured, isAdminAuthorized } from "@/lib/admin-auth";
 import { isMenuData } from "@/lib/menu";
 import { readMenu, writeMenu } from "@/lib/menu-store";
 
@@ -10,6 +11,17 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json(
+      {
+        error: adminPasswordConfigured()
+          ? "Yönetim şifresi gerekli."
+          : "Canlı ortamda ADMIN_PASSWORD tanımlayın.",
+      },
+      { status: 401 }
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

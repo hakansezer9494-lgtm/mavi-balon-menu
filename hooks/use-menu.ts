@@ -7,6 +7,21 @@ import {
   type MenuData,
 } from "@/lib/menu";
 
+const ADMIN_PASSWORD_KEY = "mavi-balon-admin-password";
+
+export function getStoredAdminPassword() {
+  if (typeof window === "undefined") return "";
+  return window.sessionStorage.getItem(ADMIN_PASSWORD_KEY) ?? "";
+}
+
+export function setStoredAdminPassword(password: string) {
+  window.sessionStorage.setItem(ADMIN_PASSWORD_KEY, password);
+}
+
+export function clearStoredAdminPassword() {
+  window.sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
+}
+
 async function fetchMenu() {
   const response = await fetch("/api/menu", { cache: "no-store" });
   if (!response.ok) {
@@ -60,17 +75,28 @@ export function useMenu(initialMenu: MenuData = defaultMenu) {
       try {
         const response = await fetch("/api/menu", {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-admin-password": getStoredAdminPassword(),
+          },
           body: JSON.stringify(resolved),
         });
+        if (response.status === 401) {
+          clearStoredAdminPassword();
+          throw new Error("unauthorized");
+        }
         if (!response.ok) {
           throw new Error("Menü kaydedilemedi.");
         }
         const saved = (await response.json()) as MenuData;
         setMenu(saved);
         window.dispatchEvent(new Event(MENU_UPDATED_EVENT));
-      } catch {
-        setSaveError("Kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin.");
+      } catch (error) {
+        setSaveError(
+          error instanceof Error && error.message === "unauthorized"
+            ? "Oturum kapandı. Tekrar giriş yapın."
+            : "Kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin."
+        );
         await refresh();
       } finally {
         setSaving(false);

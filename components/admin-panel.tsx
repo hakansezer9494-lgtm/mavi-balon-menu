@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { BalloonField } from "@/components/balloon-mark";
@@ -32,7 +32,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useMenu } from "@/hooks/use-menu";
+import {
+  clearStoredAdminPassword,
+  getStoredAdminPassword,
+  setStoredAdminPassword,
+  useMenu,
+} from "@/hooks/use-menu";
 import { compressImage } from "@/lib/image";
 import {
   defaultMenu,
@@ -62,6 +67,11 @@ const emptyProductForm = (categoryId = ""): ProductForm => ({
 
 export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const { menu, updateMenu, saving, saveError } = useMenu(initialMenu);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [cloudStore, setCloudStore] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState("");
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -70,6 +80,67 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [productError, setProductError] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkAuth() {
+      try {
+        const statusResponse = await fetch("/api/admin/status", { cache: "no-store" });
+        const status = (await statusResponse.json()) as {
+          authRequired: boolean;
+          cloudStore: boolean;
+        };
+        if (cancelled) return;
+        setCloudStore(status.cloudStore);
+        if (!status.authRequired) {
+          setUnlocked(true);
+          setAuthChecked(true);
+          return;
+        }
+        const stored = getStoredAdminPassword();
+        if (!stored) {
+          setUnlocked(false);
+          setAuthChecked(true);
+          return;
+        }
+        const loginResponse = await fetch("/api/admin/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: stored }),
+        });
+        if (cancelled) return;
+        if (loginResponse.ok) {
+          setUnlocked(true);
+        } else {
+          clearStoredAdminPassword();
+          setUnlocked(false);
+        }
+      } catch {
+        if (!cancelled) setUnlocked(false);
+      } finally {
+        if (!cancelled) setAuthChecked(true);
+      }
+    }
+    void checkAuth();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleLogin() {
+    setLoginError("");
+    const response = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (!response.ok) {
+      setLoginError("Şifre hatalı.");
+      return;
+    }
+    setStoredAdminPassword(password);
+    setUnlocked(true);
+  }
 
   const categories = menu?.categories ?? [];
   const products = menu?.products ?? [];
@@ -81,6 +152,59 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     }
     return counts;
   }, [menu]);
+
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-full flex-1 items-center justify-center text-sky-100/70">
+        Yönetim paneli hazırlanıyor…
+      </div>
+    );
+  }
+
+  if (!unlocked) {
+    return (
+      <div className="relative flex min-h-full flex-1 flex-col">
+        <BalloonField />
+        <SiteHeader eyebrow="Yönetim" compact />
+        <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col px-4 pb-16">
+          <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+            <CardHeader>
+              <CardTitle className="text-white">Yönetim girişi</CardTitle>
+              <CardDescription className="text-sky-100/60">
+                Menüyü yalnızca siz güncelleyin. Vercel’de verdiğiniz
+                ADMIN_PASSWORD ile giriş yapın.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="admin-password">Şifre</Label>
+                <Input
+                  id="admin-password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className="h-10 bg-white/5 text-white"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") void handleLogin();
+                  }}
+                />
+              </div>
+              {loginError ? <p className="text-sm text-red-300">{loginError}</p> : null}
+              <Button
+                className="w-full bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                onClick={() => void handleLogin()}
+              >
+                Giriş yap
+              </Button>
+              <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
+                Menüye dön
+              </Link>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   function addCategory() {
     const name = categoryName.trim();
@@ -255,7 +379,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 ? "Kaydediliyor…"
                 : saveError
                   ? saveError
-                  : "Kayıtlar QR menüsüne yansır."}
+                  : cloudStore
+                    ? "Kayıtlar Turso’da; yayındaki menü güncellenir."
+                    : "Yerel kayıt. Yayında Turso bağlayın."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -265,6 +391,16 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             <Link href="/qr" className={cn(buttonVariants({ variant: "outline" }))}>
               QR kod
             </Link>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                clearStoredAdminPassword();
+                setUnlocked(false);
+                setPassword("");
+              }}
+            >
+              Çıkış
+            </Button>
             <Button variant="ghost" onClick={() => setResetOpen(true)}>
               Örneği yükle
             </Button>

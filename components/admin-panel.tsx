@@ -72,6 +72,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [cloudStore, setCloudStore] = useState(false);
+  const [cloudWarning, setCloudWarning] = useState("");
   const [categoryName, setCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState("");
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -89,9 +90,17 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         const status = (await statusResponse.json()) as {
           authRequired: boolean;
           cloudStore: boolean;
+          cloudError?: string | null;
         };
         if (cancelled) return;
         setCloudStore(status.cloudStore);
+        if (status.cloudError) {
+          setCloudWarning(
+            `Turso bağlantı uyarısı: ${status.cloudError}. URL ve token’ı kontrol edin.`
+          );
+        } else {
+          setCloudWarning("");
+        }
         if (!status.authRequired) {
           setUnlocked(true);
           setAuthChecked(true);
@@ -379,6 +388,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 ? "Kaydediliyor…"
                 : saveError
                   ? saveError
+                  : cloudWarning
+                    ? cloudWarning
                   : cloudStore
                     ? "Kayıtlar Turso’da; yayındaki menü güncellenir."
                     : "Yerel kayıt. Yayında Turso bağlayın."}

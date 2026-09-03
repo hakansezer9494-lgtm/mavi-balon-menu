@@ -6,23 +6,38 @@ import { defaultMenu, isMenuData, normalizeMenu, type MenuData } from "@/lib/men
 const menuFile = path.join(process.cwd(), "data", "menu.json");
 let writeChain: Promise<unknown> = Promise.resolve();
 let tursoClient: Client | null | undefined;
+let lastCloudError = "";
+
+function cleanEnv(value: string | undefined) {
+  if (!value) return "";
+  return value.trim().replace(/^["']|["']$/g, "");
+}
+
+function tursoConfig() {
+  let url = cleanEnv(process.env.TURSO_DATABASE_URL);
+  const authToken = cleanEnv(process.env.TURSO_AUTH_TOKEN);
+  if (!url || !authToken) return null;
+  if (url.startsWith("https://")) {
+    url = `libsql://${url.slice("https://".length)}`;
+  }
+  return { url, authToken };
+}
 
 function getTurso(): Client | null {
   if (tursoClient !== undefined) return tursoClient;
-  const url = process.env.TURSO_DATABASE_URL;
-  const authToken = process.env.TURSO_AUTH_TOKEN;
-  if (!url || !authToken) {
+  const config = tursoConfig();
+  if (!config) {
     tursoClient = null;
     return null;
   }
-  tursoClient = createClient({ url, authToken });
+  tursoClient = createClient(config);
   return tursoClient;
 }
 
 async function ensureTursoSchema(client: Client) {
   await client.execute(`
     CREATE TABLE IF NOT EXISTS menu_state (
-      id INTEGER PRIMARY KEY CHECK (id = 1),
+      id INTEGER PRIMARY KEY,
       payload TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
@@ -78,26 +93,54 @@ async function writeToFile(data: MenuData): Promise<MenuData> {
 }
 
 export function usingCloudStore() {
-  return Boolean(process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN);
+  return Boolean(tursoConfig());
+}
+
+export function getLastCloudError() {
+  return lastCloudError;
 }
 
 export async function readMenu(): Promise<MenuData> {
   const client = getTurso();
   if (client) {
-    const fromCloud = await readFromTurso(client);
-    if (fromCloud) return fromCloud;
-    return writeToTurso(client, defaultMenu);
+    try {
+      const fromCloud = await readFromTurso(client);
+      if (fromCloud) {
+        lastCloudError = "";
+        return fromCloud;
+      }
+      const seeded = await writeToTurso(client, defaultMenu);
+      lastCloudError = "";
+      return seeded;
+    } catch (error) {
+      lastCloudError =
+        error instanceof Error ? error.message : "Turso bağlantısı başarısız.";
+      console.error("Turso read failed:", lastCloudError);
+      return structuredClone(defaultMenu);
+    }
   }
 
-  const fromFile = await readFromFile();
-  if (fromFile) return fromFile;
-  return writeToFile(defaultMenu);
+  try {
+    const fromFile = await readFromFile();
+    if (fromFile) return fromFile;
+    return writeToFile(defaultMenu);
+  } catch {
+    return structuredClone(defaultMenu);
+  }
 }
 
 export async function writeMenu(data: MenuData): Promise<MenuData> {
   const client = getTurso();
   if (client) {
-    return writeToTurso(client, data);
+    try {
+      const saved = await writeToTurso(client, data);
+      lastCloudError = "";
+      return saved;
+    } catch (error) {
+      lastCloudError =
+        error instanceof Error ? error.message : "Turso yazma başarısız.";
+      throw error;
+    }
   }
   return writeToFile(data);
 }

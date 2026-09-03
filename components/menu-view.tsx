@@ -45,12 +45,7 @@ export function MenuView() {
       />
 
       <div className="relative mx-auto w-full max-w-5xl px-4">
-        <p className="max-w-xl text-sm leading-relaxed text-sky-100/70 sm:text-base">
-          Hamburger, Antakya döner, broast ve Arjantin patatesi. Ürüne dokunun,
-          fotoğrafı ve fiyatı büyüsün.
-        </p>
-
-        <div className="mt-6 flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <CategoryChip
             label="Tümü"
             active={activeCategory === "all"}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { BalloonField } from "@/components/balloon-mark";
 import { ProductCard } from "@/components/product-card";
 import { SiteHeader } from "@/components/site-header";
@@ -33,16 +32,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
       <BalloonField />
-      <SiteHeader
-        actions={
-          <Link
-            href="/yonetim"
-            className="rounded-full bg-sky-400 px-3 py-2 text-sm font-medium text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
-          >
-            Yönetim
-          </Link>
-        }
-      />
+      <SiteHeader />
 
       <div className="relative mx-auto w-full max-w-5xl px-4">
         <div className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -65,13 +55,13 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
       <main className="relative mx-auto w-full max-w-5xl flex-1 px-4 py-6">
         {emptyCategories ? (
           <EmptyState
-            title="Kategori henüz yok"
-            body="Menü kategorileri yönetim panelinden oluşturulabilir."
+            title="Menü hazırlanıyor"
+            body="Ürünler birazdan burada görünecek."
           />
         ) : emptyProducts ? (
           <EmptyState
             title="Bu kategoride ürün yok"
-            body="Yeni ürün eklemek veya fiyat girmek için yönetim panelini kullanın."
+            body="Başka bir kategori seçebilirsiniz."
           />
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -88,14 +78,6 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
 
       <footer className="relative mt-auto border-t border-white/8 px-4 py-6 text-center text-xs text-sky-100/45">
         <p>Mavi Balon • Taze pişer, sıcak gelir</p>
-        <p className="mt-2 flex justify-center gap-4">
-          <Link href="/qr" className="text-sky-300/70 underline-offset-4 hover:text-sky-200 hover:underline">
-            Masa QR kodu
-          </Link>
-          <Link href="/yonetim" className="text-sky-300/70 underline-offset-4 hover:text-sky-200 hover:underline">
-            Yönetim
-          </Link>
-        </p>
       </footer>
 
       <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>

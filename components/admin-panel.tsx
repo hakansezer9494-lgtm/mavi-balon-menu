@@ -165,13 +165,13 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     return (
       <div className="relative flex min-h-full flex-1 flex-col">
         <BalloonField />
-        <SiteHeader eyebrow="Yönetim" compact />
+        <SiteHeader eyebrow="İşletme paneli" compact />
         <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col px-4 pb-16">
           <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
             <CardHeader>
-              <CardTitle className="text-white">Yönetim girişi</CardTitle>
+              <CardTitle className="text-white">İşletme girişi</CardTitle>
               <CardDescription className="text-sky-100/60">
-                Menüyü yalnızca siz güncelleyin. Vercel’de verdiğiniz
+                Müşteri menüsünden ayrı portal. Vercel’de verdiğiniz
                 ADMIN_PASSWORD ile giriş yapın.
               </CardDescription>
             </CardHeader>
@@ -196,8 +196,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               >
                 Giriş yap
               </Button>
-              <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
-                Menüye dön
+              <Link href="/portal" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
+                Portala dön
               </Link>
             </CardContent>
           </Card>
@@ -365,7 +365,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
       <BalloonField />
-      <SiteHeader eyebrow="Yönetim" compact />
+      <SiteHeader eyebrow="İşletme paneli" compact />
 
       <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -385,8 +385,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Link href="/portal" className={cn(buttonVariants({ variant: "outline" }))}>
+              Portal
+            </Link>
             <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
-              Menüyü gör
+              Müşteri menüsü
             </Link>
             <Link href="/qr" className={cn(buttonVariants({ variant: "outline" }))}>
               QR kod

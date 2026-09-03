@@ -84,10 +84,10 @@ export function QrPage() {
             href="/"
             className={cn(buttonVariants({ variant: "outline" }))}
           >
-            Menüyü aç
+            Müşteri menüsü
           </Link>
-          <Link href="/yonetim" className={cn(buttonVariants({ variant: "outline" }))}>
-            Yönetim
+          <Link href="/portal" className={cn(buttonVariants({ variant: "outline" }))}>
+            Portal
           </Link>
         </div>
       </main>

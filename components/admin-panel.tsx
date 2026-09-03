@@ -81,6 +81,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [productError, setProductError] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
   const [resetOpen, setResetOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,8 +186,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             <CardHeader>
               <CardTitle className="text-white">İşletme girişi</CardTitle>
               <CardDescription className="text-sky-100/60">
-                Müşteri menüsünden ayrı portal. Vercel’de verdiğiniz
-                ADMIN_PASSWORD ile giriş yapın.
+                Müşteri menüsünden ayrı portal. Yönetim şifrenizle giriş yapın.
+                Şifreyi panel içinden değiştirebilirsiniz.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
@@ -213,6 +219,47 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         </main>
       </div>
     );
+  }
+
+  async function handlePasswordChange() {
+    setPasswordError("");
+    setPasswordMessage("");
+    if (newPassword.length < 6) {
+      setPasswordError("Yeni şifre en az 6 karakter olmalı.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Yeni şifreler eşleşmiyor.");
+      return;
+    }
+    setPasswordBusy(true);
+    try {
+      const response = await fetch("/api/admin/password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": getStoredAdminPassword(),
+        },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+      const payload = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        setPasswordError(payload.error || "Şifre değiştirilemedi.");
+        return;
+      }
+      setStoredAdminPassword(newPassword);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setPasswordMessage("Şifre güncellendi. Bundan sonra yeni şifreyle giriş yapın.");
+    } catch {
+      setPasswordError("Bağlantı hatası. Tekrar deneyin.");
+    } finally {
+      setPasswordBusy(false);
+    }
   }
 
   function addCategory() {
@@ -607,6 +654,62 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 ))}
               </ul>
             )}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Şifre değiştir</CardTitle>
+            <CardDescription className="text-sky-100/60">
+              Yeni şifre Turso’da saklanır. Vercel’deki ADMIN_PASSWORD yalnızca
+              ilk giriş / yedek içindir; panelden değiştirdikten sonra yeni şifre
+              geçerli olur.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid max-w-md gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="current-password">Mevcut şifre</Label>
+              <Input
+                id="current-password"
+                type="password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                className="h-10 bg-white/5 text-white"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="new-password">Yeni şifre</Label>
+              <Input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                className="h-10 bg-white/5 text-white"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="confirm-password">Yeni şifre (tekrar)</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                className="h-10 bg-white/5 text-white"
+              />
+            </div>
+            {passwordError ? (
+              <p className="text-sm text-red-300">{passwordError}</p>
+            ) : null}
+            {passwordMessage ? (
+              <p className="text-sm text-sky-200">{passwordMessage}</p>
+            ) : null}
+            <Button
+              className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+              disabled={passwordBusy}
+              onClick={() => void handlePasswordChange()}
+            >
+              {passwordBusy ? "Kaydediliyor…" : "Şifreyi kaydet"}
+            </Button>
           </CardContent>
         </Card>
       </main>

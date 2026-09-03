@@ -28,10 +28,10 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  if (!isAdminAuthorized(request)) {
+  if (!(await isAdminAuthorized(request))) {
     return NextResponse.json(
       {
-        error: adminPasswordConfigured()
+        error: (await adminPasswordConfigured())
           ? "Yönetim şifresi gerekli."
           : "Canlı ortamda ADMIN_PASSWORD tanımlayın.",
       },

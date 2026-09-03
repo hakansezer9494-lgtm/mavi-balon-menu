@@ -42,6 +42,12 @@ async function ensureTursoSchema(client: Client) {
       updated_at TEXT NOT NULL
     )
   `);
+  await client.execute(`
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `);
 }
 
 async function readFromTurso(client: Client): Promise<MenuData | null> {
@@ -143,4 +149,68 @@ export async function writeMenu(data: MenuData): Promise<MenuData> {
     }
   }
   return writeToFile(data);
+}
+
+const settingsFile = path.join(process.cwd(), "data", "settings.json");
+
+async function readSettingsFile(): Promise<Record<string, string>> {
+  try {
+    const raw = await fs.readFile(settingsFile, "utf8");
+    const parsed = JSON.parse(raw) as unknown;
+    if (parsed && typeof parsed === "object") {
+      return Object.fromEntries(
+        Object.entries(parsed as Record<string, unknown>).filter(
+          ([, value]) => typeof value === "string"
+        )
+      ) as Record<string, string>;
+    }
+  } catch {
+    // missing
+  }
+  return {};
+}
+
+async function writeSettingsFile(settings: Record<string, string>) {
+  await fs.mkdir(path.dirname(settingsFile), { recursive: true });
+  await fs.writeFile(settingsFile, JSON.stringify(settings, null, 2), "utf8");
+}
+
+export async function getAppSetting(key: string): Promise<string | null> {
+  const client = getTurso();
+  if (client) {
+    try {
+      await ensureTursoSchema(client);
+      const result = await client.execute({
+        sql: "SELECT value FROM app_settings WHERE key = ?",
+        args: [key],
+      });
+      const value = result.rows[0]?.value;
+      return typeof value === "string" ? value : null;
+    } catch (error) {
+      lastCloudError =
+        error instanceof Error ? error.message : "Turso ayar okunamadı.";
+      return null;
+    }
+  }
+  const settings = await readSettingsFile();
+  return settings[key] ?? null;
+}
+
+export async function setAppSetting(key: string, value: string) {
+  const client = getTurso();
+  if (client) {
+    await ensureTursoSchema(client);
+    await client.execute({
+      sql: `
+        INSERT INTO app_settings (key, value)
+        VALUES (?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `,
+      args: [key, value],
+    });
+    return;
+  }
+  const settings = await readSettingsFile();
+  settings[key] = value;
+  await writeSettingsFile(settings);
 }

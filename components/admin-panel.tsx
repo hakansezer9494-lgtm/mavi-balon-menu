@@ -59,7 +59,7 @@ const emptyProductForm = (categoryId = ""): ProductForm => ({
 });
 
 export function AdminPanel() {
-  const { menu, ready, updateMenu } = useMenu();
+  const { menu, updateMenu } = useMenu();
   const [categoryName, setCategoryName] = useState("");
   const [categoryError, setCategoryError] = useState("");
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -234,14 +234,6 @@ export function AdminPanel() {
 
   function categoryNameById(id: string) {
     return categories.find((category) => category.id === id)?.name ?? "Kategorisiz";
-  }
-
-  if (!ready || !menu) {
-    return (
-      <div className="flex min-h-full flex-1 items-center justify-center text-sky-100/70">
-        Yönetim paneli yükleniyor…
-      </div>
-    );
   }
 
   return (

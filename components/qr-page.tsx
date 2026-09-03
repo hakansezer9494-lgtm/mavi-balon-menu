@@ -11,11 +11,13 @@ function subscribe() {
   return () => {};
 }
 
+const FALLBACK_ORIGIN = "http://127.0.0.1:43123";
+
 export function QrPage() {
   const url = useSyncExternalStore(
     subscribe,
     () => window.location.origin,
-    () => ""
+    () => FALLBACK_ORIGIN
   );
 
   return (
@@ -29,23 +31,17 @@ export function QrPage() {
         </p>
 
         <div className="mt-8 rounded-3xl bg-white p-6 shadow-[0_20px_60px_rgba(59,158,255,0.18)]">
-          {url ? (
-            <QRCodeSVG
-              value={url}
-              size={240}
-              bgColor="#ffffff"
-              fgColor="#0b1f3a"
-              level="M"
-              includeMargin={false}
-            />
-          ) : (
-            <div className="flex h-[240px] w-[240px] items-center justify-center text-sm text-slate-500">
-              QR hazırlanıyor…
-            </div>
-          )}
+          <QRCodeSVG
+            value={url}
+            size={240}
+            bgColor="#ffffff"
+            fgColor="#0b1f3a"
+            level="M"
+            includeMargin={false}
+          />
         </div>
 
-        <p className="mt-4 break-all text-xs text-sky-100/50">{url || "Adres bekleniyor"}</p>
+        <p className="mt-4 break-all text-xs text-sky-100/50">{url}</p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-2">
           <Button render={<Link href="/" />} className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300">

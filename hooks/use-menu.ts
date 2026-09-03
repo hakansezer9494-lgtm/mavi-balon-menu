@@ -48,5 +48,5 @@ export function useMenu() {
     saveMenu(resolved);
   }, []);
 
-  return { menu, ready: true, updateMenu };
+  return { menu, updateMenu };
 }

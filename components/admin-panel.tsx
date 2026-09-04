@@ -83,8 +83,20 @@ function subscribeOrigin() {
 
 const FALLBACK_ORIGIN = "http://127.0.0.1:43123";
 
+/** Outline/ghost on light page chrome */
+const lightOutline =
+  "border-slate-300 bg-white text-slate-800 hover:bg-slate-100 hover:text-slate-900";
+const lightGhost = "text-slate-700 hover:bg-slate-200/70 hover:text-slate-900";
+
+/** Outline/ghost inside dark admin cards / dialogs */
+const darkOutline =
+  "border-white/30 bg-white/15 text-white hover:bg-white/25 hover:text-white";
+const darkGhost = "text-sky-100 hover:bg-white/15 hover:text-white";
+
 export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
-  const { menu, updateMenu, saving, saveError } = useMenu(initialMenu);
+  const { menu, updateMenu, saving, saveError } = useMenu(initialMenu, {
+    pollMs: false,
+  });
   const [authChecked, setAuthChecked] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
@@ -186,7 +198,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     setUnlocked(true);
   }
 
-  const categories = menu?.categories ?? [];
+  const categories = useMemo(
+    () =>
+      [...(menu?.categories ?? [])].sort((a, b) => a.sortOrder - b.sortOrder),
+    [menu?.categories]
+  );
   const products = menu?.products ?? [];
 
   const productsByCategory = useMemo(() => {
@@ -199,7 +215,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
   if (!authChecked) {
     return (
-      <div className="flex min-h-full flex-1 items-center justify-center text-sky-100/70">
+      <div className="flex min-h-full flex-1 items-center justify-center text-slate-600">
         Yönetim paneli hazırlanıyor…
       </div>
     );
@@ -239,7 +255,10 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               >
                 Giriş yap
               </Button>
-              <Link href="/portal" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
+              <Link
+                href="/portal"
+                className={cn(buttonVariants({ variant: "outline" }), darkOutline, "w-full")}
+              >
                 Portala dön
               </Link>
             </CardContent>
@@ -595,17 +614,27 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Link href="/portal" className={cn(buttonVariants({ variant: "outline" }))}>
+            <Link
+              href="/portal"
+              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
+            >
               Portal
             </Link>
-            <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
+            <Link
+              href="/"
+              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
+            >
               Müşteri menüsü
             </Link>
-            <Link href="/qr" className={cn(buttonVariants({ variant: "outline" }))}>
+            <Link
+              href="/qr"
+              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
+            >
               QR kod
             </Link>
             <Button
               variant="ghost"
+              className={lightGhost}
               onClick={() => {
                 clearStoredAdminPassword();
                 setUnlocked(false);
@@ -614,7 +643,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             >
               Çıkış
             </Button>
-            <Button variant="ghost" onClick={() => setResetOpen(true)}>
+            <Button
+              variant="ghost"
+              className={lightGhost}
+              onClick={() => setResetOpen(true)}
+            >
               Güncel menüyü yükle
             </Button>
           </div>
@@ -708,6 +741,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        className={darkGhost}
                         disabled={index === 0}
                         onClick={() => moveCategory(category.id, -1)}
                         aria-label="Yukarı taşı"
@@ -717,6 +751,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        className={darkGhost}
                         disabled={index === categories.length - 1}
                         onClick={() => moveCategory(category.id, 1)}
                         aria-label="Aşağı taşı"
@@ -724,13 +759,18 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                         <ArrowDown />
                       </Button>
                       {editingCategory?.id === category.id ? (
-                        <Button size="sm" onClick={saveCategoryEdit}>
+                        <Button
+                          size="sm"
+                          className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                          onClick={saveCategoryEdit}
+                        >
                           Kaydet
                         </Button>
                       ) : (
                         <Button
                           variant="ghost"
                           size="icon-sm"
+                          className={darkGhost}
                           onClick={() => setEditingCategory(category)}
                           aria-label="Düzenle"
                         >
@@ -740,6 +780,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        className={darkGhost}
                         onClick={() => deleteCategory(category)}
                         aria-label="Sil"
                       >
@@ -809,6 +850,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        className={darkGhost}
                         onClick={() => openEditProduct(product)}
                         aria-label="Ürünü düzenle"
                       >
@@ -817,6 +859,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        className={darkGhost}
                         onClick={() => deleteProduct(product.id)}
                         aria-label="Ürünü sil"
                       >
@@ -864,7 +907,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="w-fit"
+                className={cn("w-fit", darkOutline)}
                 onClick={() =>
                   updateVenueField("heroImage", defaultVenue.heroImage)
                 }
@@ -987,6 +1030,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                   type="button"
                   variant="outline"
                   size="sm"
+                  className={darkOutline}
                   onClick={addHourRow}
                 >
                   <Plus />
@@ -1019,6 +1063,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       type="button"
                       variant="ghost"
                       size="icon-sm"
+                      className={darkGhost}
                       onClick={() => removeHourRow(row.id)}
                       aria-label="Saat satırını sil"
                     >
@@ -1071,7 +1116,10 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 <Download />
                 QR indir
               </Button>
-              <Link href="/qr" className={cn(buttonVariants({ variant: "outline" }))}>
+              <Link
+                href="/qr"
+                className={cn(buttonVariants({ variant: "outline" }), darkOutline)}
+              >
                 QR sayfasını aç
               </Link>
             </div>
@@ -1327,7 +1375,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </div>
 
           <DialogFooter className="border-white/10 bg-transparent">
-            <Button variant="outline" onClick={() => setProductOpen(false)}>
+            <Button
+              variant="outline"
+              className={darkOutline}
+              onClick={() => setProductOpen(false)}
+            >
               Vazgeç
             </Button>
             <Button
@@ -1352,7 +1404,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="border-white/10 bg-transparent">
-            <Button variant="outline" onClick={() => setResetOpen(false)}>
+            <Button
+              variant="outline"
+              className={darkOutline}
+              onClick={() => setResetOpen(false)}
+            >
               Vazgeç
             </Button>
             <Button

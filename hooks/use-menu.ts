@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   defaultMenu,
   MENU_UPDATED_EVENT,
@@ -30,14 +30,33 @@ async function fetchMenu() {
   return (await response.json()) as MenuData;
 }
 
-export function useMenu(initialMenu: MenuData = defaultMenu) {
+type UseMenuOptions = {
+  /** Guest menu polling. Admin should pass false. Default 20s. */
+  pollMs?: number | false;
+};
+
+export function useMenu(
+  initialMenu: MenuData = defaultMenu,
+  options: UseMenuOptions = {}
+) {
+  const pollMs = options.pollMs === false ? 0 : (options.pollMs ?? 20_000);
   const [menu, setMenu] = useState<MenuData>(initialMenu);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const menuRef = useRef(menu);
+  const savingRef = useRef(false);
+  const genRef = useRef(0);
+  const writeChainRef = useRef<Promise<void>>(Promise.resolve());
+
+  menuRef.current = menu;
 
   const refresh = useCallback(async () => {
+    if (savingRef.current) return;
+    const gen = genRef.current;
     try {
       const next = await fetchMenu();
+      if (savingRef.current || gen !== genRef.current) return;
+      menuRef.current = next;
       setMenu(next);
     } catch {
       // keep the last good menu on the screen
@@ -45,6 +64,8 @@ export function useMenu(initialMenu: MenuData = defaultMenu) {
   }, []);
 
   useEffect(() => {
+    if (pollMs <= 0) return;
+
     const onUpdate = () => {
       void refresh();
     };
@@ -55,7 +76,7 @@ export function useMenu(initialMenu: MenuData = defaultMenu) {
     };
     const timer = window.setInterval(() => {
       void refresh();
-    }, 8000);
+    }, pollMs);
 
     window.addEventListener(MENU_UPDATED_EVENT, onUpdate);
     document.addEventListener("visibilitychange", onVisible);
@@ -64,45 +85,59 @@ export function useMenu(initialMenu: MenuData = defaultMenu) {
       window.removeEventListener(MENU_UPDATED_EVENT, onUpdate);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [refresh]);
+  }, [pollMs, refresh]);
 
   const updateMenu = useCallback(
-    async (next: MenuData | ((current: MenuData) => MenuData)) => {
-      const resolved = typeof next === "function" ? next(menu) : next;
-      setMenu(resolved);
-      setSaving(true);
-      setSaveError("");
-      try {
-        const response = await fetch("/api/menu", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "x-admin-password": getStoredAdminPassword(),
-          },
-          body: JSON.stringify(resolved),
-        });
-        if (response.status === 401) {
-          clearStoredAdminPassword();
-          throw new Error("unauthorized");
+    (next: MenuData | ((current: MenuData) => MenuData)) => {
+      const job = writeChainRef.current.then(async () => {
+        const resolved =
+          typeof next === "function" ? next(menuRef.current) : next;
+        genRef.current += 1;
+        menuRef.current = resolved;
+        setMenu(resolved);
+        savingRef.current = true;
+        setSaving(true);
+        setSaveError("");
+        try {
+          const response = await fetch("/api/menu", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "x-admin-password": getStoredAdminPassword(),
+            },
+            body: JSON.stringify(resolved),
+          });
+          if (response.status === 401) {
+            clearStoredAdminPassword();
+            throw new Error("unauthorized");
+          }
+          if (!response.ok) {
+            throw new Error("Menü kaydedilemedi.");
+          }
+          const saved = (await response.json()) as MenuData;
+          menuRef.current = saved;
+          setMenu(saved);
+          window.dispatchEvent(new Event(MENU_UPDATED_EVENT));
+        } catch (error) {
+          setSaveError(
+            error instanceof Error && error.message === "unauthorized"
+              ? "Oturum kapandı. Tekrar giriş yapın."
+              : "Kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin."
+          );
+          savingRef.current = false;
+          await refresh();
+        } finally {
+          savingRef.current = false;
+          setSaving(false);
         }
-        if (!response.ok) {
-          throw new Error("Menü kaydedilemedi.");
-        }
-        const saved = (await response.json()) as MenuData;
-        setMenu(saved);
-        window.dispatchEvent(new Event(MENU_UPDATED_EVENT));
-      } catch (error) {
-        setSaveError(
-          error instanceof Error && error.message === "unauthorized"
-            ? "Oturum kapandı. Tekrar giriş yapın."
-            : "Kaydedilemedi. Bağlantıyı kontrol edip tekrar deneyin."
-        );
-        await refresh();
-      } finally {
-        setSaving(false);
-      }
+      });
+      writeChainRef.current = job.then(
+        () => undefined,
+        () => undefined
+      );
+      return job;
     },
-    [menu, refresh]
+    [refresh]
   );
 
   return { menu, updateMenu, saving, saveError, refresh };

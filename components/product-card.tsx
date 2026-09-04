@@ -27,22 +27,22 @@ export function ProductCard({
             Fotoğraf yok
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
         {featured || product.featured ? (
-          <span className="absolute top-2 left-2 rounded-full bg-[#007AFF] px-2 py-0.5 text-[9px] font-semibold tracking-[0.12em] text-white uppercase">
+          <span className="absolute top-2 left-2 rounded-full bg-[#007AFF] px-2 py-0.5 text-[10px] font-bold tracking-[0.12em] text-white uppercase">
             Şefin Seçimi
           </span>
         ) : null}
-        <p className="absolute right-2 bottom-2 rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-[#007AFF] shadow-sm">
+        <p className="absolute right-2 bottom-2 rounded-full bg-white/95 px-2.5 py-1 text-sm font-bold text-[#007AFF] shadow-sm">
           {formatPrice(product.price)}
         </p>
       </div>
       <div className="space-y-1 px-3 pt-2.5 pb-3 text-left">
-        <h3 className="font-heading text-lg leading-tight text-slate-900">
+        <h3 className="font-heading text-xl leading-tight font-semibold text-slate-900">
           {product.name}
         </h3>
         {product.description ? (
-          <p className="line-clamp-2 text-xs leading-relaxed text-slate-500">
+          <p className="line-clamp-2 text-sm leading-relaxed font-medium text-slate-600">
             {product.description}
           </p>
         ) : null}

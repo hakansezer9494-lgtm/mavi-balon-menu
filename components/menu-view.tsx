@@ -33,7 +33,11 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const [selected, setSelected] = useState<Product | null>(null);
   const scrollingToRef = useRef<string | null>(null);
 
-  const categories = menu.categories;
+  const categories = useMemo(
+    () =>
+      [...menu.categories].sort((a, b) => a.sortOrder - b.sortOrder),
+    [menu.categories]
+  );
   const featured = useMemo(
     () => menu.products.filter((product) => product.featured),
     [menu.products]
@@ -121,23 +125,23 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         <header className="relative isolate min-h-[52svh] overflow-hidden rounded-[1.75rem] shadow-[0_20px_50px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/brand/hero.webp"
+            src={venue.heroImage || "/brand/hero.webp"}
             alt={venue.brandName}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover [filter:contrast(1.08)_saturate(1.06)_brightness(1.04)]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-slate-950/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/55 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/18 to-slate-950/8" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/35 via-transparent to-transparent" />
 
           <div className="relative flex h-full min-h-[52svh] flex-col justify-between p-5 sm:p-7 lg:p-9">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium tracking-[0.28em] text-sky-200 uppercase">
+                <p className="text-xs font-semibold tracking-[0.28em] text-sky-100 uppercase">
                   {venue.tagline}
                 </p>
-                <h1 className="mt-2 font-heading text-4xl leading-[0.95] text-white sm:text-5xl lg:text-6xl">
+                <h1 className="mt-2 font-heading text-4xl leading-[0.95] font-semibold text-white sm:text-5xl lg:text-6xl">
                   {venue.headline}
                 </h1>
-                <p className="mt-3 max-w-md text-base text-white/85 sm:text-lg">
+                <p className="mt-3 max-w-md text-base font-medium text-white/95 sm:text-lg">
                   {venue.subheadline}
                 </p>
               </div>
@@ -172,10 +176,10 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                   </div>
                 ) : null}
                 <div>
-                  <p className="font-heading text-3xl tracking-wide text-white sm:text-4xl">
+                  <p className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
                     {venue.brandName}
                   </p>
-                  <p className="mt-1 text-sm text-white/75">
+                  <p className="mt-1 text-sm font-medium text-white/90">
                     {venue.brandSubtitle}
                   </p>
                 </div>
@@ -203,7 +207,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         </header>
 
         <nav className="sticky top-0 z-20 -mx-4 mt-5 bg-white/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-          <p className="text-[11px] font-medium tracking-[0.22em] text-[#007AFF]/80 uppercase">
+          <p className="text-xs font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
             Menü Keşfi
           </p>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -233,11 +237,11 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 className="scroll-mt-28"
               >
                 <div className="mb-3">
-                  <h2 className="font-heading text-2xl text-slate-900 sm:text-3xl">
+                  <h2 className="font-heading text-3xl font-semibold text-slate-900 sm:text-4xl">
                     {section.title}
                   </h2>
                   {section.id === "imza" ? (
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-base font-medium text-slate-600">
                       Mevsimsel malzemeler ve modern mutfak teknikleriyle
                       hazırlandı. Kaydırarak bakın.
                     </p>
@@ -339,28 +343,28 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               ) : null}
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
                 <DialogHeader className="gap-2 text-left">
-                  <DialogTitle className="font-heading text-2xl text-slate-900">
+                  <DialogTitle className="font-heading text-2xl font-semibold text-slate-900">
                     {selected.name}
                   </DialogTitle>
-                  <p className="text-2xl font-semibold text-[#007AFF]">
+                  <p className="text-2xl font-bold text-[#007AFF]">
                     {formatPrice(selected.price)}
                   </p>
                 </DialogHeader>
 
                 <div className="mt-5 space-y-4">
                   <section>
-                    <h3 className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
+                    <h3 className="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase">
                       İçerik
                     </h3>
-                    <DialogDescription className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                    <DialogDescription className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
                       {selected.description || "Mavi Balloon menü ürünü"}
                     </DialogDescription>
                   </section>
                   <section>
-                    <h3 className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
+                    <h3 className="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase">
                       Alerjenler
                     </h3>
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                    <p className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
                       {selected.allergens?.trim()
                         ? selected.allergens
                         : "Belirtilmemiş"}
@@ -393,10 +397,10 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
+        "shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
         active
           ? "bg-[#007AFF] text-white shadow-sm"
-          : "bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200/70"
+          : "bg-slate-100 text-slate-700 ring-1 ring-slate-200 hover:bg-slate-200/70"
       )}
     >
       {label}

@@ -1,9 +1,13 @@
-export async function compressImage(file: File): Promise<string> {
+export async function compressImage(
+  file: File,
+  options?: { maxSize?: number; quality?: number }
+): Promise<string> {
   const objectUrl = URL.createObjectURL(file);
+  const maxSize = options?.maxSize ?? 900;
+  const quality = options?.quality ?? 0.72;
 
   try {
     const image = await loadImage(objectUrl);
-    const maxSize = 900;
     const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
     const width = Math.round(image.width * scale);
     const height = Math.round(image.height * scale);
@@ -15,8 +19,10 @@ export async function compressImage(file: File): Promise<string> {
     if (!context) {
       throw new Error("Görsel işlenemedi.");
     }
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
     context.drawImage(image, 0, 0, width, height);
-    return canvas.toDataURL("image/jpeg", 0.72);
+    return canvas.toDataURL("image/jpeg", quality);
   } finally {
     URL.revokeObjectURL(objectUrl);
   }

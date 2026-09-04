@@ -262,6 +262,7 @@
     "whatsapp": "https://wa.me/905555555555",
     "instagram": "https://instagram.com/maviballoon",
     "statusLabel": "Açık · 11:00 - 01:30",
+    "heroImage": "/brand/hero.webp",
     "hours": [
       {
         "id": "mon",

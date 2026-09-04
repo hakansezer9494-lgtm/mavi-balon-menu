@@ -35,6 +35,7 @@ export type VenueInfo = {
   whatsapp: string;
   instagram: string;
   statusLabel: string;
+  heroImage: string;
   hours: HoursRow[];
 };
 
@@ -62,6 +63,7 @@ export const defaultVenue: VenueInfo = {
   whatsapp: "https://wa.me/905555555555",
   instagram: "https://instagram.com/maviballoon",
   statusLabel: "Açık · 11:00 - 01:30",
+  heroImage: "/brand/hero.webp",
   hours: [
     { id: "mon", label: "Pazartesi", value: "Kapalı" },
     { id: "tue-thu", label: "Salı – Perşembe", value: "11:00 - 23:30" },
@@ -369,6 +371,9 @@ export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
     whatsapp: String(base.whatsapp ?? defaultVenue.whatsapp).trim(),
     instagram: String(base.instagram ?? defaultVenue.instagram).trim(),
     statusLabel: String(base.statusLabel ?? defaultVenue.statusLabel).trim(),
+    heroImage:
+      String(base.heroImage ?? defaultVenue.heroImage).trim() ||
+      defaultVenue.heroImage,
     hours,
   };
 }

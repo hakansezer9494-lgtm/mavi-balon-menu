@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, Pencil, Plus, Trash2 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -70,6 +71,12 @@ const emptyProductForm = (categoryId = ""): ProductForm => ({
   featured: false,
 });
 
+function subscribeOrigin() {
+  return () => {};
+}
+
+const FALLBACK_ORIGIN = "http://127.0.0.1:43123";
+
 export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const { menu, updateMenu, saving, saveError } = useMenu(initialMenu);
   const [authChecked, setAuthChecked] = useState(false);
@@ -96,6 +103,13 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     () => initialMenu.venue ?? defaultVenue
   );
   const [venueMessage, setVenueMessage] = useState("");
+  const [heroBusy, setHeroBusy] = useState(false);
+  const [heroError, setHeroError] = useState("");
+  const menuOrigin = useSyncExternalStore(
+    subscribeOrigin,
+    () => window.location.origin,
+    () => FALLBACK_ORIGIN
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -441,6 +455,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       venue: {
         ...venueForm,
         brandName: venueForm.brandName.trim() || defaultVenue.brandName,
+        heroImage: venueForm.heroImage.trim() || defaultVenue.heroImage,
         hours: venueForm.hours.map((row) => ({
           ...row,
           label: row.label.trim(),
@@ -449,6 +464,61 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       },
     }));
     setVenueMessage("İşletme bilgileri kaydedildi.");
+  }
+
+  async function onHeroChange(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setHeroError("Lütfen bir fotoğraf seçin.");
+      return;
+    }
+    setHeroBusy(true);
+    setHeroError("");
+    try {
+      const heroImage = await compressImage(file, {
+        maxSize: 1800,
+        quality: 0.88,
+      });
+      setVenueForm((current) => ({ ...current, heroImage }));
+      setVenueMessage("");
+    } catch {
+      setHeroError("Kapak fotoğrafı yüklenemedi.");
+    } finally {
+      setHeroBusy(false);
+    }
+  }
+
+  async function downloadAdminQr() {
+    const svg = document.getElementById("admin-menu-qr-svg");
+    if (!(svg instanceof SVGSVGElement)) return;
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svg);
+    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    try {
+      const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("QR yüklenemedi"));
+        img.src = url;
+      });
+      const size = 1024;
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, size, size);
+      ctx.drawImage(image, 64, 64, size - 128, size - 128);
+      const png = canvas.toDataURL("image/png");
+      const anchor = document.createElement("a");
+      anchor.href = png;
+      anchor.download = "mavi-balloon-menu-qr.png";
+      anchor.click();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
   }
 
   function updateHourRow(id: string, field: "label" | "value", value: string) {
@@ -531,8 +601,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">Kategoriler</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Hamburger, döner, broast gibi bölümler oluşturun. Menüdeki sekmeler
-              buradan gelir.
+              Oklarla sıralayın; misafir menüsündeki ürün grubu ve üst sekmelerin
+              sırası da aynı şekilde değişir.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -720,11 +790,45 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">İşletme & iletişim</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Açılış saatleri, durum rozeti, telefon, sosyal medya ve Google Maps
-              konum linki. Misafir menüsünde ikonlarla görünür.
+              Kapak fotoğrafı, açılış saatleri, durum rozeti, telefon, sosyal
+              medya ve Google Maps konum linki.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="hero-photo">Header / kapak fotoğrafı</Label>
+              <Input
+                id="hero-photo"
+                type="file"
+                accept="image/*"
+                className="h-10 bg-white/5 file:text-sky-100"
+                onChange={(event) => void onHeroChange(event.target.files?.[0])}
+              />
+              {heroBusy ? (
+                <p className="text-xs text-sky-200">Kapak hazırlanıyor…</p>
+              ) : null}
+              {heroError ? (
+                <p className="text-sm text-red-300">{heroError}</p>
+              ) : null}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={venueForm.heroImage || "/brand/hero.webp"}
+                alt="Kapak önizleme"
+                className="mt-1 h-40 w-full rounded-xl object-cover ring-1 ring-white/10"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-fit"
+                onClick={() =>
+                  updateVenueField("heroImage", defaultVenue.heroImage)
+                }
+              >
+                Varsayılan kapağa dön
+              </Button>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="grid gap-1.5">
                 <Label htmlFor="status-label">Durum rozeti (sol alt)</Label>
@@ -887,10 +991,46 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             <Button
               className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
               onClick={saveVenue}
-              disabled={saving}
+              disabled={saving || heroBusy}
             >
               İşletme bilgilerini kaydet
             </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Masa QR kodu</CardTitle>
+            <CardDescription className="text-sky-100/60">
+              PNG olarak indirip yazdırın. Yayın adresiniz bu tarayıcıdaki site
+              adresidir.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            <div className="rounded-2xl bg-white p-3">
+              <QRCodeSVG
+                id="admin-menu-qr-svg"
+                value={menuOrigin}
+                size={148}
+                bgColor="#ffffff"
+                fgColor="#0f172a"
+                level="M"
+                includeMargin={false}
+              />
+            </div>
+            <div className="space-y-2">
+              <p className="break-all text-xs text-sky-100/60">{menuOrigin}</p>
+              <Button
+                className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                onClick={() => void downloadAdminQr()}
+              >
+                <Download />
+                QR indir
+              </Button>
+              <Link href="/qr" className={cn(buttonVariants({ variant: "outline" }))}>
+                QR sayfasını aç
+              </Link>
+            </div>
           </CardContent>
         </Card>
 

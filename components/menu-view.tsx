@@ -22,7 +22,6 @@ import { useMenu } from "@/hooks/use-menu";
 import {
   getUi,
   matchesSearch,
-  translateAllergens,
   translateCategory,
   translateHourLabel,
   translateHourValue,
@@ -31,6 +30,8 @@ import {
 import {
   formatPrice,
   instagramHref,
+  localizedCategoryName,
+  localizedProduct,
   phoneHref,
   type MenuData,
   type Product,
@@ -81,8 +82,10 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
 
   const sections = useMemo(() => {
     const list: { id: string; title: string; products: Product[] }[] = [];
-    const filteredFeatured = featured.filter((product) =>
-      matchesSearch(product.name, query)
+    const filteredFeatured = featured.filter(
+      (product) =>
+        matchesSearch(product.name, query) ||
+        matchesSearch(product.nameEn || "", query)
     );
     if (filteredFeatured.length > 0) {
       list.push({
@@ -95,12 +98,17 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
       const products = menu.products.filter(
         (product) =>
           product.categoryId === category.id &&
-          matchesSearch(product.name, query)
+          (matchesSearch(product.name, query) ||
+            matchesSearch(product.nameEn || "", query))
       );
       if (products.length > 0) {
         list.push({
           id: category.id,
-          title: translateCategory(locale, category.id, category.name),
+          title:
+            locale === "en"
+              ? localizedCategoryName(category, "en") ||
+                translateCategory(locale, category.id, category.name)
+              : category.name,
           products,
         });
       }
@@ -320,33 +328,39 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
 
                 {section.id === "imza" && !searching ? (
                   <div className="-mx-0.5 flex gap-2.5 overflow-x-auto px-0.5 pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    {section.products.map((product) => (
-                      <ProductCard
-                        key={`featured-${product.id}`}
-                        product={product}
-                        featured
-                        variant="featured"
-                        onSelect={setSelected}
-                        chefPickLabel={t.chefPick}
-                        chefPickShortLabel={t.chefPickShort}
-                        noPhotoLabel={t.noPhoto}
-                        className="w-[72vw] max-w-[260px] shrink-0 snap-start sm:w-[220px]"
-                      />
-                    ))}
+                    {section.products.map((product) => {
+                      const localized = localizedProduct(product, locale);
+                      return (
+                        <ProductCard
+                          key={`featured-${product.id}`}
+                          product={{ ...product, ...localized }}
+                          featured
+                          variant="featured"
+                          onSelect={() => setSelected(product)}
+                          chefPickLabel={t.chefPick}
+                          chefPickShortLabel={t.chefPickShort}
+                          noPhotoLabel={t.noPhoto}
+                          className="w-[72vw] max-w-[260px] shrink-0 snap-start sm:w-[220px]"
+                        />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2.5">
-                    {section.products.map((product) => (
-                      <ProductCard
-                        key={product.id}
-                        product={product}
-                        variant="list"
-                        onSelect={setSelected}
-                        chefPickLabel={t.chefPick}
-                        chefPickShortLabel={t.chefPickShort}
-                        noPhotoLabel={t.noPhoto}
-                      />
-                    ))}
+                    {section.products.map((product) => {
+                      const localized = localizedProduct(product, locale);
+                      return (
+                        <ProductCard
+                          key={product.id}
+                          product={{ ...product, ...localized }}
+                          variant="list"
+                          onSelect={() => setSelected(product)}
+                          chefPickLabel={t.chefPick}
+                          chefPickShortLabel={t.chefPickShort}
+                          noPhotoLabel={t.noPhoto}
+                        />
+                      );
+                    })}
                   </div>
                 )}
               </section>
@@ -424,14 +438,14 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={selected.image}
-                  alt={selected.name}
+                  alt={localizedProduct(selected, locale).name}
                   className="h-52 w-full shrink-0 object-cover sm:h-56"
                 />
               ) : null}
               <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
                 <DialogHeader className="gap-2 text-left">
                   <DialogTitle className="font-heading text-2xl font-semibold text-slate-900">
-                    {selected.name}
+                    {localizedProduct(selected, locale).name}
                   </DialogTitle>
                   <p className="text-2xl font-bold text-[#007AFF]">
                     {formatPrice(selected.price)}
@@ -444,7 +458,8 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                       {t.content}
                     </h3>
                     <DialogDescription className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
-                      {selected.description || t.productFallback}
+                      {localizedProduct(selected, locale).description ||
+                        t.productFallback}
                     </DialogDescription>
                   </section>
                   <section>
@@ -452,8 +467,8 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                       {t.allergens}
                     </h3>
                     <p className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
-                      {selected.allergens?.trim()
-                        ? translateAllergens(locale, selected.allergens)
+                      {localizedProduct(selected, locale).allergens?.trim()
+                        ? localizedProduct(selected, locale).allergens
                         : t.allergensNone}
                     </p>
                   </section>

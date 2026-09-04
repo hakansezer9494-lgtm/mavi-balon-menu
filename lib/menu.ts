@@ -1,14 +1,18 @@
 export type Category = {
   id: string;
   name: string;
+  nameEn: string;
   sortOrder: number;
 };
 
 export type Product = {
   id: string;
   name: string;
+  nameEn: string;
   description: string;
+  descriptionEn: string;
   allergens: string;
+  allergensEn: string;
   price: number;
   image: string;
   categoryId: string;
@@ -74,21 +78,25 @@ export const defaultVenue: VenueInfo = {
 
 export const defaultMenu: MenuData = {
   categories: [
-    { id: "burgerler", name: "Burgerler", sortOrder: 0 },
-    { id: "donerler", name: "Dönerler", sortOrder: 1 },
-    { id: "doner-menuleri", name: "Döner Menüleri", sortOrder: 2 },
-    { id: "ekonomik", name: "Ekonomik Menüler", sortOrder: 3 },
-    { id: "aperatifler", name: "Aperatifler", sortOrder: 4 },
-    { id: "icecekler", name: "İçecekler", sortOrder: 5 },
-    { id: "soslar", name: "Soslar", sortOrder: 6 },
+    { id: "burgerler", name: "Burgerler", nameEn: "Burgers", sortOrder: 0 },
+    { id: "donerler", name: "Dönerler", nameEn: "Döner", sortOrder: 1 },
+    { id: "doner-menuleri", name: "Döner Menüleri", nameEn: "Döner Menus", sortOrder: 2 },
+    { id: "ekonomik", name: "Ekonomik Menüler", nameEn: "Value Menus", sortOrder: 3 },
+    { id: "aperatifler", name: "Aperatifler", nameEn: "Sides", sortOrder: 4 },
+    { id: "icecekler", name: "İçecekler", nameEn: "Drinks", sortOrder: 5 },
+    { id: "soslar", name: "Soslar", nameEn: "Sauces", sortOrder: 6 },
   ],
   products: [
     {
       id: "smash-burger",
       name: "Smash Burger",
+      nameEn: "Smash Burger",
       description:
         "2x 60 gr burger köftesi, 2x cheddar, ızgara soğan ve biber, salatalık relish ve burger sos.",
+      descriptionEn:
+        "2x 60g beef patties, 2x cheddar, grilled onion and pepper, pickle relish and burger sauce.",
       allergens: "Gluten, süt ürünleri, yumurta",
+      allergensEn: "Gluten, dairy, egg",
       price: 495,
       image: img("smash.webp"),
       categoryId: "burgerler",
@@ -97,9 +105,13 @@ export const defaultMenu: MenuData = {
     {
       id: "mavi-balloon-burger",
       name: "Mavi Balloon Burger",
+      nameEn: "Mavi Balloon Burger",
       description:
         "120 gr burger köftesi, Antakya peyniri, köz patlıcan, sürülebilir peynir, roka ve sriracha sos.",
+      descriptionEn:
+        "120g beef patty, Antakya cheese, roasted eggplant, spreadable cheese, arugula and sriracha.",
       allergens: "Gluten, süt ürünleri, yumurta",
+      allergensEn: "Gluten, dairy, egg",
       price: 520,
       image: img("mavi-burger.webp"),
       categoryId: "burgerler",
@@ -108,9 +120,13 @@ export const defaultMenu: MenuData = {
     {
       id: "moon-piece-burger",
       name: "Moon Piece Burger",
+      nameEn: "Moon Piece Burger",
       description:
         "160 gr kuzu burger köftesi, peynir, Samandağ biber reçeli, roka ve sriracha sos.",
+      descriptionEn:
+        "160g lamb burger patty, cheese, Samandağ pepper jam, arugula and sriracha.",
       allergens: "Gluten, süt ürünleri",
+      allergensEn: "Gluten, dairy",
       price: 530,
       image: img("moon.webp"),
       categoryId: "burgerler",
@@ -119,9 +135,13 @@ export const defaultMenu: MenuData = {
     {
       id: "basic-burger",
       name: "Basic Burger",
+      nameEn: "Basic Burger",
       description:
         "120 gr burger köftesi, 2x cheddar, karamelize soğan, salatalık relish ve burger sos.",
+      descriptionEn:
+        "120g beef patty, 2x cheddar, caramelized onion, pickle relish and burger sauce.",
       allergens: "Gluten, süt ürünleri, yumurta",
+      allergensEn: "Gluten, dairy, egg",
       price: 495,
       image: img("smash.webp"),
       categoryId: "burgerler",
@@ -129,9 +149,13 @@ export const defaultMenu: MenuData = {
     {
       id: "small-antakya-doner",
       name: "Small Antakya Döneri",
+      nameEn: "Small Antakya Döner",
       description:
         "60 gr tavuk, anne patatesi, turşu, sarımsaklı mayonez ve özel sos.",
+      descriptionEn:
+        "60g chicken, house fries, pickles, garlic mayo and special sauce.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 175,
       image: img("doner.webp"),
       categoryId: "donerler",
@@ -139,9 +163,13 @@ export const defaultMenu: MenuData = {
     {
       id: "nugget-doner",
       name: "Nugget Döner",
+      nameEn: "Nugget Döner",
       description:
         "120 gr nugget, marul, kırmızı lahana turşusu, turşu, sarımsaklı mayonez ve sriracha sos.",
+      descriptionEn:
+        "120g nuggets, lettuce, red cabbage pickle, pickles, garlic mayo and sriracha.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 185,
       image: img("nugget-doner.webp"),
       categoryId: "donerler",
@@ -149,9 +177,13 @@ export const defaultMenu: MenuData = {
     {
       id: "antakya-doner",
       name: "Antakya Döneri",
+      nameEn: "Antakya Döner",
       description:
         "90 gr tavuk, anne patatesi, turşu, sarımsaklı mayonez ve özel sos.",
+      descriptionEn:
+        "90g chicken, house fries, pickles, garlic mayo and special sauce.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 220,
       image: img("doner.webp"),
       categoryId: "donerler",
@@ -159,9 +191,13 @@ export const defaultMenu: MenuData = {
     {
       id: "citir-tavuk-doner",
       name: "Çıtır Tavuk Döner",
+      nameEn: "Crispy Chicken Döner",
       description:
         "120 gr çıtır tavuk, marul, kırmızı lahana turşusu, sarımsaklı mayonez ve sriracha sos.",
+      descriptionEn:
+        "120g crispy chicken, lettuce, red cabbage pickle, garlic mayo and sriracha.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 260,
       image: img("nugget-doner.webp"),
       categoryId: "donerler",
@@ -169,8 +205,12 @@ export const defaultMenu: MenuData = {
     {
       id: "small-doner-menu",
       name: "Small Antakya Döner Menü",
+      nameEn: "Small Antakya Döner Menu",
       description: "Small Antakya Döneri, 100 gr patates ve büyük ayran.",
+      descriptionEn:
+        "Small Antakya Döner, 100g fries and a large ayran.",
       allergens: "Gluten, yumurta, süt ürünleri",
+      allergensEn: "Gluten, egg, dairy",
       price: 299,
       image: img("doner.webp"),
       categoryId: "doner-menuleri",
@@ -178,8 +218,12 @@ export const defaultMenu: MenuData = {
     {
       id: "antakya-doner-menu",
       name: "Antakya Döner Menü",
+      nameEn: "Antakya Döner Menu",
       description: "Antakya Döneri, 150 gr patates ve istenilen içecek.",
+      descriptionEn:
+        "Antakya Döner, 150g fries and a drink of your choice.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 350,
       image: img("doner.webp"),
       categoryId: "doner-menuleri",
@@ -187,8 +231,12 @@ export const defaultMenu: MenuData = {
     {
       id: "eko-2-small",
       name: "2x Small Döner + 1 Lt Cola",
+      nameEn: "2x Small Döner + 1L Cola",
       description: "2 Small Döner ve 1 litre Coca-Cola.",
+      descriptionEn:
+        "2 Small Döner and 1 liter Coca-Cola.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 420,
       image: img("doner.webp"),
       categoryId: "ekonomik",
@@ -196,8 +244,12 @@ export const defaultMenu: MenuData = {
     {
       id: "eko-2-antakya",
       name: "2x Antakya Döneri + 1 Lt Cola",
+      nameEn: "2x Antakya Döner + 1L Cola",
       description: "2 Antakya Döneri ve 1 litre Coca-Cola.",
+      descriptionEn:
+        "2 Antakya Döner and 1 liter Coca-Cola.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 520,
       image: img("doner.webp"),
       categoryId: "ekonomik",
@@ -205,8 +257,12 @@ export const defaultMenu: MenuData = {
     {
       id: "arjantin-patates",
       name: "Arjantin Patates",
+      nameEn: "Argentine Fries",
       description: "Yeşillikler, patates ve özel sos ile hazırlanan aperatif.",
+      descriptionEn:
+        "Greens, fries and special sauce.",
       allergens: "Süt ürünleri",
+      allergensEn: "Dairy",
       price: 270,
       image: img("patates.webp"),
       categoryId: "aperatifler",
@@ -214,8 +270,12 @@ export const defaultMenu: MenuData = {
     {
       id: "sogan-halkasi",
       name: "Soğan Halkası",
+      nameEn: "Onion Rings",
       description: "Çıtır soğan halkaları.",
+      descriptionEn:
+        "Crispy onion rings.",
       allergens: "Gluten",
+      allergensEn: "Gluten",
       price: 50,
       image: img("aperatif.webp"),
       categoryId: "aperatifler",
@@ -223,8 +283,12 @@ export const defaultMenu: MenuData = {
     {
       id: "nugget",
       name: "Nugget",
+      nameEn: "Nuggets",
       description: "Çıtır tavuk nugget.",
+      descriptionEn:
+        "Crispy chicken nuggets.",
       allergens: "Gluten, yumurta",
+      allergensEn: "Gluten, egg",
       price: 65,
       image: img("aperatif.webp"),
       categoryId: "aperatifler",
@@ -232,8 +296,12 @@ export const defaultMenu: MenuData = {
     {
       id: "patates",
       name: "Patates",
+      nameEn: "Fries",
       description: "Klasik patates kızartması.",
+      descriptionEn:
+        "Classic french fries.",
       allergens: "",
+      allergensEn: "",
       price: 130,
       image: img("patates.webp"),
       categoryId: "aperatifler",
@@ -241,8 +309,12 @@ export const defaultMenu: MenuData = {
     {
       id: "cola",
       name: "Coca-Cola",
+      nameEn: "Coca-Cola",
       description: "330 ml",
+      descriptionEn:
+        "330 ml",
       allergens: "",
+      allergensEn: "",
       price: 90,
       image: img("icecek.webp"),
       categoryId: "icecekler",
@@ -250,8 +322,12 @@ export const defaultMenu: MenuData = {
     {
       id: "ayran",
       name: "Ayran",
+      nameEn: "Ayran",
       description: "200 ml",
+      descriptionEn:
+        "200 ml",
       allergens: "Süt ürünleri",
+      allergensEn: "Dairy",
       price: 45,
       image: img("icecek.webp"),
       categoryId: "icecekler",
@@ -259,8 +335,12 @@ export const defaultMenu: MenuData = {
     {
       id: "su",
       name: "Su",
+      nameEn: "Water",
       description: "500 ml",
+      descriptionEn:
+        "500 ml",
       allergens: "",
+      allergensEn: "",
       price: 25,
       image: img("icecek.webp"),
       categoryId: "icecekler",
@@ -268,8 +348,12 @@ export const defaultMenu: MenuData = {
     {
       id: "aci-sos",
       name: "Acı Sos",
+      nameEn: "Hot Sauce",
       description: "Tatlı acı sos.",
+      descriptionEn:
+        "Sweet-hot sauce.",
       allergens: "",
+      allergensEn: "",
       price: 25,
       image: img("aperatif.webp"),
       categoryId: "soslar",
@@ -277,8 +361,12 @@ export const defaultMenu: MenuData = {
     {
       id: "sarimsakli-mayonez",
       name: "Sarımsaklı Mayonez",
+      nameEn: "Garlic Mayo",
       description: "Ev yapımı sarımsaklı mayonez.",
+      descriptionEn:
+        "House-made garlic mayonnaise.",
       allergens: "Yumurta",
+      allergensEn: "Egg",
       price: 25,
       image: img("aperatif.webp"),
       categoryId: "soslar",
@@ -385,13 +473,17 @@ export function normalizeMenu(data: MenuData): MenuData {
       .map((category, index) => ({
         id: category.id,
         name: category.name.trim(),
+        nameEn: String(category.nameEn ?? "").trim(),
         sortOrder: index,
       })),
     products: data.products.map((product) => ({
       id: product.id,
       name: product.name.trim(),
+      nameEn: String(product.nameEn ?? "").trim(),
       description: product.description.trim(),
+      descriptionEn: String(product.descriptionEn ?? "").trim(),
       allergens: String(product.allergens ?? "").trim(),
+      allergensEn: String(product.allergensEn ?? "").trim(),
       price: product.price,
       image: product.image,
       categoryId: product.categoryId,
@@ -399,6 +491,34 @@ export function normalizeMenu(data: MenuData): MenuData {
     })),
     venue: normalizeVenue(data.venue),
   };
+}
+
+export function localizedProduct(
+  product: Product,
+  locale: "tr" | "en"
+): Pick<Product, "name" | "description" | "allergens"> {
+  if (locale === "en") {
+    return {
+      name: product.nameEn.trim() || product.name,
+      description: product.descriptionEn.trim() || product.description,
+      allergens: product.allergensEn.trim() || product.allergens,
+    };
+  }
+  return {
+    name: product.name,
+    description: product.description,
+    allergens: product.allergens,
+  };
+}
+
+export function localizedCategoryName(
+  category: Category,
+  locale: "tr" | "en"
+) {
+  if (locale === "en") {
+    return category.nameEn.trim() || category.name;
+  }
+  return category.name;
 }
 
 export function formatPrice(price: number) {

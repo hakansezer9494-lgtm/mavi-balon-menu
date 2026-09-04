@@ -53,8 +53,11 @@ import {
 type ProductForm = {
   id?: string;
   name: string;
+  nameEn: string;
   description: string;
+  descriptionEn: string;
   allergens: string;
+  allergensEn: string;
   price: string;
   categoryId: string;
   image: string;
@@ -63,8 +66,11 @@ type ProductForm = {
 
 const emptyProductForm = (categoryId = ""): ProductForm => ({
   name: "",
+  nameEn: "",
   description: "",
+  descriptionEn: "",
   allergens: "",
+  allergensEn: "",
   price: "",
   categoryId,
   image: "",
@@ -298,7 +304,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       ...current,
       categories: [
         ...current.categories,
-        { id: newId(), name, sortOrder: current.categories.length },
+        {
+          id: newId(),
+          name,
+          nameEn: "",
+          sortOrder: current.categories.length,
+        },
       ],
     }));
     setCategoryName("");
@@ -315,7 +326,13 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     updateMenu((current) => ({
       ...current,
       categories: current.categories.map((category) =>
-        category.id === editingCategory.id ? { ...category, name } : category
+        category.id === editingCategory.id
+          ? {
+              ...category,
+              name,
+              nameEn: String(editingCategory.nameEn ?? "").trim(),
+            }
+          : category
       ),
     }));
     setEditingCategory(null);
@@ -363,8 +380,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     setProductForm({
       id: product.id,
       name: product.name,
+      nameEn: product.nameEn ?? "",
       description: product.description,
+      descriptionEn: product.descriptionEn ?? "",
       allergens: product.allergens ?? "",
+      allergensEn: product.allergensEn ?? "",
       price: String(product.price),
       categoryId: product.categoryId,
       image: product.image,
@@ -411,8 +431,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     const nextProduct: Product = {
       id: productForm.id ?? newId(),
       name,
+      nameEn: productForm.nameEn.trim(),
       description: productForm.description.trim(),
+      descriptionEn: productForm.descriptionEn.trim(),
       allergens: productForm.allergens.trim(),
+      allergensEn: productForm.allergensEn.trim(),
       price: Math.round(price * 100) / 100,
       image: productForm.image,
       categoryId: productForm.categoryId,
@@ -637,25 +660,46 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     className="flex items-center gap-2 rounded-xl bg-white/5 px-3 py-2 ring-1 ring-white/8"
                   >
                     {editingCategory?.id === category.id ? (
-                      <Input
-                        value={editingCategory.name}
-                        onChange={(event) =>
-                          setEditingCategory({
-                            ...editingCategory,
-                            name: event.target.value,
-                          })
-                        }
-                        className="h-9 flex-1 bg-white/5 text-white"
-                        autoFocus
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter") saveCategoryEdit();
-                          if (event.key === "Escape") setEditingCategory(null);
-                        }}
-                      />
+                      <div className="grid min-w-0 flex-1 gap-1.5">
+                        <Input
+                          value={editingCategory.name}
+                          onChange={(event) =>
+                            setEditingCategory({
+                              ...editingCategory,
+                              name: event.target.value,
+                            })
+                          }
+                          className="h-9 bg-white/5 text-white"
+                          autoFocus
+                          placeholder="Kategori (TR)"
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") saveCategoryEdit();
+                            if (event.key === "Escape") setEditingCategory(null);
+                          }}
+                        />
+                        <Input
+                          value={editingCategory.nameEn ?? ""}
+                          onChange={(event) =>
+                            setEditingCategory({
+                              ...editingCategory,
+                              nameEn: event.target.value,
+                            })
+                          }
+                          className="h-9 bg-white/5 text-white"
+                          placeholder="Category (EN)"
+                          onKeyDown={(event) => {
+                            if (event.key === "Enter") saveCategoryEdit();
+                            if (event.key === "Escape") setEditingCategory(null);
+                          }}
+                        />
+                      </div>
                     ) : (
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{category.name}</p>
-                        <p className="text-xs text-sky-100/50">
+                        <p className="truncate text-xs text-sky-100/50">
+                          {category.nameEn
+                            ? `EN: ${category.nameEn} · `
+                            : ""}
                           {productsByCategory.get(category.id) ?? 0} ürün
                         </p>
                       </div>
@@ -1129,7 +1173,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="product-name">Ürün adı</Label>
+              <Label htmlFor="product-name">Ürün adı (TR)</Label>
               <Input
                 id="product-name"
                 value={productForm.name}
@@ -1137,6 +1181,22 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                   setProductForm((current) => ({ ...current, name: event.target.value }))
                 }
                 placeholder="Örn. Double Mavi Burger"
+                className="h-10 bg-white/5 text-white"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="product-name-en">Ürün adı (EN)</Label>
+              <Input
+                id="product-name-en"
+                value={productForm.nameEn}
+                onChange={(event) =>
+                  setProductForm((current) => ({
+                    ...current,
+                    nameEn: event.target.value,
+                  }))
+                }
+                placeholder="e.g. Double Mavi Burger"
                 className="h-10 bg-white/5 text-white"
               />
             </div>
@@ -1183,7 +1243,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="product-desc">İçerik / açıklama</Label>
+              <Label htmlFor="product-desc">İçerik / açıklama (TR)</Label>
               <Textarea
                 id="product-desc"
                 value={productForm.description}
@@ -1199,7 +1259,23 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="product-allergens">Alerjenler</Label>
+              <Label htmlFor="product-desc-en">İçerik / açıklama (EN)</Label>
+              <Textarea
+                id="product-desc-en"
+                value={productForm.descriptionEn}
+                onChange={(event) =>
+                  setProductForm((current) => ({
+                    ...current,
+                    descriptionEn: event.target.value,
+                  }))
+                }
+                placeholder="Product description in English"
+                className="min-h-24 bg-white/5 text-white"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="product-allergens">Alerjenler (TR)</Label>
               <Textarea
                 id="product-allergens"
                 value={productForm.allergens}
@@ -1210,6 +1286,22 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                   }))
                 }
                 placeholder="Gluten, süt ürünleri, yumurta…"
+                className="min-h-16 bg-white/5 text-white"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="product-allergens-en">Alerjenler (EN)</Label>
+              <Textarea
+                id="product-allergens-en"
+                value={productForm.allergensEn}
+                onChange={(event) =>
+                  setProductForm((current) => ({
+                    ...current,
+                    allergensEn: event.target.value,
+                  }))
+                }
+                placeholder="Gluten, dairy, egg…"
                 className="min-h-16 bg-white/5 text-white"
               />
             </div>

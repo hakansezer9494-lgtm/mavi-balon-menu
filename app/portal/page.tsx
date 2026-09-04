@@ -1,27 +1,15 @@
 import Link from "next/link";
-import { BalloonField, BalloonMark } from "@/components/balloon-mark";
+import { SiteHeader } from "@/components/site-header";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export default function PortalPage() {
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
-      <BalloonField />
+      <SiteHeader eyebrow="İşletme portali" compact />
 
-      <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 py-10">
-        <div className="mb-8 flex items-center gap-3">
-          <BalloonMark className="h-14 w-11 drop-shadow-[0_8px_18px_rgba(59,158,255,0.45)]" />
-          <div>
-            <p className="text-[11px] font-medium tracking-[0.22em] text-sky-300/80 uppercase">
-              İşletme portali
-            </p>
-            <h1 className="font-heading text-3xl leading-none text-white sm:text-4xl">
-              Mavi Balon
-            </h1>
-          </div>
-        </div>
-
-        <p className="mb-6 text-sm leading-relaxed text-sky-100/70">
+      <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-16">
+        <p className="mb-6 text-sm leading-relaxed text-cream/70">
           Bu sayfa yalnızca işletme içindir. Müşteri menüsünde görünmez.
           Kategori, fiyat, fotoğraf ve masa QR’sini buradan yönetin.
         </p>
@@ -45,8 +33,8 @@ export default function PortalPage() {
           />
         </div>
 
-        <p className="mt-8 text-center text-xs text-sky-100/40">
-          Adresi yer imlerine ekleyin: <span className="text-sky-200/70">/portal</span>
+        <p className="mt-8 text-center text-xs text-cream/40">
+          Adresi yer imlerine ekleyin: <span className="text-gold/80">/portal</span>
         </p>
       </main>
     </div>
@@ -68,21 +56,21 @@ function PortalCard({
     <Link
       href={href}
       className={cn(
-        "block rounded-2xl p-4 ring-1 transition",
+        "block rounded-[1.5rem] p-4 ring-1 transition",
         primary
-          ? "bg-sky-400 text-[oklch(0.18_0.05_250)] ring-sky-300/40 hover:bg-sky-300"
-          : "bg-white/6 text-white ring-white/10 hover:bg-white/10"
+          ? "bg-gold text-[#14100a] ring-gold/40 hover:bg-[#d4b67a]"
+          : "bg-[#120e0a] text-[#fff4dd] ring-gold/15 hover:ring-gold/30"
       )}
     >
-      <p className={cn("font-heading text-xl", primary ? "" : "text-white")}>{title}</p>
-      <p className={cn("mt-1 text-sm", primary ? "opacity-80" : "text-sky-100/65")}>
+      <p className="font-heading text-xl">{title}</p>
+      <p className={cn("mt-1 text-sm", primary ? "opacity-80" : "text-cream/65")}>
         {body}
       </p>
       <span
         className={cn(
           buttonVariants({ variant: primary ? "secondary" : "outline", size: "sm" }),
           "mt-3 pointer-events-none",
-          primary ? "bg-white/70" : ""
+          primary ? "bg-[#14100a]/10" : ""
         )}
       >
         Aç

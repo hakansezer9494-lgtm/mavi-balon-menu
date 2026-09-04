@@ -1,28 +1,32 @@
-import type { Metadata } from "next";
-import { DM_Sans, Fraunces } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Inter, Oswald } from "next/font/google";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin", "latin-ext"],
 });
 
-const fraunces = Fraunces({
+const oswald = Oswald({
   variable: "--font-heading",
   subsets: ["latin", "latin-ext"],
 });
 
 export const metadata: Metadata = {
-  title: "Mavi Balon | Dijital Menü",
+  title: "Mavi Balloon | Dijital Menü",
   description:
-    "Mavi Balon dijital menü: hamburger, Antakya döner, broast ve Arjantin patatesi.",
+    "Mavi Balloon dijital menü: Antakya döner, burger ve sokak lezzetleri.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#080705",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="tr"
-      className={`${dmSans.variable} ${fraunces.variable} h-full antialiased`}
+      className={`${inter.variable} ${oswald.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">{children}</body>
     </html>

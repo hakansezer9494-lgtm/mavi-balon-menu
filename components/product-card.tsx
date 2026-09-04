@@ -3,38 +3,43 @@ import { formatPrice, type Product } from "@/lib/menu";
 export function ProductCard({
   product,
   onSelect,
+  featured = false,
 }: {
   product: Product;
   onSelect?: (product: Product) => void;
+  featured?: boolean;
 }) {
   const inner = (
     <>
-      <div className="relative aspect-[4/3] bg-[oklch(0.18_0.04_250)]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[#14100a]">
         {product.image ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={product.image}
             alt={product.name}
-            className="h-full w-full object-cover"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-sm text-sky-200/60">
+          <div className="flex h-full w-full items-center justify-center text-sm text-cream/50">
             Fotoğraf yok
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[oklch(0.22_0.04_250)] to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#080705] via-[#080705]/20 to-transparent" />
+        {featured || product.featured ? (
+          <span className="absolute top-3 left-3 rounded-full bg-gold/90 px-2.5 py-1 text-[10px] font-semibold tracking-[0.14em] text-[#14100a] uppercase">
+            Şefin Seçimi
+          </span>
+        ) : null}
+        <p className="absolute right-3 bottom-3 rounded-full bg-[#080705]/75 px-2.5 py-1 text-sm font-semibold text-gold ring-1 ring-gold/30 backdrop-blur-sm">
+          {formatPrice(product.price)}
+        </p>
       </div>
-      <div className="space-y-2 px-4 pb-4 pt-1 text-left">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="font-heading text-lg leading-tight text-white">
-            {product.name}
-          </h3>
-          <p className="shrink-0 rounded-full bg-sky-400/15 px-2.5 py-1 text-sm font-semibold text-sky-200">
-            {formatPrice(product.price)}
-          </p>
-        </div>
+      <div className="space-y-2 px-4 pt-3 pb-4 text-left">
+        <h3 className="font-heading text-xl leading-tight text-[#fff4dd]">
+          {product.name}
+        </h3>
         {product.description ? (
-          <p className="text-sm leading-relaxed text-sky-100/65">
+          <p className="line-clamp-2 text-sm leading-relaxed text-cream/65">
             {product.description}
           </p>
         ) : null}
@@ -47,7 +52,7 @@ export function ProductCard({
       <button
         type="button"
         onClick={() => onSelect(product)}
-        className="overflow-hidden rounded-2xl bg-[oklch(0.22_0.04_250)] text-left ring-1 ring-white/10 transition hover:ring-sky-300/50"
+        className="group overflow-hidden rounded-[1.5rem] bg-[#120e0a] text-left ring-1 ring-gold/12 transition hover:ring-gold/35"
       >
         {inner}
       </button>
@@ -55,7 +60,7 @@ export function ProductCard({
   }
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-[oklch(0.22_0.04_250)] ring-1 ring-white/10">
+    <article className="group overflow-hidden rounded-[1.5rem] bg-[#120e0a] ring-1 ring-gold/12">
       {inner}
     </article>
   );

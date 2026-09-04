@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BalloonField } from "@/components/balloon-mark";
 import { ProductCard } from "@/components/product-card";
-import { SiteHeader } from "@/components/site-header";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +19,10 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const [selected, setSelected] = useState<Product | null>(null);
 
   const categories = menu.categories;
+  const featured = useMemo(
+    () => menu.products.filter((product) => product.featured).slice(0, 3),
+    [menu.products]
+  );
   const products = useMemo(() => {
     if (activeCategory === "all") return menu.products;
     return menu.products.filter((product) => product.categoryId === activeCategory);
@@ -30,58 +32,165 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const emptyProducts = products.length === 0;
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col">
-      <BalloonField />
-      <SiteHeader />
-
-      <div className="relative mx-auto w-full max-w-5xl px-4">
-        <div className="flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <CategoryChip
-            label="Tümü"
-            active={activeCategory === "all"}
-            onClick={() => setActiveCategory("all")}
+    <div className="relative flex min-h-full flex-1 flex-col px-5 py-6 sm:px-8 lg:px-12">
+      <div className="mx-auto w-full max-w-5xl">
+        <header className="relative isolate min-h-[58svh] overflow-hidden rounded-[2rem] ring-1 ring-gold/15">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/hero.webp"
+            alt="Mavi Balloon"
+            className="absolute inset-0 h-full w-full object-cover"
           />
-          {categories.map((category) => (
+          <div className="absolute inset-0 bg-gradient-to-t from-[#080705] via-[#080705]/55 to-[#080705]/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#080705]/70 via-transparent to-transparent" />
+
+          <div className="relative flex h-full min-h-[58svh] flex-col justify-between p-6 sm:p-8 lg:p-10">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-medium tracking-[0.28em] text-gold uppercase">
+                  Antakya lezzeti
+                </p>
+                <h1 className="mt-2 font-heading text-5xl leading-[0.95] text-[#fff4dd] sm:text-6xl lg:text-7xl">
+                  Döner & Burger
+                </h1>
+                <p className="mt-3 max-w-md text-base text-cream/80 sm:text-lg">
+                  Taze. Sıcak. Efsane.
+                </p>
+              </div>
+              <div className="rounded-full bg-[#080705]/55 px-3 py-1.5 text-xs font-medium text-gold ring-1 ring-gold/30 backdrop-blur-sm">
+                Açık · 11:00 - 01:30
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="font-heading text-3xl tracking-wide text-[#fff4dd] sm:text-4xl">
+                  Mavi Balloon
+                </p>
+                <p className="mt-1 text-sm text-cream/65">
+                  Döner, Burger & Sokak Lezzetleri
+                </p>
+              </div>
+              <p className="max-w-xs text-right text-xs leading-relaxed text-cream/55">
+                Caferağa, Neşet Ömer Sk. No:16 B
+                <br />
+                Kadıköy, Istanbul
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <section className="mt-8">
+          <p className="text-[11px] font-medium tracking-[0.22em] text-gold/80 uppercase">
+            Menü Keşfi
+          </p>
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <CategoryChip
-              key={category.id}
-              label={category.name}
-              active={activeCategory === category.id}
-              onClick={() => setActiveCategory(category.id)}
+              label="Tüm Gün Lezzetleri"
+              active={activeCategory === "all"}
+              onClick={() => setActiveCategory("all")}
             />
-          ))}
-        </div>
-      </div>
-
-      <main className="relative mx-auto w-full max-w-5xl flex-1 px-4 py-6">
-        {emptyCategories ? (
-          <EmptyState
-            title="Menü hazırlanıyor"
-            body="Ürünler birazdan burada görünecek."
-          />
-        ) : emptyProducts ? (
-          <EmptyState
-            title="Bu kategoride ürün yok"
-            body="Başka bir kategori seçebilirsiniz."
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onSelect={setSelected}
+            {categories.map((category) => (
+              <CategoryChip
+                key={category.id}
+                label={category.name}
+                active={activeCategory === category.id}
+                onClick={() => setActiveCategory(category.id)}
               />
             ))}
           </div>
-        )}
-      </main>
+        </section>
 
-      <footer className="relative mt-auto border-t border-white/8 px-4 py-6 text-center text-xs text-sky-100/45">
-        <p>Mavi Balon • Taze pişer, sıcak gelir</p>
-      </footer>
+        {activeCategory === "all" && featured.length > 0 ? (
+          <section className="mt-10">
+            <div className="mb-4 flex items-end justify-between gap-3">
+              <div>
+                <h2 className="font-heading text-3xl text-[#fff4dd]">İmza Seçkisi</h2>
+                <p className="mt-1 text-sm text-cream/60">
+                  Mevsimsel malzemeler ve modern mutfak teknikleriyle hazırlandı.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map((product) => (
+                <ProductCard
+                  key={`featured-${product.id}`}
+                  product={product}
+                  featured
+                  onSelect={setSelected}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <main className="mt-10 pb-10">
+          {emptyCategories ? (
+            <EmptyState
+              title="Menü hazırlanıyor"
+              body="Ürünler birazdan burada görünecek."
+            />
+          ) : emptyProducts ? (
+            <EmptyState
+              title="Bu kategoride ürün yok"
+              body="Başka bir kategori seçebilirsiniz."
+            />
+          ) : (
+            <>
+              <h2 className="mb-4 font-heading text-3xl text-[#fff4dd]">
+                {activeCategory === "all"
+                  ? "Tüm Gün Lezzetleri"
+                  : categories.find((category) => category.id === activeCategory)?.name}
+              </h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {products.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onSelect={setSelected}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </main>
+
+        <footer className="mt-4 border-t border-gold/15 py-10">
+          <div className="grid gap-8 sm:grid-cols-2">
+            <div>
+              <p className="font-heading text-2xl text-[#fff4dd]">Mavi Balloon</p>
+              <p className="mt-1 text-sm text-cream/60">Antakya Döner ve Özel Burgerler</p>
+              <p className="mt-4 text-sm text-cream/50">Istanbul, Turkey</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-medium tracking-[0.2em] text-gold uppercase">
+                Açılış Saatleri
+              </p>
+              <ul className="mt-3 space-y-1.5 text-sm text-cream/70">
+                <li className="flex justify-between gap-4">
+                  <span>Pazartesi</span>
+                  <span>Kapalı</span>
+                </li>
+                <li className="flex justify-between gap-4">
+                  <span>Salı – Perşembe</span>
+                  <span>11:00 - 23:30</span>
+                </li>
+                <li className="flex justify-between gap-4">
+                  <span>Cuma – Cumartesi</span>
+                  <span>11:00 - 01:30</span>
+                </li>
+                <li className="flex justify-between gap-4">
+                  <span>Pazar</span>
+                  <span>12:00 - 23:00</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </footer>
+      </div>
 
       <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="overflow-hidden bg-[oklch(0.2_0.04_250)] p-0 text-white sm:max-w-md">
+        <DialogContent className="overflow-hidden border-gold/20 bg-[#100c08] p-0 text-[#fff4dd] sm:max-w-md">
           {selected ? (
             <>
               {selected.image ? (
@@ -92,16 +201,16 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                   className="h-56 w-full object-cover"
                 />
               ) : null}
-              <div className="space-y-2 p-4">
+              <div className="space-y-2 p-5">
                 <DialogHeader>
-                  <DialogTitle className="font-heading text-2xl text-white">
+                  <DialogTitle className="font-heading text-2xl text-[#fff4dd]">
                     {selected.name}
                   </DialogTitle>
-                  <DialogDescription className="text-sky-100/70">
-                    {selected.description || "Mavi Balon menü ürünü"}
+                  <DialogDescription className="text-cream/65">
+                    {selected.description || "Mavi Balloon menü ürünü"}
                   </DialogDescription>
                 </DialogHeader>
-                <p className="text-2xl font-semibold text-sky-200">
+                <p className="text-2xl font-semibold text-gold">
                   {formatPrice(selected.price)}
                 </p>
               </div>
@@ -127,10 +236,10 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
+        "shrink-0 rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
         active
-          ? "bg-sky-400 text-[oklch(0.18_0.05_250)]"
-          : "bg-white/8 text-sky-100/80 ring-1 ring-white/10 hover:bg-white/12"
+          ? "bg-gold text-[#14100a]"
+          : "bg-white/6 text-cream/80 ring-1 ring-white/10 hover:bg-white/10"
       )}
     >
       {label}
@@ -140,9 +249,9 @@ function CategoryChip({
 
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-2xl bg-white/5 px-6 py-16 text-center ring-1 ring-white/10">
-      <h2 className="font-heading text-xl text-white">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-sky-100/65">{body}</p>
+    <div className="rounded-[1.5rem] bg-white/4 px-6 py-16 text-center ring-1 ring-gold/12">
+      <h2 className="font-heading text-2xl text-[#fff4dd]">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-cream/60">{body}</p>
     </div>
   );
 }

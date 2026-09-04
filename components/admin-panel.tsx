@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-react";
-import { BalloonField } from "@/components/balloon-mark";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -179,7 +178,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   if (!unlocked) {
     return (
       <div className="relative flex min-h-full flex-1 flex-col">
-        <BalloonField />
         <SiteHeader eyebrow="İşletme paneli" compact />
         <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col px-4 pb-16">
           <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
@@ -420,7 +418,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
-      <BalloonField />
       <SiteHeader eyebrow="İşletme paneli" compact />
 
       <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-16">

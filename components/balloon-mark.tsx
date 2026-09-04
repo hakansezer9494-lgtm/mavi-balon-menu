@@ -44,14 +44,14 @@ export function BalloonMark({
 }
 
 const balloons = [
-  { top: "6%", left: "8%", size: "h-16 w-12", delay: "0s", duration: "18s", opacity: "opacity-[0.14]", rotate: "rotate-[-12deg]" },
-  { top: "18%", left: "78%", size: "h-20 w-14", delay: "2s", duration: "22s", opacity: "opacity-[0.16]", rotate: "rotate-[10deg]" },
-  { top: "42%", left: "4%", size: "h-12 w-9", delay: "4s", duration: "16s", opacity: "opacity-[0.12]", rotate: "rotate-[8deg]" },
-  { top: "58%", left: "86%", size: "h-14 w-10", delay: "1s", duration: "20s", opacity: "opacity-[0.13]", rotate: "rotate-[-6deg]" },
-  { top: "72%", left: "18%", size: "h-10 w-8", delay: "3s", duration: "19s", opacity: "opacity-[0.11]", rotate: "rotate-[14deg]" },
-  { top: "28%", left: "48%", size: "h-9 w-7", delay: "5s", duration: "24s", opacity: "opacity-[0.1]", rotate: "rotate-[-4deg]" },
-  { top: "85%", left: "62%", size: "h-16 w-12", delay: "2.5s", duration: "21s", opacity: "opacity-[0.12]", rotate: "rotate-[6deg]" },
-  { top: "8%", left: "38%", size: "h-11 w-8", delay: "6s", duration: "17s", opacity: "opacity-[0.1]", rotate: "rotate-[-16deg]" },
+  { top: "6%", left: "8%", size: "h-20 w-14", delay: "0s", duration: "18s", opacity: "opacity-[0.22]", rotate: "rotate-[-12deg]" },
+  { top: "18%", left: "78%", size: "h-24 w-16", delay: "2s", duration: "22s", opacity: "opacity-[0.24]", rotate: "rotate-[10deg]" },
+  { top: "42%", left: "4%", size: "h-14 w-10", delay: "4s", duration: "16s", opacity: "opacity-[0.18]", rotate: "rotate-[8deg]" },
+  { top: "58%", left: "86%", size: "h-16 w-12", delay: "1s", duration: "20s", opacity: "opacity-[0.2]", rotate: "rotate-[-6deg]" },
+  { top: "72%", left: "18%", size: "h-12 w-9", delay: "3s", duration: "19s", opacity: "opacity-[0.16]", rotate: "rotate-[14deg]" },
+  { top: "28%", left: "48%", size: "h-11 w-8", delay: "5s", duration: "24s", opacity: "opacity-[0.15]", rotate: "rotate-[-4deg]" },
+  { top: "85%", left: "62%", size: "h-18 w-14", delay: "2.5s", duration: "21s", opacity: "opacity-[0.18]", rotate: "rotate-[6deg]" },
+  { top: "8%", left: "38%", size: "h-14 w-10", delay: "6s", duration: "17s", opacity: "opacity-[0.16]", rotate: "rotate-[-16deg]" },
 ];
 
 export function BalloonField() {

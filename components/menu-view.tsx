@@ -164,8 +164,8 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="space-y-2">
+            <div className="flex items-end justify-between gap-3">
+              <div className="min-w-0 space-y-2">
                 {venue.statusLabel ? (
                   <div className="w-fit rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#007AFF] shadow-sm ring-1 ring-white/70">
                     {venue.statusLabel}
@@ -180,8 +180,8 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                   </p>
                 </div>
               </div>
-              <div className="max-w-xs text-right">
-                <p className="text-xs leading-relaxed text-white/80">
+              <div className="shrink-0 text-right">
+                <p className="max-w-[11rem] text-xs leading-relaxed text-white/80 sm:max-w-xs">
                   {venue.addressLine1}
                   <br />
                   {venue.addressLine2}

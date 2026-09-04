@@ -122,8 +122,8 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
     <div className="relative flex min-h-full flex-1 flex-col">
       <BalloonField />
 
-      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 lg:px-10">
-        <header className="relative isolate min-h-[52svh] overflow-hidden rounded-[1.75rem] shadow-[0_20px_50px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70">
+      <div className="relative z-10 mx-auto w-full max-w-lg px-3 py-4 sm:max-w-5xl sm:px-6 sm:py-5 lg:px-10">
+        <header className="relative isolate min-h-[44svh] overflow-hidden rounded-[1.5rem] shadow-[0_16px_40px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 sm:min-h-[52svh] sm:rounded-[1.75rem]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={venue.heroImage || "/brand/hero.webp"}
@@ -133,7 +133,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/18 to-slate-950/8" />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/35 via-transparent to-transparent" />
 
-          <div className="relative flex h-full min-h-[52svh] flex-col justify-between p-5 sm:p-7 lg:p-9">
+          <div className="relative flex h-full min-h-[44svh] flex-col justify-between p-4 sm:min-h-[52svh] sm:p-7 lg:p-9">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold tracking-[0.28em] text-sky-100 uppercase">
@@ -207,11 +207,11 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </header>
 
-        <nav className="sticky top-0 z-20 -mx-4 mt-5 bg-white/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
-          <p className="text-xs font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
+        <nav className="sticky top-0 z-20 -mx-3 mt-4 bg-white/92 px-3 py-2.5 backdrop-blur-md sm:-mx-6 sm:mt-5 sm:px-6 lg:-mx-10 lg:px-10">
+          <p className="text-[11px] font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
             Menü Keşfi
           </p>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {sections.map((section) => (
               <CategoryChip
                 key={section.id}
@@ -224,7 +224,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </nav>
 
-        <main className="mt-5 space-y-12 pb-8">
+        <main className="mt-4 space-y-9 pb-8 sm:mt-5 sm:space-y-12">
           {sections.length === 0 ? (
             <EmptyState
               title="Menü hazırlanıyor"
@@ -235,43 +235,44 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               <section
                 key={section.id}
                 id={`section-${section.id}`}
-                className="scroll-mt-28"
+                className="scroll-mt-24"
               >
                 <div className="mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#007AFF]/12 text-[#007AFF] ring-1 ring-[#007AFF]/20">
-                      <UtensilsCrossed className="size-5" aria-hidden />
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#007AFF]/12 text-[#007AFF] ring-1 ring-[#007AFF]/20">
+                      <UtensilsCrossed className="size-4" aria-hidden />
                     </span>
-                    <h2 className="font-heading text-3xl font-semibold text-slate-900 sm:text-4xl">
+                    <h2 className="font-heading text-2xl font-semibold text-slate-900 sm:text-3xl">
                       {section.title}
                     </h2>
                   </div>
                   {section.id === "imza" ? (
-                    <p className="mt-1 pl-[3.25rem] text-base font-medium text-slate-600">
-                      Mevsimsel malzemeler ve modern mutfak teknikleriyle
-                      hazırlandı. Kaydırarak bakın.
+                    <p className="mt-1 pl-[2.75rem] text-sm font-medium text-slate-600">
+                      Kaydırarak bakın.
                     </p>
                   ) : null}
                 </div>
 
                 {section.id === "imza" ? (
-                  <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="-mx-0.5 flex gap-2.5 overflow-x-auto px-0.5 pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {section.products.map((product) => (
                       <ProductCard
                         key={`featured-${product.id}`}
                         product={product}
                         featured
+                        variant="featured"
                         onSelect={setSelected}
-                        className="w-[70%] shrink-0 snap-start sm:w-[42%] lg:w-[32%]"
+                        className="w-[72vw] max-w-[260px] shrink-0 snap-start sm:w-[220px]"
                       />
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+                  <div className="flex flex-col gap-2.5">
                     {section.products.map((product) => (
                       <ProductCard
                         key={product.id}
                         product={product}
+                        variant="list"
                         onSelect={setSelected}
                       />
                     ))}
@@ -403,7 +404,7 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-colors",
         active
           ? "bg-[#007AFF] text-white shadow-sm"
           : "bg-slate-100 text-slate-700 ring-1 ring-slate-200 hover:bg-slate-200/70"

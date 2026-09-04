@@ -52,15 +52,15 @@
 :root {
   --background: #fdfcfb;
   --foreground: #0f172a;
-  --card: #f3f0ea;
+  --card: #f9f7f4;
   --card-foreground: #0f172a;
-  --popover: #f3f0ea;
+  --popover: #f9f7f4;
   --popover-foreground: #0f172a;
   --primary: #007aff;
   --primary-foreground: #ffffff;
-  --secondary: #ebe7e0;
+  --secondary: #f1efe9;
   --secondary-foreground: #0f172a;
-  --muted: #efece6;
+  --muted: #f2f0eb;
   --muted-foreground: #64748b;
   --accent: #eef5ff;
   --accent-foreground: #0f172a;
@@ -75,7 +75,7 @@
   --chart-4: #94a3b8;
   --chart-5: #cbd5e1;
   --radius: 1rem;
-  --sidebar: #f3f0ea;
+  --sidebar: #f9f7f4;
   --sidebar-foreground: #0f172a;
   --sidebar-primary: #007aff;
   --sidebar-primary-foreground: #ffffff;
@@ -111,11 +111,11 @@
     letter-spacing: 0.01em;
   }
   .surface-raised {
-    background: #f3f0ea;
+    background: #fcfbf9;
     box-shadow: var(--surface-shadow);
   }
   .surface-raised-soft {
-    background: #f3f0ea;
+    background: #fcfbf9;
     box-shadow: var(--surface-shadow-soft);
   }
 }

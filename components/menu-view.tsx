@@ -348,7 +348,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 </div>
 
                 {section.id === "imza" && !searching ? (
-                  <div className="-mx-0.5 flex gap-2.5 overflow-x-auto px-0.5 pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="-mx-1 flex gap-2.5 overflow-x-auto px-1 py-3 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {section.products.map((product) => {
                       const localized = localizedProduct(product, locale);
                       return (

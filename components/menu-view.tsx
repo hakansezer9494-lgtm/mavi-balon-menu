@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  MapPin,
+  MessageCircle,
+  Phone,
+} from "lucide-react";
+import { BalloonField, BalloonMark } from "@/components/balloon-mark";
 import { ProductCard } from "@/components/product-card";
 import {
   Dialog,
@@ -10,11 +16,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useMenu } from "@/hooks/use-menu";
-import { formatPrice, type MenuData, type Product } from "@/lib/menu";
+import {
+  formatPrice,
+  instagramHref,
+  phoneHref,
+  type MenuData,
+  type Product,
+  whatsappHref,
+} from "@/lib/menu";
 import { cn } from "@/lib/utils";
 
 export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const { menu } = useMenu(initialMenu);
+  const venue = menu.venue;
   const [activeCategory, setActiveCategory] = useState<string>("imza");
   const [selected, setSelected] = useState<Product | null>(null);
   const scrollingToRef = useRef<string | null>(null);
@@ -94,57 +108,102 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
     }, 900);
   }
 
+  const tel = phoneHref(venue.phone);
+  const wa = whatsappHref(venue.whatsapp);
+  const ig = instagramHref(venue.instagram);
+  const maps = venue.mapsUrl.trim();
+
   return (
-    <div className="relative flex min-h-full flex-1 flex-col px-5 py-6 sm:px-8 lg:px-12">
-      <div className="mx-auto w-full max-w-5xl">
-        <header className="relative isolate min-h-[58svh] overflow-hidden rounded-[2rem] ring-1 ring-gold/15">
+    <div className="relative flex min-h-full flex-1 flex-col">
+      <BalloonField />
+
+      <div className="relative z-10 mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 lg:px-10">
+        <header className="relative isolate min-h-[52svh] overflow-hidden rounded-[1.75rem] shadow-[0_20px_50px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/brand/hero.webp"
-            alt="Mavi Balloon"
+            alt={venue.brandName}
             className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#080705] via-[#080705]/55 to-[#080705]/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#080705]/70 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-slate-950/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/55 via-transparent to-transparent" />
 
-          <div className="relative flex h-full min-h-[58svh] flex-col justify-between p-6 sm:p-8 lg:p-10">
+          <div className="relative flex h-full min-h-[52svh] flex-col justify-between p-5 sm:p-7 lg:p-9">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-medium tracking-[0.28em] text-gold uppercase">
-                  Antakya lezzeti
+                <p className="text-[11px] font-medium tracking-[0.28em] text-sky-200 uppercase">
+                  {venue.tagline}
                 </p>
-                <h1 className="mt-2 font-heading text-5xl leading-[0.95] text-[#fff4dd] sm:text-6xl lg:text-7xl">
-                  Döner & Burger
+                <h1 className="mt-2 font-heading text-4xl leading-[0.95] text-white sm:text-5xl lg:text-6xl">
+                  {venue.headline}
                 </h1>
-                <p className="mt-3 max-w-md text-base text-cream/80 sm:text-lg">
-                  Taze. Sıcak. Efsane.
+                <p className="mt-3 max-w-md text-base text-white/85 sm:text-lg">
+                  {venue.subheadline}
                 </p>
               </div>
-              <div className="rounded-full bg-[#080705]/55 px-3 py-1.5 text-xs font-medium text-gold ring-1 ring-gold/30 backdrop-blur-sm">
-                Açık · 11:00 - 01:30
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <div className="rounded-2xl bg-white/95 p-2 shadow-lg ring-1 ring-white/60 backdrop-blur-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/brand/logo-banner.webp"
+                    alt={venue.brandName}
+                    className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
+                    onError={(event) => {
+                      event.currentTarget.style.display = "none";
+                      const fallback = event.currentTarget.nextElementSibling;
+                      if (fallback instanceof HTMLElement) {
+                        fallback.style.display = "block";
+                      }
+                    }}
+                  />
+                  <BalloonMark
+                    className="hidden h-12 w-9"
+                    title={venue.brandName}
+                  />
+                </div>
               </div>
             </div>
 
             <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="font-heading text-3xl tracking-wide text-[#fff4dd] sm:text-4xl">
-                  Mavi Balloon
-                </p>
-                <p className="mt-1 text-sm text-cream/65">
-                  Döner, Burger & Sokak Lezzetleri
-                </p>
+              <div className="space-y-2">
+                {venue.statusLabel ? (
+                  <div className="w-fit rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#007AFF] shadow-sm ring-1 ring-white/70">
+                    {venue.statusLabel}
+                  </div>
+                ) : null}
+                <div>
+                  <p className="font-heading text-3xl tracking-wide text-white sm:text-4xl">
+                    {venue.brandName}
+                  </p>
+                  <p className="mt-1 text-sm text-white/75">
+                    {venue.brandSubtitle}
+                  </p>
+                </div>
               </div>
-              <p className="max-w-xs text-right text-xs leading-relaxed text-cream/55">
-                Caferağa, Neşet Ömer Sk. No:16 B
-                <br />
-                Kadıköy, Istanbul
-              </p>
+              <div className="max-w-xs text-right">
+                <p className="text-xs leading-relaxed text-white/80">
+                  {venue.addressLine1}
+                  <br />
+                  {venue.addressLine2}
+                </p>
+                {maps ? (
+                  <a
+                    href={maps}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
+                  >
+                    <MapPin className="size-3.5" />
+                    Konum
+                  </a>
+                ) : null}
+              </div>
             </div>
           </div>
         </header>
 
-        <nav className="sticky top-0 z-20 -mx-5 mt-6 bg-[#080705]/92 px-5 py-3 backdrop-blur-md sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
-          <p className="text-[11px] font-medium tracking-[0.22em] text-gold/80 uppercase">
+        <nav className="sticky top-0 z-20 -mx-4 mt-5 bg-white/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+          <p className="text-[11px] font-medium tracking-[0.22em] text-[#007AFF]/80 uppercase">
             Menü Keşfi
           </p>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -160,7 +219,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </nav>
 
-        <main className="mt-6 space-y-14 pb-10">
+        <main className="mt-5 space-y-12 pb-8">
           {sections.length === 0 ? (
             <EmptyState
               title="Menü hazırlanıyor"
@@ -173,12 +232,12 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 id={`section-${section.id}`}
                 className="scroll-mt-28"
               >
-                <div className="mb-4">
-                  <h2 className="font-heading text-3xl text-[#fff4dd]">
+                <div className="mb-3">
+                  <h2 className="font-heading text-2xl text-slate-900 sm:text-3xl">
                     {section.title}
                   </h2>
                   {section.id === "imza" ? (
-                    <p className="mt-1 text-sm text-cream/60">
+                    <p className="mt-1 text-sm text-slate-500">
                       Mevsimsel malzemeler ve modern mutfak teknikleriyle
                       hazırlandı. Kaydırarak bakın.
                     </p>
@@ -186,19 +245,19 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 </div>
 
                 {section.id === "imza" ? (
-                  <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {section.products.map((product) => (
                       <ProductCard
                         key={`featured-${product.id}`}
                         product={product}
                         featured
                         onSelect={setSelected}
-                        className="w-[78%] shrink-0 snap-start sm:w-[48%] lg:w-[38%]"
+                        className="w-[70%] shrink-0 snap-start sm:w-[42%] lg:w-[32%]"
                       />
                     ))}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                     {section.products.map((product) => (
                       <ProductCard
                         key={product.id}
@@ -213,68 +272,103 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           )}
         </main>
 
-        <footer className="mt-4 border-t border-gold/15 py-10">
+        <footer className="mt-2 border-t border-slate-200 py-10">
           <div className="grid gap-8 sm:grid-cols-2">
             <div>
-              <p className="font-heading text-2xl text-[#fff4dd]">Mavi Balloon</p>
-              <p className="mt-1 text-sm text-cream/60">
+              <p className="font-heading text-2xl text-slate-900">
+                {venue.brandName}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
                 Antakya Döner ve Özel Burgerler
               </p>
-              <p className="mt-4 text-sm text-cream/50">Istanbul, Turkey</p>
+              <p className="mt-4 text-sm text-slate-500">{venue.city}</p>
+              <div className="mt-5 flex flex-wrap gap-2">
+                {tel ? (
+                  <ContactIcon href={tel} label="Telefon">
+                    <Phone className="size-4" />
+                  </ContactIcon>
+                ) : null}
+                {wa ? (
+                  <ContactIcon href={wa} label="WhatsApp">
+                    <MessageCircle className="size-4" />
+                  </ContactIcon>
+                ) : null}
+                {ig ? (
+                  <ContactIcon href={ig} label="Instagram">
+                    <InstagramGlyph />
+                  </ContactIcon>
+                ) : null}
+                {maps ? (
+                  <ContactIcon href={maps} label="Konum">
+                    <MapPin className="size-4" />
+                  </ContactIcon>
+                ) : null}
+              </div>
             </div>
             <div>
-              <p className="text-[11px] font-medium tracking-[0.2em] text-gold uppercase">
+              <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
                 Açılış Saatleri
               </p>
-              <ul className="mt-3 space-y-1.5 text-sm text-cream/70">
-                <li className="flex justify-between gap-4">
-                  <span>Pazartesi</span>
-                  <span>Kapalı</span>
-                </li>
-                <li className="flex justify-between gap-4">
-                  <span>Salı – Perşembe</span>
-                  <span>11:00 - 23:30</span>
-                </li>
-                <li className="flex justify-between gap-4">
-                  <span>Cuma – Cumartesi</span>
-                  <span>11:00 - 01:30</span>
-                </li>
-                <li className="flex justify-between gap-4">
-                  <span>Pazar</span>
-                  <span>12:00 - 23:00</span>
-                </li>
+              <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
+                {venue.hours.map((row) => (
+                  <li key={row.id} className="flex justify-between gap-4">
+                    <span>{row.label}</span>
+                    <span className="text-slate-800">{row.value}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
         </footer>
       </div>
 
-      <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="overflow-hidden border-gold/20 bg-[#100c08] p-0 text-[#fff4dd] sm:max-w-md">
+      <Dialog
+        open={selected !== null}
+        onOpenChange={(open) => !open && setSelected(null)}
+      >
+        <DialogContent className="max-h-[min(92vh,720px)] overflow-hidden border-slate-200 bg-white p-0 text-slate-900 sm:max-w-md">
           {selected ? (
-            <>
+            <div className="flex max-h-[min(92vh,720px)] flex-col">
               {selected.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={selected.image}
                   alt={selected.name}
-                  className="h-56 w-full object-cover"
+                  className="h-52 w-full shrink-0 object-cover sm:h-56"
                 />
               ) : null}
-              <div className="space-y-2 p-5">
-                <DialogHeader>
-                  <DialogTitle className="font-heading text-2xl text-[#fff4dd]">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
+                <DialogHeader className="gap-2 text-left">
+                  <DialogTitle className="font-heading text-2xl text-slate-900">
                     {selected.name}
                   </DialogTitle>
-                  <DialogDescription className="text-cream/65">
-                    {selected.description || "Mavi Balloon menü ürünü"}
-                  </DialogDescription>
+                  <p className="text-2xl font-semibold text-[#007AFF]">
+                    {formatPrice(selected.price)}
+                  </p>
                 </DialogHeader>
-                <p className="text-2xl font-semibold text-gold">
-                  {formatPrice(selected.price)}
-                </p>
+
+                <div className="mt-5 space-y-4">
+                  <section>
+                    <h3 className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
+                      İçerik
+                    </h3>
+                    <DialogDescription className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                      {selected.description || "Mavi Balloon menü ürünü"}
+                    </DialogDescription>
+                  </section>
+                  <section>
+                    <h3 className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">
+                      Alerjenler
+                    </h3>
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
+                      {selected.allergens?.trim()
+                        ? selected.allergens
+                        : "Belirtilmemiş"}
+                    </p>
+                  </section>
+                </div>
               </div>
-            </>
+            </div>
           ) : null}
         </DialogContent>
       </Dialog>
@@ -299,10 +393,10 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full px-4 py-2.5 text-sm font-medium transition-colors",
+        "shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors",
         active
-          ? "bg-gold text-[#14100a]"
-          : "bg-white/6 text-cream/80 ring-1 ring-white/10 hover:bg-white/10"
+          ? "bg-[#007AFF] text-white shadow-sm"
+          : "bg-slate-100 text-slate-600 ring-1 ring-slate-200 hover:bg-slate-200/70"
       )}
     >
       {label}
@@ -310,11 +404,51 @@ function CategoryChip({
   );
 }
 
+function InstagramGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4" fill="none" aria-hidden>
+      <rect
+        x="3"
+        y="3"
+        width="18"
+        height="18"
+        rx="5"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ContactIcon({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target={href.startsWith("tel:") ? undefined : "_blank"}
+      rel={href.startsWith("tel:") ? undefined : "noreferrer"}
+      aria-label={label}
+      className="inline-flex size-10 items-center justify-center rounded-full bg-[#007AFF]/10 text-[#007AFF] ring-1 ring-[#007AFF]/20 transition hover:bg-[#007AFF] hover:text-white"
+    >
+      {children}
+    </a>
+  );
+}
+
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[1.5rem] bg-white/4 px-6 py-16 text-center ring-1 ring-gold/12">
-      <h2 className="font-heading text-2xl text-[#fff4dd]">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-cream/60">{body}</p>
+    <div className="rounded-[1.5rem] bg-white px-6 py-16 text-center shadow-sm ring-1 ring-slate-200">
+      <h2 className="font-heading text-2xl text-slate-900">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{body}</p>
     </div>
   );
 }

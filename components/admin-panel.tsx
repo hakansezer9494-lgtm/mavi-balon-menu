@@ -40,28 +40,34 @@ import {
 import { compressImage } from "@/lib/image";
 import {
   defaultMenu,
+  defaultVenue,
   formatPrice,
   newId,
   type Category,
   type MenuData,
   type Product,
+  type VenueInfo,
 } from "@/lib/menu";
 
 type ProductForm = {
   id?: string;
   name: string;
   description: string;
+  allergens: string;
   price: string;
   categoryId: string;
   image: string;
+  featured: boolean;
 };
 
 const emptyProductForm = (categoryId = ""): ProductForm => ({
   name: "",
   description: "",
+  allergens: "",
   price: "",
   categoryId,
   image: "",
+  featured: false,
 });
 
 export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
@@ -86,6 +92,10 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordBusy, setPasswordBusy] = useState(false);
+  const [venueForm, setVenueForm] = useState<VenueInfo>(
+    () => initialMenu.venue ?? defaultVenue
+  );
+  const [venueMessage, setVenueMessage] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -340,9 +350,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       id: product.id,
       name: product.name,
       description: product.description,
+      allergens: product.allergens ?? "",
       price: String(product.price),
       categoryId: product.categoryId,
       image: product.image,
+      featured: Boolean(product.featured),
     });
     setProductError("");
     setProductOpen(true);
@@ -386,9 +398,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       id: productForm.id ?? newId(),
       name,
       description: productForm.description.trim(),
+      allergens: productForm.allergens.trim(),
       price: Math.round(price * 100) / 100,
       image: productForm.image,
       categoryId: productForm.categoryId,
+      featured: productForm.featured,
     };
 
     updateMenu((current) => {
@@ -414,6 +428,54 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
   function categoryNameById(id: string) {
     return categories.find((category) => category.id === id)?.name ?? "Kategorisiz";
+  }
+
+  function updateVenueField<K extends keyof VenueInfo>(key: K, value: VenueInfo[K]) {
+    setVenueForm((current) => ({ ...current, [key]: value }));
+    setVenueMessage("");
+  }
+
+  function saveVenue() {
+    updateMenu((current) => ({
+      ...current,
+      venue: {
+        ...venueForm,
+        brandName: venueForm.brandName.trim() || defaultVenue.brandName,
+        hours: venueForm.hours.map((row) => ({
+          ...row,
+          label: row.label.trim(),
+          value: row.value.trim(),
+        })),
+      },
+    }));
+    setVenueMessage("İşletme bilgileri kaydedildi.");
+  }
+
+  function updateHourRow(id: string, field: "label" | "value", value: string) {
+    setVenueForm((current) => ({
+      ...current,
+      hours: current.hours.map((row) =>
+        row.id === id ? { ...row, [field]: value } : row
+      ),
+    }));
+    setVenueMessage("");
+  }
+
+  function addHourRow() {
+    setVenueForm((current) => ({
+      ...current,
+      hours: [
+        ...current.hours,
+        { id: newId(), label: "Yeni gün", value: "11:00 - 23:00" },
+      ],
+    }));
+  }
+
+  function removeHourRow(id: string) {
+    setVenueForm((current) => ({
+      ...current,
+      hours: current.hours.filter((row) => row.id !== id),
+    }));
   }
 
   return (
@@ -656,6 +718,184 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
         <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
+            <CardTitle className="text-white">İşletme & iletişim</CardTitle>
+            <CardDescription className="text-sky-100/60">
+              Açılış saatleri, durum rozeti, telefon, sosyal medya ve Google Maps
+              konum linki. Misafir menüsünde ikonlarla görünür.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="status-label">Durum rozeti (sol alt)</Label>
+                <Input
+                  id="status-label"
+                  value={venueForm.statusLabel}
+                  onChange={(event) =>
+                    updateVenueField("statusLabel", event.target.value)
+                  }
+                  placeholder="Açık · 11:00 - 01:30"
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="brand-name">Marka adı</Label>
+                <Input
+                  id="brand-name"
+                  value={venueForm.brandName}
+                  onChange={(event) =>
+                    updateVenueField("brandName", event.target.value)
+                  }
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="brand-subtitle">Alt başlık</Label>
+                <Input
+                  id="brand-subtitle"
+                  value={venueForm.brandSubtitle}
+                  onChange={(event) =>
+                    updateVenueField("brandSubtitle", event.target.value)
+                  }
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="address-1">Adres satırı 1</Label>
+                <Input
+                  id="address-1"
+                  value={venueForm.addressLine1}
+                  onChange={(event) =>
+                    updateVenueField("addressLine1", event.target.value)
+                  }
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="address-2">Adres satırı 2</Label>
+                <Input
+                  id="address-2"
+                  value={venueForm.addressLine2}
+                  onChange={(event) =>
+                    updateVenueField("addressLine2", event.target.value)
+                  }
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="maps-url">Google Maps konum linki</Label>
+                <Input
+                  id="maps-url"
+                  value={venueForm.mapsUrl}
+                  onChange={(event) =>
+                    updateVenueField("mapsUrl", event.target.value)
+                  }
+                  placeholder="https://maps.google.com/..."
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="phone">Telefon</Label>
+                <Input
+                  id="phone"
+                  value={venueForm.phone}
+                  onChange={(event) =>
+                    updateVenueField("phone", event.target.value)
+                  }
+                  placeholder="+90..."
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="whatsapp">WhatsApp</Label>
+                <Input
+                  id="whatsapp"
+                  value={venueForm.whatsapp}
+                  onChange={(event) =>
+                    updateVenueField("whatsapp", event.target.value)
+                  }
+                  placeholder="https://wa.me/90... veya numara"
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="instagram">Instagram</Label>
+                <Input
+                  id="instagram"
+                  value={venueForm.instagram}
+                  onChange={(event) =>
+                    updateVenueField("instagram", event.target.value)
+                  }
+                  placeholder="@maviballoon veya profil linki"
+                  className="h-10 bg-white/5 text-white"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label>Açılış saatleri</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addHourRow}
+                >
+                  <Plus />
+                  Satır ekle
+                </Button>
+              </div>
+              <ul className="space-y-2">
+                {venueForm.hours.map((row) => (
+                  <li
+                    key={row.id}
+                    className="grid gap-2 rounded-xl bg-white/5 p-2 sm:grid-cols-[1fr_1fr_auto]"
+                  >
+                    <Input
+                      value={row.label}
+                      onChange={(event) =>
+                        updateHourRow(row.id, "label", event.target.value)
+                      }
+                      placeholder="Gün"
+                      className="h-9 bg-white/5 text-white"
+                    />
+                    <Input
+                      value={row.value}
+                      onChange={(event) =>
+                        updateHourRow(row.id, "value", event.target.value)
+                      }
+                      placeholder="11:00 - 23:00"
+                      className="h-9 bg-white/5 text-white"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => removeHourRow(row.id)}
+                      aria-label="Saat satırını sil"
+                    >
+                      <Trash2 />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {venueMessage ? (
+              <p className="text-sm text-sky-200">{venueMessage}</p>
+            ) : null}
+            <Button
+              className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+              onClick={saveVenue}
+              disabled={saving}
+            >
+              İşletme bilgilerini kaydet
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
             <CardTitle className="text-white">Şifre değiştir</CardTitle>
             <CardDescription className="text-sky-100/60">
               Yeni şifre kaydedilir. Vercel’deki ADMIN_PASSWORD her zaman yedek
@@ -803,7 +1043,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="product-desc">Açıklama (isteğe bağlı)</Label>
+              <Label htmlFor="product-desc">İçerik / açıklama</Label>
               <Textarea
                 id="product-desc"
                 value={productForm.description}
@@ -813,10 +1053,41 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     description: event.target.value,
                   }))
                 }
-                placeholder="Kısa tarif"
-                className="min-h-20 bg-white/5 text-white"
+                placeholder="Ürün içeriği"
+                className="min-h-24 bg-white/5 text-white"
               />
             </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="product-allergens">Alerjenler</Label>
+              <Textarea
+                id="product-allergens"
+                value={productForm.allergens}
+                onChange={(event) =>
+                  setProductForm((current) => ({
+                    ...current,
+                    allergens: event.target.value,
+                  }))
+                }
+                placeholder="Gluten, süt ürünleri, yumurta…"
+                className="min-h-16 bg-white/5 text-white"
+              />
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-sky-100/80">
+              <input
+                type="checkbox"
+                checked={productForm.featured}
+                onChange={(event) =>
+                  setProductForm((current) => ({
+                    ...current,
+                    featured: event.target.checked,
+                  }))
+                }
+                className="size-4 rounded border-white/20 bg-white/5"
+              />
+              İmza seçkisinde göster
+            </label>
 
             {productError ? (
               <p className="text-sm text-red-300">{productError}</p>
@@ -854,6 +1125,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             <Button
               onClick={() => {
                 updateMenu(structuredClone(defaultMenu));
+                setVenueForm(structuredClone(defaultVenue));
                 setResetOpen(false);
               }}
             >

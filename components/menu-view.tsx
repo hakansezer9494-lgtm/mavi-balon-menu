@@ -271,7 +271,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </header>
 
-        <nav className="sticky top-0 z-20 mt-4 rounded-2xl bg-[#fcfbf9]/96 px-3 py-3 shadow-[0_1px_2px_rgba(40,32,20,0.03),0_8px_20px_rgba(40,32,20,0.07),0_18px_36px_rgba(40,32,20,0.04)] ring-1 ring-black/[0.04] backdrop-blur-md sm:mt-5 sm:px-4">
+        <nav className="sticky top-0 z-20 mt-4 rounded-2xl bg-[#f3f0ea]/96 px-3 py-3 shadow-[0_1px_2px_rgba(40,32,20,0.03),0_8px_20px_rgba(40,32,20,0.07),0_18px_36px_rgba(40,32,20,0.04)] ring-1 ring-black/[0.04] backdrop-blur-md sm:mt-5 sm:px-4">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
@@ -300,7 +300,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t.searchPlaceholder}
-              className="h-11 w-full rounded-full border-0 bg-[#f0ede8] pr-10 pl-10 text-sm font-medium text-slate-900 outline-none shadow-[inset_0_1px_2px_rgba(40,32,20,0.04)] ring-1 ring-black/[0.04] placeholder:text-slate-400 focus:bg-[#fcfbf9] focus:shadow-[0_4px_14px_rgba(0,122,255,0.1)] focus:ring-2 focus:ring-[#007AFF]/25"
+              className="h-11 w-full rounded-full border-0 bg-[#ebe7e0] pr-10 pl-10 text-sm font-medium text-slate-900 outline-none shadow-[inset_0_1px_2px_rgba(40,32,20,0.04)] ring-1 ring-black/[0.04] placeholder:text-slate-400 focus:bg-[#fdfcfb] focus:shadow-[0_4px_14px_rgba(0,122,255,0.1)] focus:ring-2 focus:ring-[#007AFF]/25"
             />
             {query ? (
               <button
@@ -336,7 +336,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     <h2 className="min-w-0 flex-1 font-heading text-2xl font-semibold text-slate-900 sm:text-3xl">
                       {section.title}
                     </h2>
-                    <span className="shrink-0 rounded-full bg-[#fcfbf9] px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-[0_2px_6px_rgba(40,32,20,0.06)] ring-1 ring-black/[0.04]">
+                    <span className="shrink-0 rounded-full bg-[#fdfcfb] px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-[0_2px_6px_rgba(40,32,20,0.06)] ring-1 ring-black/[0.04]">
                       {t.productsInCategory(section.products.length)}
                     </span>
                   </div>
@@ -523,7 +523,7 @@ function CategoryChip({
         "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-colors",
         active
           ? "bg-[#007AFF] text-white shadow-[0_4px_12px_rgba(0,122,255,0.28)]"
-          : "bg-[#fcfbf9] text-slate-700 shadow-[0_2px_6px_rgba(40,32,20,0.06)] ring-1 ring-black/[0.04] hover:shadow-[0_4px_12px_rgba(40,32,20,0.09)]"
+          : "bg-[#f3f0ea] text-slate-700 shadow-[0_2px_6px_rgba(40,32,20,0.06)] ring-1 ring-black/[0.04] hover:shadow-[0_4px_12px_rgba(40,32,20,0.09)]"
       )}
     >
       <UtensilsCrossed className="size-3.5 opacity-90" aria-hidden />
@@ -574,7 +574,7 @@ function ContactIcon({
 
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[1.5rem] bg-[#fcfbf9] px-6 py-16 text-center shadow-[0_6px_20px_rgba(40,32,20,0.07)] ring-1 ring-black/[0.04]">
+    <div className="rounded-[1.5rem] bg-[#f3f0ea] px-6 py-16 text-center shadow-[0_6px_20px_rgba(40,32,20,0.07)] ring-1 ring-black/[0.04]">
       <h2 className="font-heading text-2xl text-slate-900">{title}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{body}</p>
     </div>

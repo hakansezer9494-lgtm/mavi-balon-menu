@@ -50,17 +50,17 @@
 }
 
 :root {
-  --background: #faf9f6;
+  --background: #fdfcfb;
   --foreground: #0f172a;
-  --card: #f9f7f4;
+  --card: #f3f0ea;
   --card-foreground: #0f172a;
-  --popover: #f9f7f4;
+  --popover: #f3f0ea;
   --popover-foreground: #0f172a;
   --primary: #007aff;
   --primary-foreground: #ffffff;
-  --secondary: #f1efe9;
+  --secondary: #ebe7e0;
   --secondary-foreground: #0f172a;
-  --muted: #f2f0eb;
+  --muted: #efece6;
   --muted-foreground: #64748b;
   --accent: #eef5ff;
   --accent-foreground: #0f172a;
@@ -75,7 +75,7 @@
   --chart-4: #94a3b8;
   --chart-5: #cbd5e1;
   --radius: 1rem;
-  --sidebar: #f9f7f4;
+  --sidebar: #f3f0ea;
   --sidebar-foreground: #0f172a;
   --sidebar-primary: #007aff;
   --sidebar-primary-foreground: #ffffff;
@@ -111,11 +111,11 @@
     letter-spacing: 0.01em;
   }
   .surface-raised {
-    background: #fcfbf9;
+    background: #f3f0ea;
     box-shadow: var(--surface-shadow);
   }
   .surface-raised-soft {
-    background: #fcfbf9;
+    background: #f3f0ea;
     box-shadow: var(--surface-shadow-soft);
   }
 }

@@ -40,7 +40,6 @@ import {
 } from "@/hooks/use-menu";
 import { compressImage } from "@/lib/image";
 import {
-  defaultMenu,
   defaultVenue,
   formatPrice,
   newId,
@@ -110,7 +109,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [productForm, setProductForm] = useState<ProductForm>(emptyProductForm());
   const [productError, setProductError] = useState("");
   const [imageBusy, setImageBusy] = useState(false);
-  const [resetOpen, setResetOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -642,13 +640,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               }}
             >
               Çıkış
-            </Button>
-            <Button
-              variant="ghost"
-              className={lightGhost}
-              onClick={() => setResetOpen(true)}
-            >
-              Güncel menüyü yükle
             </Button>
           </div>
         </div>
@@ -1388,38 +1379,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               disabled={imageBusy || categories.length === 0}
             >
               Kaydet
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent className="bg-[oklch(0.2_0.04_250)] text-white">
-          <DialogHeader>
-            <DialogTitle className="text-white">Güncel menü paketini yükle</DialogTitle>
-            <DialogDescription className="text-sky-100/60">
-              Turso’daki eski menüyü siler; projedeki güncel kategori, ürün,
-              fiyat ve işletme bilgisiyle değiştirir. Yayındaki müşteri menüsü
-              de buna döner.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="border-white/10 bg-transparent">
-            <Button
-              variant="outline"
-              className={darkOutline}
-              onClick={() => setResetOpen(false)}
-            >
-              Vazgeç
-            </Button>
-            <Button
-              onClick={() => {
-                const next = structuredClone(defaultMenu);
-                void updateMenu(next);
-                setVenueForm(structuredClone(next.venue ?? defaultVenue));
-                setResetOpen(false);
-              }}
-            >
-              Yükle ve kaydet
             </Button>
           </DialogFooter>
         </DialogContent>

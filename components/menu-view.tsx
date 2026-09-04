@@ -187,7 +187,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
       <BalloonField />
 
       <div className="relative z-10 mx-auto w-full max-w-lg px-3 py-4 sm:max-w-5xl sm:px-6 sm:py-5 lg:px-10">
-        <header className="relative isolate min-h-[44svh] overflow-hidden rounded-[1.5rem] shadow-[0_16px_40px_rgba(15,23,42,0.12)] ring-1 ring-slate-200/70 sm:min-h-[52svh] sm:rounded-[1.75rem]">
+        <header className="relative isolate min-h-[44svh] overflow-hidden rounded-[1.5rem] shadow-[0_4px_10px_rgba(40,32,20,0.06),0_18px_40px_rgba(40,32,20,0.14),0_36px_64px_rgba(40,32,20,0.08)] ring-1 ring-black/5 sm:min-h-[52svh] sm:rounded-[1.75rem]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={venue.heroImage || "/brand/hero.webp"}
@@ -271,7 +271,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </header>
 
-        <nav className="sticky top-0 z-20 -mx-3 mt-4 bg-white/92 px-3 py-2.5 backdrop-blur-md sm:-mx-6 sm:mt-5 sm:px-6 lg:-mx-10 lg:px-10">
+        <nav className="sticky top-0 z-20 mt-4 rounded-2xl bg-white/95 px-3 py-3 shadow-[0_2px_4px_rgba(40,32,20,0.04),0_12px_28px_rgba(40,32,20,0.1),0_24px_48px_rgba(40,32,20,0.06)] ring-1 ring-black/5 backdrop-blur-md sm:mt-5 sm:px-4">
           <div className="flex items-end justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
@@ -300,13 +300,13 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t.searchPlaceholder}
-              className="h-11 w-full rounded-full border-0 bg-slate-100 pr-10 pl-10 text-sm font-medium text-slate-900 outline-none ring-1 ring-slate-200 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#007AFF]/35"
+              className="h-11 w-full rounded-full border-0 bg-[#f3f0ea] pr-10 pl-10 text-sm font-medium text-slate-900 outline-none shadow-[inset_0_1px_2px_rgba(40,32,20,0.06)] ring-1 ring-black/5 placeholder:text-slate-400 focus:bg-white focus:shadow-[0_4px_14px_rgba(0,122,255,0.12)] focus:ring-2 focus:ring-[#007AFF]/30"
             />
             {query ? (
               <button
                 type="button"
                 onClick={() => setQuery("")}
-                className="absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-200/70"
+                className="absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-black/5"
                 aria-label="Clear"
               >
                 <X className="size-4" />
@@ -336,7 +336,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     <h2 className="min-w-0 flex-1 font-heading text-2xl font-semibold text-slate-900 sm:text-3xl">
                       {section.title}
                     </h2>
-                    <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                    <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-[0_2px_8px_rgba(40,32,20,0.08)] ring-1 ring-black/5">
                       {t.productsInCategory(section.products.length)}
                     </span>
                   </div>
@@ -522,8 +522,8 @@ function CategoryChip({
       className={cn(
         "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-colors",
         active
-          ? "bg-[#007AFF] text-white shadow-sm"
-          : "bg-slate-100 text-slate-700 ring-1 ring-slate-200 hover:bg-slate-200/70"
+          ? "bg-[#007AFF] text-white shadow-[0_4px_14px_rgba(0,122,255,0.35)]"
+          : "bg-white text-slate-700 shadow-[0_2px_8px_rgba(40,32,20,0.08)] ring-1 ring-black/5 hover:shadow-[0_6px_16px_rgba(40,32,20,0.12)]"
       )}
     >
       <UtensilsCrossed className="size-3.5 opacity-90" aria-hidden />
@@ -574,7 +574,7 @@ function ContactIcon({
 
 function EmptyState({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-[1.5rem] bg-white px-6 py-16 text-center shadow-sm ring-1 ring-slate-200">
+    <div className="rounded-[1.5rem] bg-white px-6 py-16 text-center shadow-[0_8px_28px_rgba(40,32,20,0.1)] ring-1 ring-black/5">
       <h2 className="font-heading text-2xl text-slate-900">{title}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{body}</p>
     </div>

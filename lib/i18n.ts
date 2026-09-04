@@ -78,9 +78,9 @@ const ui: Record<Locale, UiCopy> = {
     langSwitch: "TR",
     langSwitchAria: "Türkçeye geç",
     productsAvailable: (count) =>
-      count === 1 ? "1 item available" : `${count} items available`,
+      count === 1 ? "1 product available" : `${count} products available`,
     productsInCategory: (count) =>
-      count === 1 ? "1 item" : `${count} items`,
+      count === 1 ? "1 product" : `${count} products`,
   },
 };
 

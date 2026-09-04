@@ -7,12 +7,18 @@ export function ProductCard({
   featured = false,
   variant = "list",
   className,
+  chefPickLabel = "Şefin Seçimi",
+  chefPickShortLabel = "İmza",
+  noPhotoLabel = "Fotoğraf yok",
 }: {
   product: Product;
   onSelect?: (product: Product) => void;
   featured?: boolean;
   variant?: "list" | "featured";
   className?: string;
+  chefPickLabel?: string;
+  chefPickShortLabel?: string;
+  noPhotoLabel?: string;
 }) {
   const showBadge = featured || product.featured;
 
@@ -29,13 +35,13 @@ export function ProductCard({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-              Fotoğraf yok
+              {noPhotoLabel}
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
           {showBadge ? (
             <span className="absolute top-2 left-2 rounded-full bg-[#007AFF] px-2 py-0.5 text-[9px] font-bold tracking-[0.1em] text-white uppercase">
-              Şefin Seçimi
+              {chefPickLabel}
             </span>
           ) : null}
           <p className="absolute right-2 bottom-2 rounded-full bg-white/95 px-2 py-0.5 text-xs font-bold text-[#007AFF] shadow-sm">
@@ -65,12 +71,12 @@ export function ProductCard({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-[10px] text-slate-400">
-              Yok
+              —
             </div>
           )}
           {showBadge ? (
             <span className="absolute top-1 left-1 rounded-full bg-[#007AFF] px-1.5 py-0.5 text-[8px] font-bold text-white uppercase">
-              İmza
+              {chefPickShortLabel}
             </span>
           ) : null}
         </div>

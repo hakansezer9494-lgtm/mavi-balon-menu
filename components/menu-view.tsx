@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import {
   MapPin,
   MessageCircle,
   Phone,
+  Search,
   UtensilsCrossed,
+  X,
 } from "lucide-react";
 import { BalloonField, BalloonMark } from "@/components/balloon-mark";
 import { ProductCard } from "@/components/product-card";
@@ -18,6 +20,15 @@ import {
 } from "@/components/ui/dialog";
 import { useMenu } from "@/hooks/use-menu";
 import {
+  getUi,
+  matchesSearch,
+  translateAllergens,
+  translateCategory,
+  translateHourLabel,
+  translateHourValue,
+  type Locale,
+} from "@/lib/i18n";
+import {
   formatPrice,
   instagramHref,
   phoneHref,
@@ -27,16 +38,40 @@ import {
 } from "@/lib/menu";
 import { cn } from "@/lib/utils";
 
+const LANG_KEY = "mavi-balon-locale";
+
+function subscribeLocale(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  window.addEventListener("mavi-locale-change", onStoreChange);
+  return () => {
+    window.removeEventListener("storage", onStoreChange);
+    window.removeEventListener("mavi-locale-change", onStoreChange);
+  };
+}
+
+function readLocale(): Locale {
+  const saved = window.localStorage.getItem(LANG_KEY);
+  return saved === "en" ? "en" : "tr";
+}
+
 export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const { menu } = useMenu(initialMenu);
   const venue = menu.venue;
+  const locale = useSyncExternalStore(subscribeLocale, readLocale, () => "tr" as Locale);
+  const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("imza");
   const [selected, setSelected] = useState<Product | null>(null);
   const scrollingToRef = useRef<string | null>(null);
+  const t = getUi(locale);
+
+  function toggleLocale() {
+    const next: Locale = locale === "tr" ? "en" : "tr";
+    window.localStorage.setItem(LANG_KEY, next);
+    window.dispatchEvent(new Event("mavi-locale-change"));
+  }
 
   const categories = useMemo(
-    () =>
-      [...menu.categories].sort((a, b) => a.sortOrder - b.sortOrder),
+    () => [...menu.categories].sort((a, b) => a.sortOrder - b.sortOrder),
     [menu.categories]
   );
   const featured = useMemo(
@@ -46,23 +81,32 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
 
   const sections = useMemo(() => {
     const list: { id: string; title: string; products: Product[] }[] = [];
-    if (featured.length > 0) {
-      list.push({ id: "imza", title: "İmza Seçkisi", products: featured });
+    const filteredFeatured = featured.filter((product) =>
+      matchesSearch(product.name, query)
+    );
+    if (filteredFeatured.length > 0) {
+      list.push({
+        id: "imza",
+        title: translateCategory(locale, "imza", t.signature),
+        products: filteredFeatured,
+      });
     }
     for (const category of categories) {
       const products = menu.products.filter(
-        (product) => product.categoryId === category.id
+        (product) =>
+          product.categoryId === category.id &&
+          matchesSearch(product.name, query)
       );
       if (products.length > 0) {
         list.push({
           id: category.id,
-          title: category.name,
+          title: translateCategory(locale, category.id, category.name),
           products,
         });
       }
     }
     return list;
-  }, [categories, featured, menu.products]);
+  }, [categories, featured, locale, menu.products, query, t.signature]);
 
   useEffect(() => {
     const nodes = sections
@@ -117,6 +161,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const wa = whatsappHref(venue.whatsapp);
   const ig = instagramHref(venue.instagram);
   const maps = venue.mapsUrl.trim();
+  const searching = query.trim().length > 0;
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
@@ -199,7 +244,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
                   >
                     <MapPin className="size-3.5" />
-                    Konum
+                    {t.location}
                   </a>
                 ) : null}
               </div>
@@ -209,7 +254,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
 
         <nav className="sticky top-0 z-20 -mx-3 mt-4 bg-white/92 px-3 py-2.5 backdrop-blur-md sm:-mx-6 sm:mt-5 sm:px-6 lg:-mx-10 lg:px-10">
           <p className="text-[11px] font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
-            Menü Keşfi
+            {t.menuExplore}
           </p>
           <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {sections.map((section) => (
@@ -222,20 +267,40 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               />
             ))}
           </div>
+          <div className="relative mt-2.5">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t.searchPlaceholder}
+              className="h-11 w-full rounded-full border-0 bg-slate-100 pr-10 pl-10 text-sm font-medium text-slate-900 outline-none ring-1 ring-slate-200 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-[#007AFF]/35"
+            />
+            {query ? (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                className="absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-slate-500 hover:bg-slate-200/70"
+                aria-label="Clear"
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
+          </div>
         </nav>
 
-        <main className="mt-4 space-y-9 pb-8 sm:mt-5 sm:space-y-12">
+        <main className="mt-4 space-y-9 pb-24 sm:mt-5 sm:space-y-12">
           {sections.length === 0 ? (
             <EmptyState
-              title="Menü hazırlanıyor"
-              body="Ürünler birazdan burada görünecek."
+              title={searching ? t.searchEmpty : t.menuPreparing}
+              body={searching ? t.searchEmptyBody : t.menuPreparingBody}
             />
           ) : (
             sections.map((section) => (
               <section
                 key={section.id}
                 id={`section-${section.id}`}
-                className="scroll-mt-24"
+                className="scroll-mt-36"
               >
                 <div className="mb-3">
                   <div className="flex items-center gap-2">
@@ -246,14 +311,14 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                       {section.title}
                     </h2>
                   </div>
-                  {section.id === "imza" ? (
+                  {section.id === "imza" && !searching ? (
                     <p className="mt-1 pl-[2.75rem] text-sm font-medium text-slate-600">
-                      Kaydırarak bakın.
+                      {t.signatureHint}
                     </p>
                   ) : null}
                 </div>
 
-                {section.id === "imza" ? (
+                {section.id === "imza" && !searching ? (
                   <div className="-mx-0.5 flex gap-2.5 overflow-x-auto px-0.5 pb-1 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {section.products.map((product) => (
                       <ProductCard
@@ -262,6 +327,9 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                         featured
                         variant="featured"
                         onSelect={setSelected}
+                        chefPickLabel={t.chefPick}
+                        chefPickShortLabel={t.chefPickShort}
+                        noPhotoLabel={t.noPhoto}
                         className="w-[72vw] max-w-[260px] shrink-0 snap-start sm:w-[220px]"
                       />
                     ))}
@@ -274,6 +342,9 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                         product={product}
                         variant="list"
                         onSelect={setSelected}
+                        chefPickLabel={t.chefPick}
+                        chefPickShortLabel={t.chefPickShort}
+                        noPhotoLabel={t.noPhoto}
                       />
                     ))}
                   </div>
@@ -289,13 +360,11 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               <p className="font-heading text-2xl text-slate-900">
                 {venue.brandName}
               </p>
-              <p className="mt-1 text-sm text-slate-500">
-                Antakya Döner ve Özel Burgerler
-              </p>
+              <p className="mt-1 text-sm text-slate-500">{t.footerTagline}</p>
               <p className="mt-4 text-sm text-slate-500">{venue.city}</p>
               <div className="mt-5 flex flex-wrap gap-2">
                 {tel ? (
-                  <ContactIcon href={tel} label="Telefon">
+                  <ContactIcon href={tel} label={t.phone}>
                     <Phone className="size-4" />
                   </ContactIcon>
                 ) : null}
@@ -310,7 +379,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                   </ContactIcon>
                 ) : null}
                 {maps ? (
-                  <ContactIcon href={maps} label="Konum">
+                  <ContactIcon href={maps} label={t.location}>
                     <MapPin className="size-4" />
                   </ContactIcon>
                 ) : null}
@@ -318,13 +387,15 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
             </div>
             <div>
               <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
-                Açılış Saatleri
+                {t.hours}
               </p>
               <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
                 {venue.hours.map((row) => (
                   <li key={row.id} className="flex justify-between gap-4">
-                    <span>{row.label}</span>
-                    <span className="text-slate-800">{row.value}</span>
+                    <span>{translateHourLabel(locale, row.label)}</span>
+                    <span className="text-slate-800">
+                      {translateHourValue(locale, row.value)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -332,6 +403,15 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </footer>
       </div>
+
+      <button
+        type="button"
+        onClick={toggleLocale}
+        aria-label={t.langSwitchAria}
+        className="fixed right-4 bottom-4 z-40 inline-flex h-11 min-w-11 items-center justify-center rounded-full bg-[#007AFF] px-3.5 text-sm font-bold text-white shadow-[0_10px_28px_rgba(0,122,255,0.35)] ring-1 ring-white/40 transition hover:bg-[#0066d6] active:scale-95"
+      >
+        {t.langSwitch}
+      </button>
 
       <Dialog
         open={selected !== null}
@@ -361,20 +441,20 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 <div className="mt-5 space-y-4">
                   <section>
                     <h3 className="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase">
-                      İçerik
+                      {t.content}
                     </h3>
                     <DialogDescription className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
-                      {selected.description || "Mavi Balloon menü ürünü"}
+                      {selected.description || t.productFallback}
                     </DialogDescription>
                   </section>
                   <section>
                     <h3 className="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase">
-                      Alerjenler
+                      {t.allergens}
                     </h3>
                     <p className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
                       {selected.allergens?.trim()
-                        ? selected.allergens
-                        : "Belirtilmemiş"}
+                        ? translateAllergens(locale, selected.allergens)
+                        : t.allergensNone}
                     </p>
                   </section>
                 </div>

@@ -1,13 +1,16 @@
 import { formatPrice, type Product } from "@/lib/menu";
+import { cn } from "@/lib/utils";
 
 export function ProductCard({
   product,
   onSelect,
   featured = false,
+  className,
 }: {
   product: Product;
   onSelect?: (product: Product) => void;
   featured?: boolean;
+  className?: string;
 }) {
   const inner = (
     <>
@@ -52,7 +55,10 @@ export function ProductCard({
       <button
         type="button"
         onClick={() => onSelect(product)}
-        className="group overflow-hidden rounded-[1.5rem] bg-[#120e0a] text-left ring-1 ring-gold/12 transition hover:ring-gold/35"
+        className={cn(
+          "group overflow-hidden rounded-[1.5rem] bg-[#120e0a] text-left ring-1 ring-gold/12 transition hover:ring-gold/35",
+          className
+        )}
       >
         {inner}
       </button>
@@ -60,7 +66,12 @@ export function ProductCard({
   }
 
   return (
-    <article className="group overflow-hidden rounded-[1.5rem] bg-[#120e0a] ring-1 ring-gold/12">
+    <article
+      className={cn(
+        "group overflow-hidden rounded-[1.5rem] bg-[#120e0a] ring-1 ring-gold/12",
+        className
+      )}
+    >
       {inner}
     </article>
   );

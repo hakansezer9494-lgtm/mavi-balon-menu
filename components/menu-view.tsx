@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import {
   Dialog,
@@ -15,21 +15,84 @@ import { cn } from "@/lib/utils";
 
 export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const { menu } = useMenu(initialMenu);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeCategory, setActiveCategory] = useState<string>("imza");
   const [selected, setSelected] = useState<Product | null>(null);
+  const scrollingToRef = useRef<string | null>(null);
 
   const categories = menu.categories;
   const featured = useMemo(
-    () => menu.products.filter((product) => product.featured).slice(0, 3),
+    () => menu.products.filter((product) => product.featured),
     [menu.products]
   );
-  const products = useMemo(() => {
-    if (activeCategory === "all") return menu.products;
-    return menu.products.filter((product) => product.categoryId === activeCategory);
-  }, [activeCategory, menu]);
 
-  const emptyCategories = categories.length === 0;
-  const emptyProducts = products.length === 0;
+  const sections = useMemo(() => {
+    const list: { id: string; title: string; products: Product[] }[] = [];
+    if (featured.length > 0) {
+      list.push({ id: "imza", title: "İmza Seçkisi", products: featured });
+    }
+    for (const category of categories) {
+      const products = menu.products.filter(
+        (product) => product.categoryId === category.id
+      );
+      if (products.length > 0) {
+        list.push({
+          id: category.id,
+          title: category.name,
+          products,
+        });
+      }
+    }
+    return list;
+  }, [categories, featured, menu.products]);
+
+  useEffect(() => {
+    const nodes = sections
+      .map((section) => document.getElementById(`section-${section.id}`))
+      .filter((node): node is HTMLElement => Boolean(node));
+
+    if (nodes.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (scrollingToRef.current) return;
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        const top = visible[0];
+        if (!top?.target.id) return;
+        const id = top.target.id.replace(/^section-/, "");
+        setActiveCategory(id);
+      },
+      {
+        root: null,
+        rootMargin: "-25% 0px -55% 0px",
+        threshold: [0.15, 0.35, 0.55],
+      }
+    );
+
+    for (const node of nodes) observer.observe(node);
+    return () => observer.disconnect();
+  }, [sections]);
+
+  useEffect(() => {
+    const chip = document.getElementById(`chip-${activeCategory}`);
+    chip?.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+  }, [activeCategory]);
+
+  function scrollToSection(id: string) {
+    const node = document.getElementById(`section-${id}`);
+    if (!node) return;
+    setActiveCategory(id);
+    scrollingToRef.current = id;
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      if (scrollingToRef.current === id) scrollingToRef.current = null;
+    }, 900);
+  }
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col px-5 py-6 sm:px-8 lg:px-12">
@@ -80,78 +143,73 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </header>
 
-        <section className="mt-8">
+        <nav className="sticky top-0 z-20 -mx-5 mt-6 bg-[#080705]/92 px-5 py-3 backdrop-blur-md sm:-mx-8 sm:px-8 lg:-mx-12 lg:px-12">
           <p className="text-[11px] font-medium tracking-[0.22em] text-gold/80 uppercase">
             Menü Keşfi
           </p>
-          <div className="mt-4 flex gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <CategoryChip
-              label="Tüm Gün Lezzetleri"
-              active={activeCategory === "all"}
-              onClick={() => setActiveCategory("all")}
-            />
-            {categories.map((category) => (
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {sections.map((section) => (
               <CategoryChip
-                key={category.id}
-                label={category.name}
-                active={activeCategory === category.id}
-                onClick={() => setActiveCategory(category.id)}
+                key={section.id}
+                id={`chip-${section.id}`}
+                label={section.title}
+                active={activeCategory === section.id}
+                onClick={() => scrollToSection(section.id)}
               />
             ))}
           </div>
-        </section>
+        </nav>
 
-        {activeCategory === "all" && featured.length > 0 ? (
-          <section className="mt-10">
-            <div className="mb-4 flex items-end justify-between gap-3">
-              <div>
-                <h2 className="font-heading text-3xl text-[#fff4dd]">İmza Seçkisi</h2>
-                <p className="mt-1 text-sm text-cream/60">
-                  Mevsimsel malzemeler ve modern mutfak teknikleriyle hazırlandı.
-                </p>
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {featured.map((product) => (
-                <ProductCard
-                  key={`featured-${product.id}`}
-                  product={product}
-                  featured
-                  onSelect={setSelected}
-                />
-              ))}
-            </div>
-          </section>
-        ) : null}
-
-        <main className="mt-10 pb-10">
-          {emptyCategories ? (
+        <main className="mt-6 space-y-14 pb-10">
+          {sections.length === 0 ? (
             <EmptyState
               title="Menü hazırlanıyor"
               body="Ürünler birazdan burada görünecek."
             />
-          ) : emptyProducts ? (
-            <EmptyState
-              title="Bu kategoride ürün yok"
-              body="Başka bir kategori seçebilirsiniz."
-            />
           ) : (
-            <>
-              <h2 className="mb-4 font-heading text-3xl text-[#fff4dd]">
-                {activeCategory === "all"
-                  ? "Tüm Gün Lezzetleri"
-                  : categories.find((category) => category.id === activeCategory)?.name}
-              </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {products.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onSelect={setSelected}
-                  />
-                ))}
-              </div>
-            </>
+            sections.map((section) => (
+              <section
+                key={section.id}
+                id={`section-${section.id}`}
+                className="scroll-mt-28"
+              >
+                <div className="mb-4">
+                  <h2 className="font-heading text-3xl text-[#fff4dd]">
+                    {section.title}
+                  </h2>
+                  {section.id === "imza" ? (
+                    <p className="mt-1 text-sm text-cream/60">
+                      Mevsimsel malzemeler ve modern mutfak teknikleriyle
+                      hazırlandı. Kaydırarak bakın.
+                    </p>
+                  ) : null}
+                </div>
+
+                {section.id === "imza" ? (
+                  <div className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    {section.products.map((product) => (
+                      <ProductCard
+                        key={`featured-${product.id}`}
+                        product={product}
+                        featured
+                        onSelect={setSelected}
+                        className="w-[78%] shrink-0 snap-start sm:w-[48%] lg:w-[38%]"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    {section.products.map((product) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        onSelect={setSelected}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            ))
           )}
         </main>
 
@@ -159,7 +217,9 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           <div className="grid gap-8 sm:grid-cols-2">
             <div>
               <p className="font-heading text-2xl text-[#fff4dd]">Mavi Balloon</p>
-              <p className="mt-1 text-sm text-cream/60">Antakya Döner ve Özel Burgerler</p>
+              <p className="mt-1 text-sm text-cream/60">
+                Antakya Döner ve Özel Burgerler
+              </p>
               <p className="mt-4 text-sm text-cream/50">Istanbul, Turkey</p>
             </div>
             <div>
@@ -223,16 +283,19 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
 }
 
 function CategoryChip({
+  id,
   label,
   active,
   onClick,
 }: {
+  id: string;
   label: string;
   active: boolean;
   onClick: () => void;
 }) {
   return (
     <button
+      id={id}
       type="button"
       onClick={onClick}
       className={cn(

@@ -5,6 +5,7 @@ import {
   MapPin,
   MessageCircle,
   Phone,
+  UtensilsCrossed,
 } from "lucide-react";
 import { BalloonField, BalloonMark } from "@/components/balloon-mark";
 import { ProductCard } from "@/components/product-card";
@@ -237,11 +238,16 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 className="scroll-mt-28"
               >
                 <div className="mb-3">
-                  <h2 className="font-heading text-3xl font-semibold text-slate-900 sm:text-4xl">
-                    {section.title}
-                  </h2>
+                  <div className="flex items-center gap-2.5">
+                    <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-[#007AFF]/12 text-[#007AFF] ring-1 ring-[#007AFF]/20">
+                      <UtensilsCrossed className="size-5" aria-hidden />
+                    </span>
+                    <h2 className="font-heading text-3xl font-semibold text-slate-900 sm:text-4xl">
+                      {section.title}
+                    </h2>
+                  </div>
                   {section.id === "imza" ? (
-                    <p className="mt-1 text-base font-medium text-slate-600">
+                    <p className="mt-1 pl-[3.25rem] text-base font-medium text-slate-600">
                       Mevsimsel malzemeler ve modern mutfak teknikleriyle
                       hazırlandı. Kaydırarak bakın.
                     </p>
@@ -397,12 +403,13 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors",
         active
           ? "bg-[#007AFF] text-white shadow-sm"
           : "bg-slate-100 text-slate-700 ring-1 ring-slate-200 hover:bg-slate-200/70"
       )}
     >
+      <UtensilsCrossed className="size-3.5 opacity-90" aria-hidden />
       {label}
     </button>
   );

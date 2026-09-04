@@ -100,8 +100,8 @@ export function ProductCard({
 
   const baseClass =
     variant === "featured"
-      ? "group overflow-hidden rounded-2xl bg-white text-left shadow-[0_6px_18px_rgba(15,23,42,0.06)] ring-1 ring-slate-200/80 transition active:scale-[0.99]"
-      : "group flex w-full items-center gap-3 rounded-2xl bg-white p-2.5 text-left shadow-[0_4px_14px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/80 transition active:scale-[0.99] active:bg-slate-50";
+      ? "group overflow-hidden rounded-2xl bg-white text-left shadow-[0_2px_4px_rgba(40,32,20,0.04),0_10px_24px_rgba(40,32,20,0.1),0_22px_44px_rgba(40,32,20,0.08)] ring-1 ring-black/5 transition active:scale-[0.99]"
+      : "group flex w-full items-center gap-3 rounded-2xl bg-white p-2.5 text-left shadow-[0_2px_4px_rgba(40,32,20,0.04),0_8px_20px_rgba(40,32,20,0.09),0_18px_36px_rgba(40,32,20,0.06)] ring-1 ring-black/5 transition active:scale-[0.99] active:bg-[#faf9f7]";
 
   if (onSelect) {
     return (

@@ -615,7 +615,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               Çıkış
             </Button>
             <Button variant="ghost" onClick={() => setResetOpen(true)}>
-              Örneği yükle
+              Güncel menüyü yükle
             </Button>
           </div>
         </div>
@@ -1344,10 +1344,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogContent className="bg-[oklch(0.2_0.04_250)] text-white">
           <DialogHeader>
-            <DialogTitle className="text-white">Örnek menüyü yükle</DialogTitle>
+            <DialogTitle className="text-white">Güncel menü paketini yükle</DialogTitle>
             <DialogDescription className="text-sky-100/60">
-              Mevcut kategori ve ürünleriniz örnek hamburger, döner, broast ve
-              patates menüsüyle değişir.
+              Turso’daki eski menüyü siler; projedeki güncel kategori, ürün,
+              fiyat ve işletme bilgisiyle değiştirir. Yayındaki müşteri menüsü
+              de buna döner.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="border-white/10 bg-transparent">
@@ -1356,12 +1357,13 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </Button>
             <Button
               onClick={() => {
-                updateMenu(structuredClone(defaultMenu));
-                setVenueForm(structuredClone(defaultVenue));
+                const next = structuredClone(defaultMenu);
+                void updateMenu(next);
+                setVenueForm(structuredClone(next.venue ?? defaultVenue));
                 setResetOpen(false);
               }}
             >
-              Yükle
+              Yükle ve kaydet
             </Button>
           </DialogFooter>
         </DialogContent>

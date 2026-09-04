@@ -106,6 +106,12 @@ export function getLastCloudError() {
   return lastCloudError;
 }
 
+async function packagedMenu(): Promise<MenuData> {
+  const fromFile = await readFromFile();
+  if (fromFile) return fromFile;
+  return structuredClone(defaultMenu);
+}
+
 export async function readMenu(): Promise<MenuData> {
   const client = getTurso();
   if (client) {
@@ -115,14 +121,15 @@ export async function readMenu(): Promise<MenuData> {
         lastCloudError = "";
         return fromCloud;
       }
-      const seeded = await writeToTurso(client, defaultMenu);
+      const seed = await packagedMenu();
+      const seeded = await writeToTurso(client, seed);
       lastCloudError = "";
       return seeded;
     } catch (error) {
       lastCloudError =
         error instanceof Error ? error.message : "Turso bağlantısı başarısız.";
       console.error("Turso read failed:", lastCloudError);
-      return structuredClone(defaultMenu);
+      return await packagedMenu();
     }
   }
 

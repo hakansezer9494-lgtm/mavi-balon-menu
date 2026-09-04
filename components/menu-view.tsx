@@ -170,6 +170,17 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const ig = instagramHref(venue.instagram);
   const maps = venue.mapsUrl.trim();
   const searching = query.trim().length > 0;
+  const visibleProductCount = useMemo(() => {
+    const ids = new Set<string>();
+    for (const section of sections) {
+      for (const product of section.products) ids.add(product.id);
+    }
+    return ids.size;
+  }, [sections]);
+  const totalProductCount = menu.products.length;
+  const productCountLabel = searching
+    ? t.productsAvailable(visibleProductCount)
+    : t.productsAvailable(totalProductCount);
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
@@ -261,9 +272,16 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         </header>
 
         <nav className="sticky top-0 z-20 -mx-3 mt-4 bg-white/92 px-3 py-2.5 backdrop-blur-md sm:-mx-6 sm:mt-5 sm:px-6 lg:-mx-10 lg:px-10">
-          <p className="text-[11px] font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
-            {t.menuExplore}
-          </p>
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
+                {t.menuExplore}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-700">
+                {productCountLabel}
+              </p>
+            </div>
+          </div>
           <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {sections.map((section) => (
               <CategoryChip
@@ -315,9 +333,12 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#007AFF]/12 text-[#007AFF] ring-1 ring-[#007AFF]/20">
                       <UtensilsCrossed className="size-4" aria-hidden />
                     </span>
-                    <h2 className="font-heading text-2xl font-semibold text-slate-900 sm:text-3xl">
+                    <h2 className="min-w-0 flex-1 font-heading text-2xl font-semibold text-slate-900 sm:text-3xl">
                       {section.title}
                     </h2>
+                    <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+                      {t.productsInCategory(section.products.length)}
+                    </span>
                   </div>
                   {section.id === "imza" && !searching ? (
                     <p className="mt-1 pl-[2.75rem] text-sm font-medium text-slate-600">

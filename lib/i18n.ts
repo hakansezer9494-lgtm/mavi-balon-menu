@@ -23,6 +23,8 @@ type UiCopy = {
   noPhoto: string;
   langSwitch: string;
   langSwitchAria: string;
+  productsAvailable: (count: number) => string;
+  productsInCategory: (count: number) => string;
 };
 
 const ui: Record<Locale, UiCopy> = {
@@ -49,6 +51,8 @@ const ui: Record<Locale, UiCopy> = {
     noPhoto: "Fotoğraf yok",
     langSwitch: "EN",
     langSwitchAria: "Switch to English",
+    productsAvailable: (count) => `${count} ürün mevcut`,
+    productsInCategory: (count) => `${count} ürün`,
   },
   en: {
     menuExplore: "Explore Menu",
@@ -73,6 +77,10 @@ const ui: Record<Locale, UiCopy> = {
     noPhoto: "No photo",
     langSwitch: "TR",
     langSwitchAria: "Türkçeye geç",
+    productsAvailable: (count) =>
+      count === 1 ? "1 item available" : `${count} items available`,
+    productsInCategory: (count) =>
+      count === 1 ? "1 item" : `${count} items`,
   },
 };
 

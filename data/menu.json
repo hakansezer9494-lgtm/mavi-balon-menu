@@ -19,15 +19,15 @@
       "sortOrder": 2
     },
     {
-      "id": "ekonomik",
-      "name": "Ekonomik Menüler",
-      "nameEn": "Value Menus",
-      "sortOrder": 3
-    },
-    {
       "id": "aperatifler",
       "name": "Aperatifler",
       "nameEn": "Sides",
+      "sortOrder": 3
+    },
+    {
+      "id": "ekonomik",
+      "name": "Ekonomik Menüler",
+      "nameEn": "Value Menus",
       "sortOrder": 4
     },
     {
@@ -355,5 +355,6 @@
         "value": "12:00 - 23:00"
       }
     ]
-  }
+  },
+  "catalogRevision": 2
 }

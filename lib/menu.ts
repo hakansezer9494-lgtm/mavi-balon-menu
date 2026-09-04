@@ -47,7 +47,12 @@ export type MenuData = {
   categories: Category[];
   products: Product[];
   venue: VenueInfo;
+  /** Bumped in code when the packaged catalog must replace stale Turso data. */
+  catalogRevision?: number;
 };
+
+/** Raise this when shipping a new default catalog that should overwrite old Turso menus. */
+export const MENU_CATALOG_REVISION = 2;
 
 export const MENU_UPDATED_EVENT = "mavi-balon-menu-updated";
 
@@ -373,6 +378,7 @@ export const defaultMenu: MenuData = {
     },
   ],
   venue: defaultVenue,
+  catalogRevision: MENU_CATALOG_REVISION,
 };
 
 function isHoursRow(value: unknown): value is HoursRow {
@@ -467,6 +473,7 @@ export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
 }
 
 export function normalizeMenu(data: MenuData): MenuData {
+  const revision = Number(data.catalogRevision);
   return {
     categories: [...data.categories]
       .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -490,6 +497,7 @@ export function normalizeMenu(data: MenuData): MenuData {
       featured: Boolean(product.featured),
     })),
     venue: normalizeVenue(data.venue),
+    catalogRevision: Number.isFinite(revision) && revision > 0 ? revision : 0,
   };
 }
 

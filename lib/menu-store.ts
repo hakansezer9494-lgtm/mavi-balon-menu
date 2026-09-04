@@ -1,9 +1,16 @@
 import { createClient, type Client } from "@libsql/client";
 import { promises as fs } from "fs";
 import path from "path";
-import { defaultMenu, isMenuData, normalizeMenu, type MenuData } from "@/lib/menu";
+import {
+  defaultMenu,
+  isMenuData,
+  MENU_CATALOG_REVISION,
+  normalizeMenu,
+  type MenuData,
+} from "@/lib/menu";
 
 const menuFile = path.join(process.cwd(), "data", "menu.json");
+const CATALOG_REVISION_KEY = "menu_catalog_revision";
 let writeChain: Promise<unknown> = Promise.resolve();
 let tursoClient: Client | null | undefined;
 let lastCloudError = "";
@@ -73,7 +80,33 @@ async function writeToTurso(client: Client, data: MenuData): Promise<MenuData> {
     `,
     args: [JSON.stringify(normalized), new Date().toISOString()],
   });
+  await client.execute({
+    sql: `
+      INSERT INTO app_settings (key, value)
+      VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `,
+    args: [
+      CATALOG_REVISION_KEY,
+      String(normalized.catalogRevision ?? MENU_CATALOG_REVISION),
+    ],
+  });
   return normalized;
+}
+
+async function readCatalogRevisionSetting(client: Client): Promise<number> {
+  try {
+    await ensureTursoSchema(client);
+    const result = await client.execute({
+      sql: "SELECT value FROM app_settings WHERE key = ?",
+      args: [CATALOG_REVISION_KEY],
+    });
+    const value = result.rows[0]?.value;
+    const parsed = typeof value === "string" ? Number(value) : NaN;
+    return Number.isFinite(parsed) ? parsed : 0;
+  } catch {
+    return 0;
+  }
 }
 
 async function readFromFile(): Promise<MenuData | null> {
@@ -108,8 +141,54 @@ export function getLastCloudError() {
 
 async function packagedMenu(): Promise<MenuData> {
   const fromFile = await readFromFile();
-  if (fromFile) return fromFile;
-  return structuredClone(defaultMenu);
+  const base = fromFile ?? structuredClone(defaultMenu);
+  return normalizeMenu({
+    ...base,
+    catalogRevision: MENU_CATALOG_REVISION,
+  });
+}
+
+function withCurrentCatalogRevision(data: MenuData): MenuData {
+  return normalizeMenu({
+    ...data,
+    catalogRevision: Math.max(
+      data.catalogRevision ?? 0,
+      MENU_CATALOG_REVISION
+    ),
+  });
+}
+
+/**
+ * If Turso still holds a pre-revision / older catalog, replace categories +
+ * products from the packaged menu while keeping venue customizations.
+ */
+async function upgradeCloudCatalogIfNeeded(
+  client: Client,
+  fromCloud: MenuData
+): Promise<MenuData> {
+  const payloadRev = fromCloud.catalogRevision ?? 0;
+  const settingRev = await readCatalogRevisionSetting(client);
+  const effectiveRev = Math.max(payloadRev, settingRev);
+
+  if (effectiveRev >= MENU_CATALOG_REVISION) {
+    if (payloadRev < MENU_CATALOG_REVISION) {
+      // Setting says upgraded but payload lagged — stamp revision only.
+      return writeToTurso(client, withCurrentCatalogRevision(fromCloud));
+    }
+    return fromCloud;
+  }
+
+  const pack = await packagedMenu();
+  const upgraded = normalizeMenu({
+    categories: pack.categories,
+    products: pack.products,
+    venue: fromCloud.venue,
+    catalogRevision: MENU_CATALOG_REVISION,
+  });
+  console.info(
+    `Upgrading Turso menu catalog ${effectiveRev} → ${MENU_CATALOG_REVISION}`
+  );
+  return writeToTurso(client, upgraded);
 }
 
 export async function readMenu(): Promise<MenuData> {
@@ -118,8 +197,9 @@ export async function readMenu(): Promise<MenuData> {
     try {
       const fromCloud = await readFromTurso(client);
       if (fromCloud) {
+        const menu = await upgradeCloudCatalogIfNeeded(client, fromCloud);
         lastCloudError = "";
-        return fromCloud;
+        return menu;
       }
       const seed = await packagedMenu();
       const seeded = await writeToTurso(client, seed);
@@ -135,18 +215,24 @@ export async function readMenu(): Promise<MenuData> {
 
   try {
     const fromFile = await readFromFile();
-    if (fromFile) return fromFile;
-    return writeToFile(defaultMenu);
+    if (fromFile) {
+      if ((fromFile.catalogRevision ?? 0) < MENU_CATALOG_REVISION) {
+        return writeToFile(await packagedMenu());
+      }
+      return fromFile;
+    }
+    return writeToFile(await packagedMenu());
   } catch {
-    return structuredClone(defaultMenu);
+    return await packagedMenu();
   }
 }
 
 export async function writeMenu(data: MenuData): Promise<MenuData> {
+  const next = withCurrentCatalogRevision(data);
   const client = getTurso();
   if (client) {
     try {
-      const saved = await writeToTurso(client, data);
+      const saved = await writeToTurso(client, next);
       lastCloudError = "";
       return saved;
     } catch (error) {
@@ -155,7 +241,7 @@ export async function writeMenu(data: MenuData): Promise<MenuData> {
       throw error;
     }
   }
-  return writeToFile(data);
+  return writeToFile(next);
 }
 
 const settingsFile = path.join(process.cwd(), "data", "settings.json");

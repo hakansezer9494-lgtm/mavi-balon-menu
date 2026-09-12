@@ -129,7 +129,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   );
   const [editingSignature, setEditingSignature] = useState(false);
   const [venueMessage, setVenueMessage] = useState("");
-  const [openCorner, setOpenCorner] = useState<HeroCornerId | null>("bottomLeft");
+  const [selectedCorner, setSelectedCorner] =
+    useState<HeroCornerId>("bottomRight");
+  const [cornerMenuOpen, setCornerMenuOpen] = useState(false);
   const [logoBusy, setLogoBusy] = useState(false);
   const [logoError, setLogoError] = useState("");
   const [heroBusy, setHeroBusy] = useState(false);
@@ -1111,19 +1113,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div className="grid gap-1.5">
-                <Label htmlFor="brand-name">Marka adı (footer için)</Label>
-                <Input
-                  id="brand-name"
-                  value={venueForm.brandName}
-                  onChange={(event) =>
-                    updateVenueField("brandName", event.target.value)
-                  }
-                  placeholder="Sayfa altında görünür — kapak metni köşelerden gelir"
-                  className="h-10 bg-white/5 text-white"
-                />
-            </div>
-
-            <div className="grid gap-1.5">
               <Label htmlFor="logo-photo">Marka logosu</Label>
               <Input
                 id="logo-photo"
@@ -1216,169 +1205,177 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               </div>
             </div>
 
-            <div className="grid gap-1.5">
-              <Label>Kapak köşeleri</Label>
-              <p className="text-xs text-sky-100/55">
-                Bir köşeyi açın; alttaki alanlar yalnızca o köşeyi düzenler. Sol
-                alt ile sağ alt birbirinden bağımsızdır.
-              </p>
-              <div className="space-y-2">
-                {HERO_CORNER_IDS.map((cornerId) => {
-                  const corner = venueForm.heroCorners[cornerId];
-                  const open = openCorner === cornerId;
-                  const summary = [
-                    corner.badgeText.trim() ? "rozet" : null,
-                    corner.title.trim() ? "başlık" : null,
-                    corner.subtitle.trim() ? "alt başlık" : null,
-                    corner.showLogo ? "logo" : null,
-                    corner.linkMaps ? "harita" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ");
-                  return (
-                    <div
-                      key={cornerId}
-                      className="overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10"
-                    >
-                      <button
-                        type="button"
-                        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"
-                        onClick={() =>
-                          setOpenCorner(open ? null : cornerId)
-                        }
-                      >
-                        <span className="min-w-0">
-                          <span className="block">{HERO_CORNER_LABELS[cornerId]}</span>
-                          <span className="block truncate text-xs font-normal text-sky-100/50">
-                            {summary || "Boş"}
-                          </span>
-                        </span>
-                        <ChevronDown
+            <div className="grid gap-3">
+              <div className="grid gap-1.5">
+                <Label>Kapak köşesi</Label>
+                <p className="text-xs text-sky-100/55">
+                  Köşeyi seçin; alttaki tüm alanlar yalnızca seçili köşeye aittir.
+                </p>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="flex w-full items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2.5 text-left text-sm font-medium text-white ring-1 ring-white/10 hover:bg-white/[0.07]"
+                    onClick={() => setCornerMenuOpen((open) => !open)}
+                    aria-expanded={cornerMenuOpen}
+                  >
+                    <span>{HERO_CORNER_LABELS[selectedCorner]}</span>
+                    <ChevronDown
+                      className={cn(
+                        "size-4 shrink-0 text-sky-100/70 transition",
+                        cornerMenuOpen ? "rotate-180" : ""
+                      )}
+                    />
+                  </button>
+                  {cornerMenuOpen ? (
+                    <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl bg-[oklch(0.26_0.04_250)] shadow-xl ring-1 ring-white/15">
+                      {HERO_CORNER_IDS.map((cornerId) => (
+                        <button
+                          key={cornerId}
+                          type="button"
                           className={cn(
-                            "size-4 shrink-0 text-sky-100/70 transition",
-                            open ? "rotate-180" : ""
+                            "flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white hover:bg-white/10",
+                            cornerId === selectedCorner
+                              ? "bg-sky-400/20 font-semibold text-sky-100"
+                              : ""
                           )}
-                        />
-                      </button>
-                      {open ? (
-                        <div className="space-y-3 border-t border-white/10 px-3 py-3">
-                          <div className="grid gap-1.5">
-                            <Label htmlFor={`badge-${cornerId}`}>
-                              Rozet (isteğe bağlı)
-                            </Label>
-                            <Input
-                              id={`badge-${cornerId}`}
-                              value={corner.badgeText}
-                              onChange={(event) =>
-                                updateCornerField(
-                                  cornerId,
-                                  "badgeText",
-                                  event.target.value
-                                )
-                              }
-                              placeholder="Örn. Açık · 11:00 - 01:30"
-                              className="h-10 bg-white/5 text-white"
-                            />
-                          </div>
-                          <div className="grid gap-1.5">
-                            <Label htmlFor={`title-${cornerId}`}>Başlık</Label>
-                            <Input
-                              id={`title-${cornerId}`}
-                              value={corner.title}
-                              onChange={(event) =>
-                                updateCornerField(
-                                  cornerId,
-                                  "title",
-                                  event.target.value
-                                )
-                              }
-                              placeholder="Bu köşeye özel başlık"
-                              className="h-10 bg-white/5 text-white"
-                            />
-                          </div>
-                          <div className="grid gap-1.5">
-                            <Label htmlFor={`subtitle-${cornerId}`}>
-                              Alt başlık / adres metni
-                            </Label>
-                            <textarea
-                              id={`subtitle-${cornerId}`}
-                              value={corner.subtitle}
-                              onChange={(event) =>
-                                updateCornerField(
-                                  cornerId,
-                                  "subtitle",
-                                  event.target.value
-                                )
-                              }
-                              placeholder={"Örn. Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy"}
-                              rows={3}
-                              className="min-h-[4.5rem] w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-sky-100/35 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className={cn("w-fit", darkOutline)}
-                              onClick={() => {
-                                const address = [
-                                  venueForm.addressLine1.trim(),
-                                  venueForm.addressLine2.trim(),
-                                ]
-                                  .filter(Boolean)
-                                  .join("\n");
-                                updateCornerField(
-                                  cornerId,
-                                  "subtitle",
-                                  address
-                                );
-                              }}
-                            >
-                              İşletme adresini buraya doldur
-                            </Button>
-                          </div>
-                          <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                            <span>Marka logosunu bu köşede göster</span>
-                            <input
-                              type="checkbox"
-                              checked={corner.showLogo}
-                              onChange={(event) =>
-                                updateCornerField(
-                                  cornerId,
-                                  "showLogo",
-                                  event.target.checked
-                                )
-                              }
-                              className="size-4 accent-sky-400"
-                            />
-                          </label>
-                          <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                            <span>Alt başlığı Google Maps’e bağla</span>
-                            <input
-                              type="checkbox"
-                              checked={corner.linkMaps}
-                              onChange={(event) =>
-                                updateCornerField(
-                                  cornerId,
-                                  "linkMaps",
-                                  event.target.checked
-                                )
-                              }
-                              className="size-4 accent-sky-400"
-                            />
-                          </label>
-                          <p className="text-[11px] text-sky-100/45">
-                            Her köşenin başlık / alt başlık / logo seçimi kendine
-                            aittir. Adres metnini sağ alta yazmak için Sağ alt
-                            çekmecesini açıp alt başlığa yazın.
-                          </p>
-                        </div>
-                      ) : null}
+                          onClick={() => {
+                            setSelectedCorner(cornerId);
+                            setCornerMenuOpen(false);
+                          }}
+                        >
+                          <span>{HERO_CORNER_LABELS[cornerId]}</span>
+                          {cornerId === selectedCorner ? (
+                            <span className="text-[10px] tracking-wide text-sky-200 uppercase">
+                              Seçili
+                            </span>
+                          ) : null}
+                        </button>
+                      ))}
                     </div>
-                  );
-                })}
+                  ) : null}
+                </div>
               </div>
-            </div>
 
+              {(() => {
+                const corner = venueForm.heroCorners[selectedCorner];
+                const cornerId = selectedCorner;
+                return (
+                  <div className="space-y-3 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+                    <p className="text-xs font-medium tracking-wide text-sky-200/80 uppercase">
+                      {HERO_CORNER_LABELS[cornerId]} özelleştirme
+                    </p>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`badge-${cornerId}`}>
+                        Rozet (isteğe bağlı)
+                      </Label>
+                      <Input
+                        id={`badge-${cornerId}`}
+                        value={corner.badgeText}
+                        onChange={(event) =>
+                          updateCornerField(
+                            cornerId,
+                            "badgeText",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Örn. Açık · 11:00 - 01:30"
+                        className="h-10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`title-${cornerId}`}>Başlık</Label>
+                      <Input
+                        id={`title-${cornerId}`}
+                        value={corner.title}
+                        onChange={(event) =>
+                          updateCornerField(
+                            cornerId,
+                            "title",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Bu köşeye özel başlık"
+                        className="h-10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`subtitle-${cornerId}`}>
+                        Alt başlık / adres metni
+                      </Label>
+                      <textarea
+                        id={`subtitle-${cornerId}`}
+                        value={corner.subtitle}
+                        onChange={(event) =>
+                          updateCornerField(
+                            cornerId,
+                            "subtitle",
+                            event.target.value
+                          )
+                        }
+                        placeholder={
+                          "Örn. Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy"
+                        }
+                        rows={3}
+                        className="min-h-[4.5rem] w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-sky-100/35 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className={cn("w-fit", darkOutline)}
+                        onClick={() => {
+                          const address = [
+                            venueForm.addressLine1.trim(),
+                            venueForm.addressLine2.trim(),
+                          ]
+                            .filter(Boolean)
+                            .join("\n");
+                          updateCornerField(cornerId, "subtitle", address);
+                        }}
+                      >
+                        İşletme adresini buraya doldur
+                      </Button>
+                    </div>
+                    <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                      <span>Marka logosunu bu köşede göster</span>
+                      <input
+                        type="checkbox"
+                        checked={corner.showLogo}
+                        onChange={(event) =>
+                          updateCornerField(
+                            cornerId,
+                            "showLogo",
+                            event.target.checked
+                          )
+                        }
+                        className="size-4 accent-sky-400"
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                      <span>
+                        Konum ikonu + alt başlığı Google Maps’e bağla
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={corner.linkMaps}
+                        onChange={(event) =>
+                          updateCornerField(
+                            cornerId,
+                            "linkMaps",
+                            event.target.checked
+                          )
+                        }
+                        className="size-4 accent-sky-400"
+                      />
+                    </label>
+                    <p className="text-[11px] text-sky-100/45">
+                      Konum ikonu adresin üstünde ayrı durur; adres metni hemen
+                      altında çıkar.
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
             {venueMessage ? (
               <p className="text-sm text-sky-200">{venueMessage}</p>
             ) : null}
@@ -1401,17 +1398,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1.5 sm:col-span-2">
-                <Label htmlFor="brand-subtitle">Alt başlık</Label>
-                <Input
-                  id="brand-subtitle"
-                  value={venueForm.brandSubtitle}
-                  onChange={(event) =>
-                    updateVenueField("brandSubtitle", event.target.value)
-                  }
-                  className="h-10 bg-white/5 text-white"
-                />
-              </div>
               <div className="grid gap-1.5">
                 <Label htmlFor="address-1">Adres satırı 1</Label>
                 <Input
@@ -1506,10 +1492,33 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="footer-brand-name">Footer marka adı</Label>
+              <Input
+                id="footer-brand-name"
+                value={venueForm.brandName}
+                onChange={(event) =>
+                  updateVenueField("brandName", event.target.value)
+                }
+                placeholder="Sayfa en altında ayrı blok olarak görünür"
+                className="h-10 bg-white/5 text-white"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="footer-brand-subtitle">Footer alt yazı</Label>
+              <Input
+                id="footer-brand-subtitle"
+                value={venueForm.brandSubtitle}
+                onChange={(event) =>
+                  updateVenueField("brandSubtitle", event.target.value)
+                }
+                placeholder="Markanın altında kısa açıklama (isteğe bağlı)"
+                className="h-10 bg-white/5 text-white"
+              />
+            </div>
             <p className="rounded-xl bg-white/5 px-3 py-2 text-xs text-sky-100/60 ring-1 ring-white/10">
-              Footer’daki marka adı Kapak kartındaki marka adından gelir.
-              Telefon / WhatsApp / Instagram / konum ikonları İşletme & iletişim
-              kartından gelir.
+              İletişim ikonları İşletme & iletişim kartından gelir. Saatler
+              başlığı listenin üstünde tam genişlikte durur.
             </p>
 
             <div className="space-y-2">

@@ -334,50 +334,67 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         </main>
 
         <footer className="mt-2 border-t border-slate-200 py-10">
-          <div className="grid gap-8 sm:grid-cols-2">
-            <div>
-              {venue.brandName ? (
+          <div className="space-y-8">
+            {venue.brandName ? (
+              <div className="border-b border-slate-200/80 pb-6">
                 <p className="font-heading text-2xl text-slate-900">
                   {venue.brandName}
                 </p>
-              ) : null}
-              <div className={cn("flex flex-wrap gap-2", venue.brandName ? "mt-4" : "")}>
-                {tel ? (
-                  <ContactIcon href={tel} label={t.phone}>
-                    <Phone className="size-4" />
-                  </ContactIcon>
-                ) : null}
-                {wa ? (
-                  <ContactIcon href={wa} label="WhatsApp">
-                    <MessageCircle className="size-4" />
-                  </ContactIcon>
-                ) : null}
-                {ig ? (
-                  <ContactIcon href={ig} label="Instagram">
-                    <InstagramGlyph />
-                  </ContactIcon>
-                ) : null}
-                {maps ? (
-                  <ContactIcon href={maps} label={t.location}>
-                    <MapPin className="size-4" />
-                  </ContactIcon>
+                {venue.brandSubtitle ? (
+                  <p className="mt-1 text-sm text-slate-500">
+                    {venue.brandSubtitle}
+                  </p>
                 ) : null}
               </div>
-            </div>
-            <div>
-              <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
-                {t.hours}
-              </p>
-              <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
-                {venue.hours.map((row) => (
-                  <li key={row.id} className="flex justify-between gap-4">
-                    <span>{translateHourLabel(locale, row.label)}</span>
-                    <span className="text-slate-800">
-                      {translateHourValue(locale, row.value)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+            ) : null}
+
+            <div className="grid gap-8 sm:grid-cols-2">
+              <div>
+                <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
+                  İletişim
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {tel ? (
+                    <ContactIcon href={tel} label={t.phone}>
+                      <Phone className="size-4" />
+                    </ContactIcon>
+                  ) : null}
+                  {wa ? (
+                    <ContactIcon href={wa} label="WhatsApp">
+                      <MessageCircle className="size-4" />
+                    </ContactIcon>
+                  ) : null}
+                  {ig ? (
+                    <ContactIcon href={ig} label="Instagram">
+                      <InstagramGlyph />
+                    </ContactIcon>
+                  ) : null}
+                  {maps ? (
+                    <ContactIcon href={maps} label={t.location}>
+                      <MapPin className="size-4" />
+                    </ContactIcon>
+                  ) : null}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
+                  {t.hours}
+                </p>
+                <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
+                  {venue.hours.map((row) => (
+                    <li
+                      key={row.id}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4"
+                    >
+                      <span>{translateHourLabel(locale, row.label)}</span>
+                      <span className="text-right tabular-nums text-slate-800">
+                        {translateHourValue(locale, row.value)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </footer>
@@ -535,10 +552,22 @@ function HeroCorner({
   const linkMaps = config.linkMaps && Boolean(maps);
   if (!badge && !title && !subtitle && !showLogo) return null;
 
-  const subtitleNode = subtitle ? (
-    <p className="max-w-[16rem] whitespace-pre-line text-xs font-medium leading-snug text-white/95 sm:text-sm">
-      {subtitle}
-    </p>
+  const locationPin = subtitle ? (
+    linkMaps ? (
+      <a
+        href={maps}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Konum"
+        className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-white/95 text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
+      >
+        <MapPin className="size-4" />
+      </a>
+    ) : (
+      <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-white/95 text-[#007AFF] shadow-sm ring-1 ring-white/70">
+        <MapPin className="size-4" />
+      </span>
+    )
   ) : null;
 
   return (
@@ -588,24 +617,39 @@ function HeroCorner({
         )
       ) : null}
 
-      {subtitleNode ? (
-        linkMaps ? (
-          <a
-            href={maps}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex max-w-[16rem] items-start gap-1.5 rounded-2xl bg-white/95 px-2.5 py-1.5 text-left text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
-          >
-            <MapPin className="mt-0.5 size-3.5 shrink-0" />
-            <span className="whitespace-pre-line text-xs font-medium leading-snug sm:text-sm">
-              {subtitle}
-            </span>
-          </a>
-        ) : (
-          <div className="rounded-2xl bg-black/25 px-2.5 py-1.5 backdrop-blur-[2px]">
-            {subtitleNode}
-          </div>
-        )
+      {locationPin || subtitle ? (
+        <div
+          className={cn(
+            "flex w-max max-w-[14.5rem] flex-col gap-1.5",
+            align === "end" ? "items-end" : "items-start"
+          )}
+        >
+          {locationPin}
+          {subtitle ? (
+            linkMaps ? (
+              <a
+                href={maps}
+                target="_blank"
+                rel="noreferrer"
+                className={cn(
+                  "block w-full whitespace-pre-line text-[11px] font-medium leading-5 text-white/95 sm:text-xs",
+                  align === "end" ? "text-right" : "text-left"
+                )}
+              >
+                {subtitle}
+              </a>
+            ) : (
+              <p
+                className={cn(
+                  "w-full whitespace-pre-line text-[11px] font-medium leading-5 text-white/95 sm:text-xs",
+                  align === "end" ? "text-right" : "text-left"
+                )}
+              >
+                {subtitle}
+              </p>
+            )
+          ) : null}
+        </div>
       ) : null}
     </div>
   );

@@ -90,8 +90,8 @@ export function ProductCard({
 
   const baseClass =
     variant === "featured"
-      ? "group overflow-hidden rounded-2xl bg-[#e9ecef] text-left shadow-[0_1px_1px_rgba(40,32,20,0.02),0_3px_10px_rgba(40,32,20,0.045)] ring-1 ring-black/[0.03] transition active:scale-[0.99]"
-      : "group flex w-full items-center gap-3 rounded-2xl bg-[#e9ecef] p-2.5 text-left shadow-[0_1px_2px_rgba(40,32,20,0.03),0_6px_16px_rgba(40,32,20,0.06),0_14px_28px_rgba(40,32,20,0.04)] ring-1 ring-black/[0.04] transition active:scale-[0.99] active:bg-[#dde1e6]";
+      ? "group overflow-hidden rounded-2xl bg-[var(--menu-card-bg,#e9ecef)] text-left shadow-[0_1px_1px_rgba(40,32,20,0.02),0_3px_10px_rgba(40,32,20,0.045)] ring-1 ring-black/[0.03] transition active:scale-[0.99]"
+      : "group flex w-full items-center gap-3 rounded-2xl bg-[var(--menu-card-bg,#e9ecef)] p-2.5 text-left shadow-[0_1px_2px_rgba(40,32,20,0.03),0_6px_16px_rgba(40,32,20,0.06),0_14px_28px_rgba(40,32,20,0.04)] ring-1 ring-black/[0.04] transition active:scale-[0.99] active:brightness-[0.97]";
 
   if (onSelect) {
     return (

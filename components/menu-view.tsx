@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from "react";
 import {
   MapPin,
   MessageCircle,
@@ -31,8 +31,10 @@ import {
   localizedCategoryName,
   localizedProduct,
   phoneHref,
+  type HeroCornerConfig,
   type MenuData,
   type Product,
+  type VenueInfo,
   whatsappHref,
 } from "@/lib/menu";
 import { cn } from "@/lib/utils";
@@ -172,9 +174,21 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const maps = venue.mapsUrl.trim();
   const searching = query.trim().length > 0;
 
+  const corners = venue.heroCorners;
+  const pageBg = venue.pageBackground || "#fdfcfb";
+  const cardColor = venue.productCardColor || "#e9ecef";
+
   return (
-    <div className="relative flex min-h-full flex-1 flex-col">
-      <BalloonField />
+    <div
+      className="relative flex min-h-full flex-1 flex-col"
+      style={
+        {
+          backgroundColor: pageBg,
+          ["--menu-card-bg" as string]: cardColor,
+        } as CSSProperties
+      }
+    >
+      {venue.showBalloons ? <BalloonField /> : null}
 
       <div className="relative z-10 mx-auto w-full max-w-lg px-3 py-4 sm:max-w-5xl sm:px-6 sm:py-5 lg:px-10">
         <header className="relative isolate min-h-[40svh] overflow-hidden rounded-[1.5rem] shadow-[0_4px_10px_rgba(40,32,20,0.06),0_18px_40px_rgba(40,32,20,0.14),0_36px_64px_rgba(40,32,20,0.08)] ring-1 ring-black/5 sm:min-h-[48svh] sm:rounded-[1.75rem]">
@@ -186,54 +200,43 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/15 to-slate-950/5" />
 
-          <div className="relative flex h-full min-h-[40svh] flex-col justify-between p-4 sm:min-h-[48svh] sm:p-7 lg:p-9">
-            <div className="flex justify-end">
-              <div className="rounded-2xl bg-white/95 p-2 shadow-lg ring-1 ring-white/60 backdrop-blur-sm">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/brand/logo-banner.webp"
-                  alt={venue.brandName || "Logo"}
-                  className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
-                  onError={(event) => {
-                    event.currentTarget.style.display = "none";
-                    const fallback = event.currentTarget.nextElementSibling;
-                    if (fallback instanceof HTMLElement) {
-                      fallback.style.display = "block";
-                    }
-                  }}
+          <div className="relative flex h-full min-h-[40svh] flex-col justify-between gap-4 p-4 sm:min-h-[48svh] sm:p-7 lg:p-9">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <HeroCorner
+                  config={corners.topLeft}
+                  venue={venue}
+                  locationLabel={t.location}
+                  align="start"
                 />
-                <BalloonMark
-                  className="hidden h-12 w-9"
-                  title={venue.brandName || "Logo"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <HeroCorner
+                  config={corners.topRight}
+                  venue={venue}
+                  locationLabel={t.location}
+                  align="end"
                 />
               </div>
             </div>
 
             <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0 space-y-2">
-                {venue.statusLabel ? (
-                  <div className="w-fit rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#007AFF] shadow-sm ring-1 ring-white/70">
-                    {venue.statusLabel}
-                  </div>
-                ) : null}
-                {venue.brandName ? (
-                  <h1 className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
-                    {venue.brandName}
-                  </h1>
-                ) : null}
+              <div className="min-w-0 flex-1">
+                <HeroCorner
+                  config={corners.bottomLeft}
+                  venue={venue}
+                  locationLabel={t.location}
+                  align="start"
+                  brandAsTitle
+                />
               </div>
-              <div className="shrink-0 text-right">
-                {maps ? (
-                  <a
-                    href={maps}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
-                  >
-                    <MapPin className="size-3.5" />
-                    {t.location}
-                  </a>
-                ) : null}
+              <div className="min-w-0 flex-1">
+                <HeroCorner
+                  config={corners.bottomRight}
+                  venue={venue}
+                  locationLabel={t.location}
+                  align="end"
+                />
               </div>
             </div>
           </div>
@@ -513,6 +516,88 @@ function EmptyState({ title, body }: { title: string; body: string }) {
     <div className="rounded-[1.5rem] bg-[#fcfbf9] px-6 py-16 text-center shadow-[0_6px_20px_rgba(40,32,20,0.07)] ring-1 ring-black/[0.04]">
       <h2 className="font-heading text-2xl text-slate-900">{title}</h2>
       <p className="mx-auto mt-2 max-w-md text-sm text-slate-500">{body}</p>
+    </div>
+  );
+}
+
+function HeroCorner({
+  config,
+  venue,
+  locationLabel,
+  align,
+  brandAsTitle = false,
+}: {
+  config: HeroCornerConfig;
+  venue: VenueInfo;
+  locationLabel: string;
+  align: "start" | "end";
+  brandAsTitle?: boolean;
+}) {
+  const badge = config.badgeText.trim();
+  const maps = venue.mapsUrl.trim();
+  const showBrand = config.showBrand && Boolean(venue.brandName.trim());
+  const showLogo = config.showLogo;
+  const showLocation = config.showLocation && Boolean(maps);
+  if (!badge && !showBrand && !showLogo && !showLocation) return null;
+
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-2",
+        align === "end" ? "items-end text-right" : "items-start text-left"
+      )}
+    >
+      {showLogo ? (
+        <div className="rounded-2xl bg-white/95 p-2 shadow-lg ring-1 ring-white/60 backdrop-blur-sm">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={venue.logoImage || "/brand/logo-banner.webp"}
+            alt={venue.brandName || "Logo"}
+            className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
+            onError={(event) => {
+              event.currentTarget.style.display = "none";
+              const fallback = event.currentTarget.nextElementSibling;
+              if (fallback instanceof HTMLElement) {
+                fallback.style.display = "block";
+              }
+            }}
+          />
+          <BalloonMark
+            className="hidden h-12 w-9"
+            title={venue.brandName || "Logo"}
+          />
+        </div>
+      ) : null}
+
+      {badge ? (
+        <div className="w-fit rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#007AFF] shadow-sm ring-1 ring-white/70">
+          {badge}
+        </div>
+      ) : null}
+
+      {showBrand ? (
+        brandAsTitle ? (
+          <h1 className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
+            {venue.brandName}
+          </h1>
+        ) : (
+          <p className="font-heading text-xl font-semibold tracking-wide text-white sm:text-2xl">
+            {venue.brandName}
+          </p>
+        )
+      ) : null}
+
+      {showLocation ? (
+        <a
+          href={maps}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
+        >
+          <MapPin className="size-3.5" />
+          {locationLabel}
+        </a>
+      ) : null}
     </div>
   );
 }

@@ -319,7 +319,7 @@
     }
   ],
   "venue": {
-    "brandName": "Mavi Balloon",
+    "brandName": "",
     "brandSubtitle": "Döner, Burger & Sokak Lezzetleri",
     "tagline": "Antakya lezzeti",
     "headline": "Döner & Burger",
@@ -354,10 +354,40 @@
         "label": "Pazar",
         "value": "12:00 - 23:00"
       }
-    ]
+    ],
+    "logoImage": "/brand/logo-banner.webp",
+    "showBalloons": true,
+    "pageBackground": "#fdfcfb",
+    "productCardColor": "#e9ecef",
+    "heroCorners": {
+      "topLeft": {
+        "badgeText": "",
+        "showBrand": false,
+        "showLogo": false,
+        "showLocation": false
+      },
+      "topRight": {
+        "badgeText": "",
+        "showBrand": false,
+        "showLogo": true,
+        "showLocation": false
+      },
+      "bottomLeft": {
+        "badgeText": "Açık · 11:00 - 01:30",
+        "showBrand": true,
+        "showLogo": false,
+        "showLocation": false
+      },
+      "bottomRight": {
+        "badgeText": "",
+        "showBrand": false,
+        "showLogo": false,
+        "showLocation": true
+      }
+    }
   },
   "signature": {
-    "name": "İmza Seçkisi",
+    "name": "Şefin Favorileri",
     "nameEn": "Signature Picks"
   },
   "catalogRevision": 2

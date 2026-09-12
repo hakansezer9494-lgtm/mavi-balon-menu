@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, Download, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Download, Pencil, Plus, Trash2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -43,8 +43,12 @@ import {
   defaultSignature,
   defaultVenue,
   formatPrice,
+  HERO_CORNER_IDS,
+  HERO_CORNER_LABELS,
   newId,
   type Category,
+  type HeroCornerConfig,
+  type HeroCornerId,
   type MenuData,
   type Product,
   type SignatureSection,
@@ -125,6 +129,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   );
   const [editingSignature, setEditingSignature] = useState(false);
   const [venueMessage, setVenueMessage] = useState("");
+  const [openCorner, setOpenCorner] = useState<HeroCornerId | null>("bottomLeft");
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState("");
   const [heroBusy, setHeroBusy] = useState(false);
   const [heroError, setHeroError] = useState("");
   const menuOrigin = useSyncExternalStore(
@@ -518,6 +525,73 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     setVenueMessage("");
   }
 
+
+  function updateCornerField<K extends keyof HeroCornerConfig>(
+    id: HeroCornerId,
+    key: K,
+    value: HeroCornerConfig[K]
+  ) {
+    setVenueForm((current) => {
+      const nextCorners = { ...current.heroCorners };
+      const corner = { ...nextCorners[id], [key]: value };
+
+      if (key === "showLogo" && value === true) {
+        for (const other of HERO_CORNER_IDS) {
+          if (other !== id) {
+            nextCorners[other] = { ...nextCorners[other], showLogo: false };
+          }
+        }
+      }
+      if (key === "showLocation" && value === true) {
+        for (const other of HERO_CORNER_IDS) {
+          if (other !== id) {
+            nextCorners[other] = { ...nextCorners[other], showLocation: false };
+          }
+        }
+      }
+      if (key === "showBrand" && value === true) {
+        for (const other of HERO_CORNER_IDS) {
+          if (other !== id) {
+            nextCorners[other] = { ...nextCorners[other], showBrand: false };
+          }
+        }
+      }
+
+      nextCorners[id] = corner;
+      return {
+        ...current,
+        heroCorners: nextCorners,
+        statusLabel:
+          id === "bottomLeft" && key === "badgeText"
+            ? String(value)
+            : current.statusLabel,
+      };
+    });
+    setVenueMessage("");
+  }
+
+  async function onLogoChange(file: File | undefined) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Lütfen bir logo görseli seçin.");
+      return;
+    }
+    setLogoBusy(true);
+    setLogoError("");
+    try {
+      const logoImage = await compressImage(file, {
+        maxSize: 900,
+        quality: 0.9,
+      });
+      setVenueForm((current) => ({ ...current, logoImage }));
+      setVenueMessage("");
+    } catch {
+      setLogoError("Logo yüklenemedi.");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
   function saveVenue() {
     updateMenu((current) => ({
       ...current,
@@ -535,8 +609,15 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         phone: venueForm.phone.trim(),
         whatsapp: venueForm.whatsapp.trim(),
         instagram: venueForm.instagram.trim(),
-        statusLabel: venueForm.statusLabel.trim(),
+        statusLabel: venueForm.heroCorners.bottomLeft.badgeText.trim(),
         heroImage: venueForm.heroImage.trim() || defaultVenue.heroImage,
+        logoImage: venueForm.logoImage.trim() || defaultVenue.logoImage,
+        showBalloons: Boolean(venueForm.showBalloons),
+        pageBackground:
+          venueForm.pageBackground.trim() || defaultVenue.pageBackground,
+        productCardColor:
+          venueForm.productCardColor.trim() || defaultVenue.productCardColor,
+        heroCorners: venueForm.heroCorners,
         hours: venueForm.hours.map((row) => ({
           ...row,
           label: row.label.trim(),
@@ -995,8 +1076,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">İşletme & iletişim</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Kapak fotoğrafı, açılış saatleri, durum rozeti, telefon, sosyal
-              medya ve Google Maps konum linki.
+              Kapak fotoğrafı, köşe rozetleri, logo, balonlar, renkler, saatler
+              ve iletişim bilgileri.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -1035,31 +1116,215 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1.5">
-                <Label htmlFor="status-label">Durum rozeti (sol alt)</Label>
-                <Input
-                  id="status-label"
-                  value={venueForm.statusLabel}
-                  onChange={(event) =>
-                    updateVenueField("statusLabel", event.target.value)
-                  }
-                  placeholder="Açık · 11:00 - 01:30"
-                  className="h-10 bg-white/5 text-white"
-                />
-              </div>
-              <div className="grid gap-1.5">
-                <Label htmlFor="brand-name">
-                  Marka adı (kapak sol alt — boş bırakılabilir)
-                </Label>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="brand-name">Marka adı (köşelerde gösterilebilir)</Label>
                 <Input
                   id="brand-name"
                   value={venueForm.brandName}
                   onChange={(event) =>
                     updateVenueField("brandName", event.target.value)
                   }
+                  placeholder="Boş bırakılabilir"
                   className="h-10 bg-white/5 text-white"
                 />
               </div>
+
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label>Kapak köşeleri</Label>
+                <p className="text-xs text-sky-100/55">
+                  Her köşeyi açıp rozet, marka adı, logo veya konum ekleyin. Logo ve
+                  konum aynı anda yalnızca bir köşede durur.
+                </p>
+                <div className="space-y-2">
+                  {HERO_CORNER_IDS.map((cornerId) => {
+                    const corner = venueForm.heroCorners[cornerId];
+                    const open = openCorner === cornerId;
+                    return (
+                      <div
+                        key={cornerId}
+                        className="overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10"
+                      >
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"
+                          onClick={() =>
+                            setOpenCorner(open ? null : cornerId)
+                          }
+                        >
+                          <span>{HERO_CORNER_LABELS[cornerId]}</span>
+                          <ChevronDown
+                            className={cn(
+                              "size-4 text-sky-100/70 transition",
+                              open ? "rotate-180" : ""
+                            )}
+                          />
+                        </button>
+                        {open ? (
+                          <div className="space-y-3 border-t border-white/10 px-3 py-3">
+                            <div className="grid gap-1.5">
+                              <Label htmlFor={`badge-${cornerId}`}>
+                                Rozet metni (boş = gizli)
+                              </Label>
+                              <Input
+                                id={`badge-${cornerId}`}
+                                value={corner.badgeText}
+                                onChange={(event) =>
+                                  updateCornerField(
+                                    cornerId,
+                                    "badgeText",
+                                    event.target.value
+                                  )
+                                }
+                                placeholder="Örn. Açık · 11:00 - 01:30"
+                                className="h-10 bg-white/5 text-white"
+                              />
+                            </div>
+                            <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                              <span>Marka adını göster</span>
+                              <input
+                                type="checkbox"
+                                checked={corner.showBrand}
+                                onChange={(event) =>
+                                  updateCornerField(
+                                    cornerId,
+                                    "showBrand",
+                                    event.target.checked
+                                  )
+                                }
+                                className="size-4 accent-sky-400"
+                              />
+                            </label>
+                            <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                              <span>Logoyu burada göster</span>
+                              <input
+                                type="checkbox"
+                                checked={corner.showLogo}
+                                onChange={(event) =>
+                                  updateCornerField(
+                                    cornerId,
+                                    "showLogo",
+                                    event.target.checked
+                                  )
+                                }
+                                className="size-4 accent-sky-400"
+                              />
+                            </label>
+                            <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                              <span>Konum rozetini burada göster</span>
+                              <input
+                                type="checkbox"
+                                checked={corner.showLocation}
+                                onChange={(event) =>
+                                  updateCornerField(
+                                    cornerId,
+                                    "showLocation",
+                                    event.target.checked
+                                  )
+                                }
+                                className="size-4 accent-sky-400"
+                              />
+                            </label>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label htmlFor="logo-photo">Marka logosu</Label>
+                <Input
+                  id="logo-photo"
+                  type="file"
+                  accept="image/*"
+                  className="h-10 bg-white/5 file:text-sky-100"
+                  onChange={(event) => void onLogoChange(event.target.files?.[0])}
+                />
+                {logoBusy ? (
+                  <p className="text-xs text-sky-200">Logo hazırlanıyor…</p>
+                ) : null}
+                {logoError ? (
+                  <p className="text-sm text-red-300">{logoError}</p>
+                ) : null}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={venueForm.logoImage || defaultVenue.logoImage}
+                  alt="Logo önizleme"
+                  className="mt-1 h-16 w-auto max-w-[10rem] rounded-lg bg-white/90 object-contain p-2 ring-1 ring-white/10"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn("w-fit", darkOutline)}
+                  onClick={() =>
+                    updateVenueField("logoImage", defaultVenue.logoImage)
+                  }
+                >
+                  Varsayılan logoya dön
+                </Button>
+              </div>
+
+              <div className="grid gap-1.5 sm:col-span-2 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+                <Label>Görünüm</Label>
+                <label className="mt-1 flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                  <span>Arka plan balonları</span>
+                  <input
+                    type="checkbox"
+                    checked={venueForm.showBalloons}
+                    onChange={(event) =>
+                      updateVenueField("showBalloons", event.target.checked)
+                    }
+                    className="size-4 accent-sky-400"
+                  />
+                </label>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="page-bg">Sayfa arka plan rengi</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="page-bg"
+                        type="color"
+                        value={venueForm.pageBackground || "#fdfcfb"}
+                        onChange={(event) =>
+                          updateVenueField("pageBackground", event.target.value)
+                        }
+                        className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent"
+                      />
+                      <Input
+                        value={venueForm.pageBackground}
+                        onChange={(event) =>
+                          updateVenueField("pageBackground", event.target.value)
+                        }
+                        className="h-10 bg-white/5 text-white"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="card-bg">Ürün kartı rengi</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="card-bg"
+                        type="color"
+                        value={venueForm.productCardColor || "#e9ecef"}
+                        onChange={(event) =>
+                          updateVenueField("productCardColor", event.target.value)
+                        }
+                        className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent"
+                      />
+                      <Input
+                        value={venueForm.productCardColor}
+                        onChange={(event) =>
+                          updateVenueField("productCardColor", event.target.value)
+                        }
+                        className="h-10 bg-white/5 text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid gap-1.5 sm:col-span-2">
                 <Label htmlFor="brand-subtitle">Alt başlık</Label>
                 <Input

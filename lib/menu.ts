@@ -25,6 +25,37 @@ export type HoursRow = {
   value: string;
 };
 
+export type HeroCornerId =
+  | "topLeft"
+  | "topRight"
+  | "bottomLeft"
+  | "bottomRight";
+
+export type HeroCornerConfig = {
+  /** Rozet metni; boşsa rozet gizlenir */
+  badgeText: string;
+  /** Bu köşede marka adını göster */
+  showBrand: boolean;
+  /** Bu köşede marka logosunu göster */
+  showLogo: boolean;
+  /** Bu köşede konum rozetini göster */
+  showLocation: boolean;
+};
+
+export const HERO_CORNER_IDS: HeroCornerId[] = [
+  "topLeft",
+  "topRight",
+  "bottomLeft",
+  "bottomRight",
+];
+
+export const HERO_CORNER_LABELS: Record<HeroCornerId, string> = {
+  topLeft: "Sol üst",
+  topRight: "Sağ üst",
+  bottomLeft: "Sol alt",
+  bottomRight: "Sağ alt",
+};
+
 export type VenueInfo = {
   brandName: string;
   brandSubtitle: string;
@@ -38,8 +69,14 @@ export type VenueInfo = {
   phone: string;
   whatsapp: string;
   instagram: string;
+  /** @deprecated Prefer heroCorners[*].badgeText; kept for older clients */
   statusLabel: string;
   heroImage: string;
+  logoImage: string;
+  showBalloons: boolean;
+  pageBackground: string;
+  productCardColor: string;
+  heroCorners: Record<HeroCornerId, HeroCornerConfig>;
   hours: HoursRow[];
 };
 
@@ -64,6 +101,33 @@ export const MENU_UPDATED_EVENT = "mavi-balon-menu-updated";
 
 const img = (file: string) => `/products/${file}`;
 
+export const defaultHeroCorners: Record<HeroCornerId, HeroCornerConfig> = {
+  topLeft: {
+    badgeText: "",
+    showBrand: false,
+    showLogo: false,
+    showLocation: false,
+  },
+  topRight: {
+    badgeText: "",
+    showBrand: false,
+    showLogo: true,
+    showLocation: false,
+  },
+  bottomLeft: {
+    badgeText: "Açık · 11:00 - 01:30",
+    showBrand: true,
+    showLogo: false,
+    showLocation: false,
+  },
+  bottomRight: {
+    badgeText: "",
+    showBrand: false,
+    showLogo: false,
+    showLocation: true,
+  },
+};
+
 export const defaultVenue: VenueInfo = {
   brandName: "Mavi Balloon",
   brandSubtitle: "Döner, Burger & Sokak Lezzetleri",
@@ -79,6 +143,11 @@ export const defaultVenue: VenueInfo = {
   instagram: "https://instagram.com/maviballoon",
   statusLabel: "Açık · 11:00 - 01:30",
   heroImage: "/brand/hero.webp",
+  logoImage: "/brand/logo-banner.webp",
+  showBalloons: true,
+  pageBackground: "#fdfcfb",
+  productCardColor: "#e9ecef",
+  heroCorners: structuredClone(defaultHeroCorners),
   hours: [
     { id: "mon", label: "Pazartesi", value: "Kapalı" },
     { id: "tue-thu", label: "Salı – Perşembe", value: "11:00 - 23:30" },
@@ -451,6 +520,35 @@ export function isMenuData(value: unknown): value is MenuData {
   return isVenueInfo(data.venue);
 }
 
+export function normalizeHeroCorners(
+  corners?: Partial<Record<HeroCornerId, Partial<HeroCornerConfig>>> | null,
+  legacyStatusLabel = ""
+): Record<HeroCornerId, HeroCornerConfig> {
+  const hasSaved =
+    corners != null &&
+    typeof corners === "object" &&
+    HERO_CORNER_IDS.some((id) => corners[id] != null);
+
+  if (!hasSaved) {
+    const migrated = structuredClone(defaultHeroCorners);
+    const legacy = legacyStatusLabel.trim();
+    if (legacy) migrated.bottomLeft.badgeText = legacy;
+    return migrated;
+  }
+
+  const result = {} as Record<HeroCornerId, HeroCornerConfig>;
+  for (const id of HERO_CORNER_IDS) {
+    const row = corners?.[id];
+    result[id] = {
+      badgeText: String(row?.badgeText ?? "").trim(),
+      showBrand: Boolean(row?.showBrand),
+      showLogo: Boolean(row?.showLogo),
+      showLocation: Boolean(row?.showLocation),
+    };
+  }
+  return result;
+}
+
 export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
   const base = { ...defaultVenue, ...(venue ?? {}) };
   const hours =
@@ -463,6 +561,22 @@ export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
             value: row.value.trim(),
           }))
       : defaultVenue.hours;
+
+  const savedCorners =
+    venue && "heroCorners" in venue ? venue.heroCorners : undefined;
+  const heroCorners = normalizeHeroCorners(
+    savedCorners,
+    String(venue?.statusLabel ?? "")
+  );
+  const statusLabel =
+    heroCorners.bottomLeft.badgeText ||
+    String(base.statusLabel ?? "").trim();
+
+  const showBalloons =
+    typeof venue?.showBalloons === "boolean"
+      ? venue.showBalloons
+      : defaultVenue.showBalloons;
+
   return {
     brandName: String(base.brandName ?? "").trim(),
     brandSubtitle: String(base.brandSubtitle ?? "").trim(),
@@ -476,10 +590,21 @@ export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
     phone: String(base.phone ?? "").trim(),
     whatsapp: String(base.whatsapp ?? "").trim(),
     instagram: String(base.instagram ?? "").trim(),
-    statusLabel: String(base.statusLabel ?? "").trim(),
+    statusLabel,
     heroImage:
       String(base.heroImage ?? defaultVenue.heroImage).trim() ||
       defaultVenue.heroImage,
+    logoImage:
+      String(base.logoImage ?? defaultVenue.logoImage).trim() ||
+      defaultVenue.logoImage,
+    showBalloons,
+    pageBackground:
+      String(base.pageBackground ?? defaultVenue.pageBackground).trim() ||
+      defaultVenue.pageBackground,
+    productCardColor:
+      String(base.productCardColor ?? defaultVenue.productCardColor).trim() ||
+      defaultVenue.productCardColor,
+    heroCorners,
     hours,
   };
 }

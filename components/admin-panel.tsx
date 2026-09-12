@@ -45,10 +45,12 @@ import {
   formatPrice,
   HERO_CORNER_IDS,
   HERO_CORNER_LABELS,
+  HERO_TEXT_SIZE_OPTIONS,
   newId,
   type Category,
   type HeroCornerConfig,
   type HeroCornerId,
+  type HeroTextStyle,
   type MenuData,
   type Product,
   type SignatureSection,
@@ -528,6 +530,17 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   }
 
 
+  function cloneCorner(corner: HeroCornerConfig): HeroCornerConfig {
+    return {
+      ...corner,
+      badgeStyle: { ...corner.badgeStyle },
+      titleStyle: { ...corner.titleStyle },
+      subtitleStyle: { ...corner.subtitleStyle },
+      descriptionStyle: { ...corner.descriptionStyle },
+      addressStyle: { ...corner.addressStyle },
+    };
+  }
+
   function updateCornerField<K extends keyof HeroCornerConfig>(
     id: HeroCornerId,
     key: K,
@@ -536,10 +549,10 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     setVenueForm((current) => {
       // Deep-clone every corner so the four regions never share references.
       const nextCorners = {
-        topLeft: { ...current.heroCorners.topLeft },
-        topRight: { ...current.heroCorners.topRight },
-        bottomLeft: { ...current.heroCorners.bottomLeft },
-        bottomRight: { ...current.heroCorners.bottomRight },
+        topLeft: cloneCorner(current.heroCorners.topLeft),
+        topRight: cloneCorner(current.heroCorners.topRight),
+        bottomLeft: cloneCorner(current.heroCorners.bottomLeft),
+        bottomRight: cloneCorner(current.heroCorners.bottomRight),
       };
       nextCorners[id] = { ...nextCorners[id], [key]: value };
 
@@ -558,6 +571,32 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             ? String(value)
             : current.statusLabel,
       };
+    });
+    setVenueMessage("");
+  }
+
+  function updateCornerTextStyle(
+    id: HeroCornerId,
+    styleKey:
+      | "badgeStyle"
+      | "titleStyle"
+      | "subtitleStyle"
+      | "descriptionStyle"
+      | "addressStyle",
+    patch: Partial<HeroTextStyle>
+  ) {
+    setVenueForm((current) => {
+      const nextCorners = {
+        topLeft: cloneCorner(current.heroCorners.topLeft),
+        topRight: cloneCorner(current.heroCorners.topRight),
+        bottomLeft: cloneCorner(current.heroCorners.bottomLeft),
+        bottomRight: cloneCorner(current.heroCorners.bottomRight),
+      };
+      nextCorners[id] = {
+        ...nextCorners[id],
+        [styleKey]: { ...nextCorners[id][styleKey], ...patch },
+      };
+      return { ...current, heroCorners: nextCorners };
     });
     setVenueMessage("");
   }
@@ -1302,73 +1341,79 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     <p className="text-xs font-medium tracking-wide text-sky-200/80 uppercase">
                       {HERO_CORNER_LABELS[cornerId]} özelleştirme
                     </p>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor={`badge-${cornerId}`}>
-                        Rozet (isteğe bağlı)
-                      </Label>
-                      <Input
-                        id={`badge-${cornerId}`}
-                        value={corner.badgeText}
-                        onChange={(event) =>
-                          updateCornerField(
-                            cornerId,
-                            "badgeText",
-                            event.target.value
-                          )
-                        }
-                        placeholder="Örn. Açık · 11:00 - 01:30"
-                        className="h-10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor={`title-${cornerId}`}>Başlık</Label>
-                      <Input
-                        id={`title-${cornerId}`}
-                        value={corner.title}
-                        onChange={(event) =>
-                          updateCornerField(
-                            cornerId,
-                            "title",
-                            event.target.value
-                          )
-                        }
-                        placeholder="Bu köşeye özel başlık"
-                        className="h-10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor={`subtitle-${cornerId}`}>Alt başlık</Label>
-                      <Input
-                        id={`subtitle-${cornerId}`}
-                        value={corner.subtitle}
-                        onChange={(event) =>
-                          updateCornerField(
-                            cornerId,
-                            "subtitle",
-                            event.target.value
-                          )
-                        }
-                        placeholder="Slogan veya kısa açıklama"
-                        className="h-10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor={`address-${cornerId}`}>Adres metni</Label>
-                      <textarea
+                    <CornerTextField
+                      id={`badge-${cornerId}`}
+                      label="Rozet (isteğe bağlı)"
+                      value={corner.badgeText}
+                      placeholder="Örn. Açık · 11:00 - 01:30"
+                      style={corner.badgeStyle}
+                      onValueChange={(value) =>
+                        updateCornerField(cornerId, "badgeText", value)
+                      }
+                      onStyleChange={(patch) =>
+                        updateCornerTextStyle(cornerId, "badgeStyle", patch)
+                      }
+                    />
+                    <CornerTextField
+                      id={`title-${cornerId}`}
+                      label="Başlık"
+                      value={corner.title}
+                      placeholder="Bu köşeye özel başlık"
+                      style={corner.titleStyle}
+                      onValueChange={(value) =>
+                        updateCornerField(cornerId, "title", value)
+                      }
+                      onStyleChange={(patch) =>
+                        updateCornerTextStyle(cornerId, "titleStyle", patch)
+                      }
+                    />
+                    <CornerTextField
+                      id={`subtitle-${cornerId}`}
+                      label="Alt başlık"
+                      value={corner.subtitle}
+                      placeholder="Slogan"
+                      style={corner.subtitleStyle}
+                      onValueChange={(value) =>
+                        updateCornerField(cornerId, "subtitle", value)
+                      }
+                      onStyleChange={(patch) =>
+                        updateCornerTextStyle(cornerId, "subtitleStyle", patch)
+                      }
+                    />
+                    <CornerTextField
+                      id={`description-${cornerId}`}
+                      label="Açıklama"
+                      value={corner.description}
+                      placeholder="Alt başlığın altında kısa açıklama"
+                      multiline
+                      style={corner.descriptionStyle}
+                      onValueChange={(value) =>
+                        updateCornerField(cornerId, "description", value)
+                      }
+                      onStyleChange={(patch) =>
+                        updateCornerTextStyle(
+                          cornerId,
+                          "descriptionStyle",
+                          patch
+                        )
+                      }
+                    />
+                    <div className="space-y-1.5">
+                      <CornerTextField
                         id={`address-${cornerId}`}
+                        label="Adres metni"
                         value={corner.addressText}
-                        onChange={(event) =>
-                          updateCornerField(
-                            cornerId,
-                            "addressText",
-                            event.target.value
-                          )
-                        }
                         placeholder={
                           "Örn. Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy"
                         }
-                        rows={3}
-                        className="min-h-[4.5rem] w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-sky-100/35 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
+                        multiline
+                        style={corner.addressStyle}
+                        onValueChange={(value) =>
+                          updateCornerField(cornerId, "addressText", value)
+                        }
+                        onStyleChange={(patch) =>
+                          updateCornerTextStyle(cornerId, "addressStyle", patch)
+                        }
                       />
                       <Button
                         type="button"
@@ -1464,8 +1509,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       />
                     </label>
                     <p className="text-[11px] text-sky-100/45">
-                      Alt başlık ile adres ayrıdır. Logo bu köşeye özeldir; her
-                      köşeye farklı görsel yükleyebilirsiniz.
+                      Her yazı kutusunun sağından punto ve renk seçebilirsiniz.
+                      Logo bu köşeye özeldir.
                     </p>
                   </div>
                 );
@@ -1985,6 +2030,77 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+function CornerTextField({
+  id,
+  label,
+  value,
+  placeholder,
+  style,
+  multiline = false,
+  onValueChange,
+  onStyleChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  placeholder?: string;
+  style: HeroTextStyle;
+  multiline?: boolean;
+  onValueChange: (value: string) => void;
+  onStyleChange: (patch: Partial<HeroTextStyle>) => void;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-start gap-2">
+        {multiline ? (
+          <textarea
+            id={id}
+            value={value}
+            onChange={(event) => onValueChange(event.target.value)}
+            placeholder={placeholder}
+            rows={3}
+            className="min-h-[4.5rem] min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-sky-100/35 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
+          />
+        ) : (
+          <Input
+            id={id}
+            value={value}
+            onChange={(event) => onValueChange(event.target.value)}
+            placeholder={placeholder}
+            className="h-10 min-w-0 flex-1 bg-white/5 text-white"
+          />
+        )}
+        <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
+          <select
+            aria-label={`${label} yazı boyutu`}
+            value={style.size}
+            onChange={(event) =>
+              onStyleChange({
+                size: event.target.value as HeroTextStyle["size"],
+              })
+            }
+            className="h-10 rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-sky-400/50"
+          >
+            {HERO_TEXT_SIZE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value} className="bg-slate-900">
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="color"
+            aria-label={`${label} yazı rengi`}
+            value={style.color || "#ffffff"}
+            onChange={(event) => onStyleChange({ color: event.target.value })}
+            className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 bg-transparent p-1"
+          />
+        </div>
+      </div>
     </div>
   );
 }

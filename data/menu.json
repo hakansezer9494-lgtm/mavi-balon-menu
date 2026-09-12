@@ -367,7 +367,28 @@
         "showLogo": false,
         "linkMaps": false,
         "addressText": "",
-        "logoImage": ""
+        "logoImage": "",
+        "description": "",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "titleStyle": {
+          "size": "2xl",
+          "color": "#ffffff"
+        },
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        }
       },
       "topRight": {
         "badgeText": "",
@@ -376,7 +397,28 @@
         "showLogo": true,
         "linkMaps": false,
         "addressText": "",
-        "logoImage": ""
+        "logoImage": "",
+        "description": "",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "titleStyle": {
+          "size": "xl",
+          "color": "#ffffff"
+        },
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        }
       },
       "bottomLeft": {
         "badgeText": "Açık · 11:00 - 01:30",
@@ -385,7 +427,28 @@
         "showLogo": false,
         "linkMaps": false,
         "addressText": "",
-        "logoImage": ""
+        "logoImage": "",
+        "description": "",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "titleStyle": {
+          "size": "3xl",
+          "color": "#ffffff"
+        },
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        }
       },
       "bottomRight": {
         "badgeText": "",
@@ -394,7 +457,28 @@
         "showLogo": false,
         "linkMaps": true,
         "addressText": "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
-        "logoImage": ""
+        "logoImage": "",
+        "description": "",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "titleStyle": {
+          "size": "2xl",
+          "color": "#ffffff"
+        },
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        }
       }
     }
   },

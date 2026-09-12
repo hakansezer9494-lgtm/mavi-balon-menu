@@ -27,6 +27,7 @@ import {
 } from "@/lib/i18n";
 import {
   formatPrice,
+  HERO_TEXT_SIZE_CLASS,
   instagramHref,
   localizedCategoryName,
   localizedProduct,
@@ -544,13 +545,15 @@ function HeroCorner({
   const badge = config.badgeText.trim();
   const title = config.title.trim();
   const subtitle = config.subtitle.trim();
+  const description = config.description.trim();
   const address = config.addressText.trim();
   const cornerLogo = config.logoImage.trim();
   const logoSrc = cornerLogo || (config.showLogo ? venue.logoImage.trim() : "");
   const showLogo = Boolean(logoSrc);
   const maps = venue.mapsUrl.trim();
   const linkMaps = config.linkMaps && Boolean(maps);
-  if (!badge && !title && !subtitle && !address && !showLogo) return null;
+  if (!badge && !title && !subtitle && !description && !address && !showLogo)
+    return null;
 
   const locationPin = address ? (
     linkMaps ? (
@@ -600,18 +603,36 @@ function HeroCorner({
       ) : null}
 
       {badge ? (
-        <div className="w-fit rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-[#007AFF] shadow-sm ring-1 ring-white/70">
+        <div
+          className={cn(
+            "w-fit rounded-full bg-white/95 px-3 py-1.5 font-semibold shadow-sm ring-1 ring-white/70",
+            HERO_TEXT_SIZE_CLASS[config.badgeStyle.size]
+          )}
+          style={{ color: config.badgeStyle.color }}
+        >
           {badge}
         </div>
       ) : null}
 
       {title ? (
         titleAsHeading ? (
-          <h1 className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
+          <h1
+            className={cn(
+              "font-heading font-semibold tracking-wide",
+              HERO_TEXT_SIZE_CLASS[config.titleStyle.size]
+            )}
+            style={{ color: config.titleStyle.color }}
+          >
             {title}
           </h1>
         ) : (
-          <p className="font-heading text-xl font-semibold tracking-wide text-white sm:text-2xl">
+          <p
+            className={cn(
+              "font-heading font-semibold tracking-wide",
+              HERO_TEXT_SIZE_CLASS[config.titleStyle.size]
+            )}
+            style={{ color: config.titleStyle.color }}
+          >
             {title}
           </p>
         )
@@ -620,11 +641,26 @@ function HeroCorner({
       {subtitle ? (
         <p
           className={cn(
-            "max-w-[14.5rem] text-[11px] font-medium leading-5 text-white/90 sm:text-xs",
+            "max-w-[14.5rem] font-medium",
+            HERO_TEXT_SIZE_CLASS[config.subtitleStyle.size],
             align === "end" ? "text-right" : "text-left"
           )}
+          style={{ color: config.subtitleStyle.color }}
         >
           {subtitle}
+        </p>
+      ) : null}
+
+      {description ? (
+        <p
+          className={cn(
+            "max-w-[14.5rem] whitespace-pre-line font-medium",
+            HERO_TEXT_SIZE_CLASS[config.descriptionStyle.size],
+            align === "end" ? "text-right" : "text-left"
+          )}
+          style={{ color: config.descriptionStyle.color }}
+        >
+          {description}
         </p>
       ) : null}
 
@@ -643,18 +679,22 @@ function HeroCorner({
                 target="_blank"
                 rel="noreferrer"
                 className={cn(
-                  "block w-full whitespace-pre-line text-[11px] font-medium leading-5 text-white/95 sm:text-xs",
+                  "block w-full whitespace-pre-line font-medium",
+                  HERO_TEXT_SIZE_CLASS[config.addressStyle.size],
                   align === "end" ? "text-right" : "text-left"
                 )}
+                style={{ color: config.addressStyle.color }}
               >
                 {address}
               </a>
             ) : (
               <p
                 className={cn(
-                  "w-full whitespace-pre-line text-[11px] font-medium leading-5 text-white/95 sm:text-xs",
+                  "w-full whitespace-pre-line font-medium",
+                  HERO_TEXT_SIZE_CLASS[config.addressStyle.size],
                   align === "end" ? "text-right" : "text-left"
                 )}
+                style={{ color: config.addressStyle.color }}
               >
                 {address}
               </p>

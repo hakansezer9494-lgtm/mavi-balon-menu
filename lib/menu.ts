@@ -31,15 +31,82 @@ export type HeroCornerId =
   | "bottomLeft"
   | "bottomRight";
 
+export type HeroTextSize =
+  | "xs"
+  | "sm"
+  | "base"
+  | "lg"
+  | "xl"
+  | "2xl"
+  | "3xl";
+
+export type HeroTextStyle = {
+  size: HeroTextSize;
+  color: string;
+};
+
+export const HERO_TEXT_SIZE_OPTIONS: { value: HeroTextSize; label: string }[] = [
+  { value: "xs", label: "XS" },
+  { value: "sm", label: "S" },
+  { value: "base", label: "M" },
+  { value: "lg", label: "L" },
+  { value: "xl", label: "XL" },
+  { value: "2xl", label: "2XL" },
+  { value: "3xl", label: "3XL" },
+];
+
+export const HERO_TEXT_SIZE_CLASS: Record<HeroTextSize, string> = {
+  xs: "text-[11px] leading-4 sm:text-xs",
+  sm: "text-xs leading-5 sm:text-sm",
+  base: "text-sm leading-5 sm:text-base",
+  lg: "text-base leading-6 sm:text-lg",
+  xl: "text-xl leading-7 sm:text-2xl",
+  "2xl": "text-2xl leading-8 sm:text-3xl",
+  "3xl": "text-3xl leading-9 sm:text-4xl",
+};
+
+export function defaultHeroTextStyle(
+  size: HeroTextSize,
+  color: string
+): HeroTextStyle {
+  return { size, color };
+}
+
+export function normalizeHeroTextStyle(
+  style: Partial<HeroTextStyle> | null | undefined,
+  fallback: HeroTextStyle
+): HeroTextStyle {
+  const size = style?.size;
+  const validSize =
+    size === "xs" ||
+    size === "sm" ||
+    size === "base" ||
+    size === "lg" ||
+    size === "xl" ||
+    size === "2xl" ||
+    size === "3xl"
+      ? size
+      : fallback.size;
+  const color = String(style?.color ?? fallback.color).trim() || fallback.color;
+  return { size: validSize, color };
+}
+
 export type HeroCornerConfig = {
   /** Opsiyonel rozet; boşsa gizlenir */
   badgeText: string;
+  badgeStyle: HeroTextStyle;
   /** Bu köşeye özel başlık */
   title: string;
+  titleStyle: HeroTextStyle;
   /** Bu köşeye özel alt başlık (slogan vb.) */
   subtitle: string;
+  subtitleStyle: HeroTextStyle;
+  /** Alt başlığın altında açıklama */
+  description: string;
+  descriptionStyle: HeroTextStyle;
   /** Bu köşeye özel adres metni */
   addressText: string;
+  addressStyle: HeroTextStyle;
   /** Bu köşeye özel logo (boşsa ve showLogo açıksa genel marka logosu) */
   logoImage: string;
   /** Bu köşede logo göster */
@@ -107,42 +174,60 @@ export const MENU_UPDATED_EVENT = "mavi-balon-menu-updated";
 
 const img = (file: string) => `/products/${file}`;
 
+const emptyCornerStyles = {
+  badgeStyle: defaultHeroTextStyle("sm", "#007AFF"),
+  titleStyle: defaultHeroTextStyle("2xl", "#ffffff"),
+  subtitleStyle: defaultHeroTextStyle("sm", "#ffffff"),
+  descriptionStyle: defaultHeroTextStyle("xs", "#ffffff"),
+  addressStyle: defaultHeroTextStyle("xs", "#ffffff"),
+};
+
 export const defaultHeroCorners: Record<HeroCornerId, HeroCornerConfig> = {
   topLeft: {
     badgeText: "",
     title: "",
     subtitle: "",
+    description: "",
     addressText: "",
     logoImage: "",
     showLogo: false,
     linkMaps: false,
+    ...emptyCornerStyles,
   },
   topRight: {
     badgeText: "",
     title: "",
     subtitle: "",
+    description: "",
     addressText: "",
     logoImage: "",
     showLogo: true,
     linkMaps: false,
+    ...emptyCornerStyles,
+    titleStyle: defaultHeroTextStyle("xl", "#ffffff"),
   },
   bottomLeft: {
     badgeText: "Açık · 11:00 - 01:30",
     title: "Mavi Balloon",
     subtitle: "",
+    description: "",
     addressText: "",
     logoImage: "",
     showLogo: false,
     linkMaps: false,
+    ...emptyCornerStyles,
+    titleStyle: defaultHeroTextStyle("3xl", "#ffffff"),
   },
   bottomRight: {
     badgeText: "",
     title: "",
     subtitle: "",
+    description: "",
     addressText: "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
     logoImage: "",
     showLogo: false,
     linkMaps: true,
+    ...emptyCornerStyles,
   },
 };
 
@@ -589,11 +674,27 @@ export function normalizeHeroCorners(
     } else if (!address && row.showLocation) {
       address = legacyAddress.trim();
     }
+    const fallback = defaultHeroCorners[id];
     result[id] = {
       badgeText: String(row.badgeText ?? "").trim(),
+      badgeStyle: normalizeHeroTextStyle(row.badgeStyle, fallback.badgeStyle),
       title: String(row.title ?? titleFromLegacyBrand).trim(),
+      titleStyle: normalizeHeroTextStyle(row.titleStyle, fallback.titleStyle),
       subtitle,
+      subtitleStyle: normalizeHeroTextStyle(
+        row.subtitleStyle,
+        fallback.subtitleStyle
+      ),
+      description: String(row.description ?? "").trim(),
+      descriptionStyle: normalizeHeroTextStyle(
+        row.descriptionStyle,
+        fallback.descriptionStyle
+      ),
       addressText: address,
+      addressStyle: normalizeHeroTextStyle(
+        row.addressStyle,
+        fallback.addressStyle
+      ),
       logoImage: String(row.logoImage ?? "").trim(),
       showLogo: Boolean(row.showLogo),
       linkMaps,

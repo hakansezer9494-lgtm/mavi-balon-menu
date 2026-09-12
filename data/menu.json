@@ -365,28 +365,36 @@
         "title": "",
         "subtitle": "",
         "showLogo": false,
-        "linkMaps": false
+        "linkMaps": false,
+        "addressText": "",
+        "logoImage": ""
       },
       "topRight": {
         "badgeText": "",
         "title": "",
         "subtitle": "",
         "showLogo": true,
-        "linkMaps": false
+        "linkMaps": false,
+        "addressText": "",
+        "logoImage": ""
       },
       "bottomLeft": {
         "badgeText": "Açık · 11:00 - 01:30",
         "title": "Mavi Balloon",
         "subtitle": "",
         "showLogo": false,
-        "linkMaps": false
+        "linkMaps": false,
+        "addressText": "",
+        "logoImage": ""
       },
       "bottomRight": {
         "badgeText": "",
         "title": "",
-        "subtitle": "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
+        "subtitle": "",
         "showLogo": false,
-        "linkMaps": true
+        "linkMaps": true,
+        "addressText": "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
+        "logoImage": ""
       }
     }
   },

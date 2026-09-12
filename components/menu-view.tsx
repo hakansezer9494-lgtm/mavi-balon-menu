@@ -544,12 +544,15 @@ function HeroCorner({
   const badge = config.badgeText.trim();
   const title = config.title.trim();
   const subtitle = config.subtitle.trim();
-  const showLogo = config.showLogo;
+  const address = config.addressText.trim();
+  const cornerLogo = config.logoImage.trim();
+  const logoSrc = cornerLogo || (config.showLogo ? venue.logoImage.trim() : "");
+  const showLogo = Boolean(logoSrc);
   const maps = venue.mapsUrl.trim();
   const linkMaps = config.linkMaps && Boolean(maps);
-  if (!badge && !title && !subtitle && !showLogo) return null;
+  if (!badge && !title && !subtitle && !address && !showLogo) return null;
 
-  const locationPin = subtitle ? (
+  const locationPin = address ? (
     linkMaps ? (
       <a
         href={maps}
@@ -578,7 +581,7 @@ function HeroCorner({
         <div className="rounded-2xl bg-white/95 p-2 shadow-lg ring-1 ring-white/60 backdrop-blur-sm">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={venue.logoImage || "/brand/logo-banner.webp"}
+            src={logoSrc || "/brand/logo-banner.webp"}
             alt={title || venue.brandName || "Logo"}
             className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
             onError={(event) => {
@@ -614,7 +617,18 @@ function HeroCorner({
         )
       ) : null}
 
-      {locationPin || subtitle ? (
+      {subtitle ? (
+        <p
+          className={cn(
+            "max-w-[14.5rem] text-[11px] font-medium leading-5 text-white/90 sm:text-xs",
+            align === "end" ? "text-right" : "text-left"
+          )}
+        >
+          {subtitle}
+        </p>
+      ) : null}
+
+      {locationPin || address ? (
         <div
           className={cn(
             "flex w-max max-w-[14.5rem] flex-col gap-1.5",
@@ -622,7 +636,7 @@ function HeroCorner({
           )}
         >
           {locationPin}
-          {subtitle ? (
+          {address ? (
             linkMaps ? (
               <a
                 href={maps}
@@ -633,7 +647,7 @@ function HeroCorner({
                   align === "end" ? "text-right" : "text-left"
                 )}
               >
-                {subtitle}
+                {address}
               </a>
             ) : (
               <p
@@ -642,7 +656,7 @@ function HeroCorner({
                   align === "end" ? "text-right" : "text-left"
                 )}
               >
-                {subtitle}
+                {address}
               </p>
             )
           ) : null}

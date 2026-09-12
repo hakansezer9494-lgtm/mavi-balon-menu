@@ -584,6 +584,44 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     }
   }
 
+  async function onCornerLogoChange(
+    cornerId: HeroCornerId,
+    file: File | undefined
+  ) {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Lütfen bir logo görseli seçin.");
+      return;
+    }
+    setLogoBusy(true);
+    setLogoError("");
+    try {
+      const logoImage = await compressImage(file, {
+        maxSize: 900,
+        quality: 0.9,
+      });
+      setVenueForm((current) => {
+        const nextCorners = {
+          topLeft: { ...current.heroCorners.topLeft },
+          topRight: { ...current.heroCorners.topRight },
+          bottomLeft: { ...current.heroCorners.bottomLeft },
+          bottomRight: { ...current.heroCorners.bottomRight },
+        };
+        nextCorners[cornerId] = {
+          ...nextCorners[cornerId],
+          logoImage,
+          showLogo: true,
+        };
+        return { ...current, heroCorners: nextCorners };
+      });
+      setVenueMessage("");
+    } catch {
+      setLogoError("Köşe logosu yüklenemedi.");
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
   function saveVenue() {
     updateMenu((current) => ({
       ...current,
@@ -1299,16 +1337,30 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       />
                     </div>
                     <div className="grid gap-1.5">
-                      <Label htmlFor={`subtitle-${cornerId}`}>
-                        Alt başlık / adres metni
-                      </Label>
-                      <textarea
+                      <Label htmlFor={`subtitle-${cornerId}`}>Alt başlık</Label>
+                      <Input
                         id={`subtitle-${cornerId}`}
                         value={corner.subtitle}
                         onChange={(event) =>
                           updateCornerField(
                             cornerId,
                             "subtitle",
+                            event.target.value
+                          )
+                        }
+                        placeholder="Slogan veya kısa açıklama"
+                        className="h-10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`address-${cornerId}`}>Adres metni</Label>
+                      <textarea
+                        id={`address-${cornerId}`}
+                        value={corner.addressText}
+                        onChange={(event) =>
+                          updateCornerField(
+                            cornerId,
+                            "addressText",
                             event.target.value
                           )
                         }
@@ -1330,31 +1382,74 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                           ]
                             .filter(Boolean)
                             .join("\n");
-                          updateCornerField(cornerId, "subtitle", address);
+                          updateCornerField(cornerId, "addressText", address);
                         }}
                       >
                         İşletme adresini buraya doldur
                       </Button>
                     </div>
-                    <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                      <span>Marka logosunu bu köşede göster</span>
-                      <input
-                        type="checkbox"
-                        checked={corner.showLogo}
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`corner-logo-${cornerId}`}>
+                        Bu köşenin logosu
+                      </Label>
+                      <Input
+                        id={`corner-logo-${cornerId}`}
+                        type="file"
+                        accept="image/*"
+                        className="h-10 bg-white/5 file:text-sky-100"
                         onChange={(event) =>
-                          updateCornerField(
+                          void onCornerLogoChange(
                             cornerId,
-                            "showLogo",
-                            event.target.checked
+                            event.target.files?.[0]
                           )
                         }
-                        className="size-4 accent-sky-400"
                       />
-                    </label>
+                      {(corner.logoImage ||
+                        (corner.showLogo && venueForm.logoImage)) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={
+                            corner.logoImage ||
+                            venueForm.logoImage ||
+                            defaultVenue.logoImage
+                          }
+                          alt={`${HERO_CORNER_LABELS[cornerId]} logo`}
+                          className="mt-1 h-14 w-auto max-w-[9rem] rounded-lg bg-white/90 object-contain p-2 ring-1 ring-white/10"
+                        />
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={cn("w-fit", darkOutline)}
+                          onClick={() => {
+                            updateCornerField(
+                              cornerId,
+                              "logoImage",
+                              venueForm.logoImage || defaultVenue.logoImage
+                            );
+                            updateCornerField(cornerId, "showLogo", true);
+                          }}
+                        >
+                          Genel marka logosunu kullan
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className={cn("w-fit", darkOutline)}
+                          onClick={() => {
+                            updateCornerField(cornerId, "logoImage", "");
+                            updateCornerField(cornerId, "showLogo", false);
+                          }}
+                        >
+                          Logoyu kaldır
+                        </Button>
+                      </div>
+                    </div>
                     <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                      <span>
-                        Konum ikonu + alt başlığı Google Maps’e bağla
-                      </span>
+                      <span>Adresi Google Maps’e bağla (ikon + metin)</span>
                       <input
                         type="checkbox"
                         checked={corner.linkMaps}
@@ -1369,8 +1464,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       />
                     </label>
                     <p className="text-[11px] text-sky-100/45">
-                      Konum ikonu adresin üstünde ayrı durur; adres metni hemen
-                      altında çıkar.
+                      Alt başlık ile adres ayrıdır. Logo bu köşeye özeldir; her
+                      köşeye farklı görsel yükleyebilirsiniz.
                     </p>
                   </div>
                 );

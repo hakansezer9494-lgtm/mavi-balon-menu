@@ -36,11 +36,15 @@ export type HeroCornerConfig = {
   badgeText: string;
   /** Bu köşeye özel başlık */
   title: string;
-  /** Bu köşeye özel alt başlık (adres, slogan vb.) */
+  /** Bu köşeye özel alt başlık (slogan vb.) */
   subtitle: string;
-  /** Bu köşede marka logosunu göster */
+  /** Bu köşeye özel adres metni */
+  addressText: string;
+  /** Bu köşeye özel logo (boşsa ve showLogo açıksa genel marka logosu) */
+  logoImage: string;
+  /** Bu köşede logo göster */
   showLogo: boolean;
-  /** Alt başlığı Google Maps linkine bağla */
+  /** Adres metnini Google Maps linkine bağla */
   linkMaps: boolean;
 };
 
@@ -108,6 +112,8 @@ export const defaultHeroCorners: Record<HeroCornerId, HeroCornerConfig> = {
     badgeText: "",
     title: "",
     subtitle: "",
+    addressText: "",
+    logoImage: "",
     showLogo: false,
     linkMaps: false,
   },
@@ -115,6 +121,8 @@ export const defaultHeroCorners: Record<HeroCornerId, HeroCornerConfig> = {
     badgeText: "",
     title: "",
     subtitle: "",
+    addressText: "",
+    logoImage: "",
     showLogo: true,
     linkMaps: false,
   },
@@ -122,13 +130,17 @@ export const defaultHeroCorners: Record<HeroCornerId, HeroCornerConfig> = {
     badgeText: "Açık · 11:00 - 01:30",
     title: "Mavi Balloon",
     subtitle: "",
+    addressText: "",
+    logoImage: "",
     showLogo: false,
     linkMaps: false,
   },
   bottomRight: {
     badgeText: "",
     title: "",
-    subtitle: "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
+    subtitle: "",
+    addressText: "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
+    logoImage: "",
     showLogo: false,
     linkMaps: true,
   },
@@ -546,7 +558,7 @@ export function normalizeHeroCorners(
     if (legacy) migrated.bottomLeft.badgeText = legacy;
     if (legacyBrandName.trim()) migrated.bottomLeft.title = legacyBrandName.trim();
     if (legacyAddress.trim()) {
-      migrated.bottomRight.subtitle = legacyAddress.trim();
+      migrated.bottomRight.addressText = legacyAddress.trim();
       migrated.bottomRight.linkMaps = true;
     }
     return migrated;
@@ -562,19 +574,29 @@ export function normalizeHeroCorners(
       !String(row.title ?? "").trim() && row.showBrand
         ? legacyBrandName.trim()
         : "";
-    const subtitleFromLegacyLocation =
-      !String(row.subtitle ?? "").trim() && row.showLocation
-        ? legacyAddress.trim()
-        : "";
+    const linkMaps =
+      typeof row.linkMaps === "boolean"
+        ? row.linkMaps
+        : Boolean(row.showLocation);
+    const addressText = String(row.addressText ?? "").trim();
+    const subtitleRaw = String(row.subtitle ?? "").trim();
+    // Migrate old combined subtitle+location into addressText.
+    let subtitle = subtitleRaw;
+    let address = addressText;
+    if (!address && (row.showLocation || linkMaps) && subtitleRaw) {
+      address = subtitleRaw;
+      subtitle = "";
+    } else if (!address && row.showLocation) {
+      address = legacyAddress.trim();
+    }
     result[id] = {
       badgeText: String(row.badgeText ?? "").trim(),
       title: String(row.title ?? titleFromLegacyBrand).trim(),
-      subtitle: String(row.subtitle ?? subtitleFromLegacyLocation).trim(),
+      subtitle,
+      addressText: address,
+      logoImage: String(row.logoImage ?? "").trim(),
       showLogo: Boolean(row.showLogo),
-      linkMaps:
-        typeof row.linkMaps === "boolean"
-          ? row.linkMaps
-          : Boolean(row.showLocation),
+      linkMaps,
     };
   }
   return result;

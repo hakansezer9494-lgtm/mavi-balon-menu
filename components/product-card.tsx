@@ -41,22 +41,17 @@ export function ProductCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent" />
           {showBadge ? (
             <span className="absolute top-2 left-2 rounded-full bg-[#007AFF] px-2 py-0.5 text-[9px] font-bold tracking-[0.1em] text-white uppercase">
-              {chefPickLabel}
+              {chefPickShortLabel}
             </span>
           ) : null}
           <p className="absolute right-2 bottom-2 rounded-full bg-white/95 px-2 py-0.5 text-xs font-bold text-[#007AFF] shadow-sm">
             {formatPrice(product.price)}
           </p>
         </div>
-        <div className="space-y-0.5 px-3 py-2.5 text-left">
+        <div className="px-3 py-2.5 text-left">
           <h3 className="font-heading text-base leading-snug font-semibold text-slate-900">
             {product.name}
           </h3>
-          {product.description ? (
-            <p className="line-clamp-2 text-xs leading-snug font-medium text-slate-600">
-              {product.description}
-            </p>
-          ) : null}
         </div>
       </>
     ) : (
@@ -89,11 +84,6 @@ export function ProductCard({
               {formatPrice(product.price)}
             </p>
           </div>
-          {product.description ? (
-            <p className="mt-0.5 line-clamp-2 text-xs leading-snug text-slate-500">
-              {product.description}
-            </p>
-          ) : null}
         </div>
       </>
     );

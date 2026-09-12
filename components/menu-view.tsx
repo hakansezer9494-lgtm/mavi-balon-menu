@@ -6,7 +6,6 @@ import {
   MessageCircle,
   Phone,
   Search,
-  UtensilsCrossed,
   X,
 } from "lucide-react";
 import { BalloonField, BalloonMark } from "@/components/balloon-mark";
@@ -14,7 +13,6 @@ import { ProductCard } from "@/components/product-card";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -170,66 +168,41 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const ig = instagramHref(venue.instagram);
   const maps = venue.mapsUrl.trim();
   const searching = query.trim().length > 0;
-  const visibleProductCount = useMemo(() => {
-    const ids = new Set<string>();
-    for (const section of sections) {
-      for (const product of section.products) ids.add(product.id);
-    }
-    return ids.size;
-  }, [sections]);
-  const totalProductCount = menu.products.length;
-  const productCountLabel = searching
-    ? t.productsAvailable(visibleProductCount)
-    : t.productsAvailable(totalProductCount);
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
       <BalloonField />
 
       <div className="relative z-10 mx-auto w-full max-w-lg px-3 py-4 sm:max-w-5xl sm:px-6 sm:py-5 lg:px-10">
-        <header className="relative isolate min-h-[44svh] overflow-hidden rounded-[1.5rem] shadow-[0_4px_10px_rgba(40,32,20,0.06),0_18px_40px_rgba(40,32,20,0.14),0_36px_64px_rgba(40,32,20,0.08)] ring-1 ring-black/5 sm:min-h-[52svh] sm:rounded-[1.75rem]">
+        <header className="relative isolate min-h-[40svh] overflow-hidden rounded-[1.5rem] shadow-[0_4px_10px_rgba(40,32,20,0.06),0_18px_40px_rgba(40,32,20,0.14),0_36px_64px_rgba(40,32,20,0.08)] ring-1 ring-black/5 sm:min-h-[48svh] sm:rounded-[1.75rem]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={venue.heroImage || "/brand/hero.webp"}
             alt={venue.brandName}
             className="absolute inset-0 h-full w-full object-cover [filter:contrast(1.08)_saturate(1.06)_brightness(1.04)]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/55 via-slate-950/18 to-slate-950/8" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/35 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/15 to-slate-950/5" />
 
-          <div className="relative flex h-full min-h-[44svh] flex-col justify-between p-4 sm:min-h-[52svh] sm:p-7 lg:p-9">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold tracking-[0.28em] text-sky-100 uppercase">
-                  {venue.tagline}
-                </p>
-                <h1 className="mt-2 font-heading text-4xl leading-[0.95] font-semibold text-white sm:text-5xl lg:text-6xl">
-                  {venue.headline}
-                </h1>
-                <p className="mt-3 max-w-md text-base font-medium text-white/95 sm:text-lg">
-                  {venue.subheadline}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-col items-end gap-2">
-                <div className="rounded-2xl bg-white/95 p-2 shadow-lg ring-1 ring-white/60 backdrop-blur-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/brand/logo-banner.webp"
-                    alt={venue.brandName}
-                    className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
-                    onError={(event) => {
-                      event.currentTarget.style.display = "none";
-                      const fallback = event.currentTarget.nextElementSibling;
-                      if (fallback instanceof HTMLElement) {
-                        fallback.style.display = "block";
-                      }
-                    }}
-                  />
-                  <BalloonMark
-                    className="hidden h-12 w-9"
-                    title={venue.brandName}
-                  />
-                </div>
+          <div className="relative flex h-full min-h-[40svh] flex-col justify-between p-4 sm:min-h-[48svh] sm:p-7 lg:p-9">
+            <div className="flex justify-end">
+              <div className="rounded-2xl bg-white/95 p-2 shadow-lg ring-1 ring-white/60 backdrop-blur-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/brand/logo-banner.webp"
+                  alt={venue.brandName}
+                  className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
+                  onError={(event) => {
+                    event.currentTarget.style.display = "none";
+                    const fallback = event.currentTarget.nextElementSibling;
+                    if (fallback instanceof HTMLElement) {
+                      fallback.style.display = "block";
+                    }
+                  }}
+                />
+                <BalloonMark
+                  className="hidden h-12 w-9"
+                  title={venue.brandName}
+                />
               </div>
             </div>
 
@@ -240,27 +213,17 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     {venue.statusLabel}
                   </div>
                 ) : null}
-                <div>
-                  <p className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
-                    {venue.brandName}
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-white/90">
-                    {venue.brandSubtitle}
-                  </p>
-                </div>
+                <h1 className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
+                  {venue.brandName}
+                </h1>
               </div>
               <div className="shrink-0 text-right">
-                <p className="max-w-[11rem] text-xs leading-relaxed text-white/80 sm:max-w-xs">
-                  {venue.addressLine1}
-                  <br />
-                  {venue.addressLine2}
-                </p>
                 {maps ? (
                   <a
                     href={maps}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
                   >
                     <MapPin className="size-3.5" />
                     {t.location}
@@ -272,17 +235,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         </header>
 
         <nav className="sticky top-0 z-20 mt-4 rounded-2xl bg-[#fcfbf9]/96 px-3 py-3 shadow-[0_1px_2px_rgba(40,32,20,0.03),0_8px_20px_rgba(40,32,20,0.07),0_18px_36px_rgba(40,32,20,0.04)] ring-1 ring-black/[0.04] backdrop-blur-md sm:mt-5 sm:px-4">
-          <div className="flex items-end justify-between gap-3">
-            <div>
-              <p className="text-[11px] font-semibold tracking-[0.22em] text-[#007AFF] uppercase">
-                {t.menuExplore}
-              </p>
-              <p className="mt-1 text-sm font-semibold text-slate-700">
-                {productCountLabel}
-              </p>
-            </div>
-          </div>
-          <div className="mt-2.5 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {sections.map((section) => (
               <CategoryChip
                 key={section.id}
@@ -329,22 +282,9 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 className="scroll-mt-36"
               >
                 <div className="mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-[#007AFF]/12 text-[#007AFF] ring-1 ring-[#007AFF]/20">
-                      <UtensilsCrossed className="size-4" aria-hidden />
-                    </span>
-                    <h2 className="min-w-0 flex-1 font-heading text-2xl font-semibold text-slate-900 sm:text-3xl">
-                      {section.title}
-                    </h2>
-                    <span className="shrink-0 rounded-full bg-[#fcfbf9] px-2.5 py-1 text-xs font-semibold text-slate-600 shadow-[0_2px_6px_rgba(40,32,20,0.06)] ring-1 ring-black/[0.04]">
-                      {t.productsInCategory(section.products.length)}
-                    </span>
-                  </div>
-                  {section.id === "imza" && !searching ? (
-                    <p className="mt-1 pl-[2.75rem] text-sm font-medium text-slate-600">
-                      {t.signatureHint}
-                    </p>
-                  ) : null}
+                  <h2 className="font-heading text-2xl font-semibold text-slate-900 sm:text-3xl">
+                    {section.title}
+                  </h2>
                 </div>
 
                 {section.id === "imza" && !searching ? (
@@ -395,9 +335,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               <p className="font-heading text-2xl text-slate-900">
                 {venue.brandName}
               </p>
-              <p className="mt-1 text-sm text-slate-500">{t.footerTagline}</p>
-              <p className="mt-4 text-sm text-slate-500">{venue.city}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-2">
                 {tel ? (
                   <ContactIcon href={tel} label={t.phone}>
                     <Phone className="size-4" />
@@ -474,25 +412,17 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 </DialogHeader>
 
                 <div className="mt-5 space-y-4">
-                  <section>
-                    <h3 className="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase">
-                      {t.content}
-                    </h3>
-                    <DialogDescription className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
-                      {localizedProduct(selected, locale).description ||
-                        t.productFallback}
-                    </DialogDescription>
-                  </section>
-                  <section>
-                    <h3 className="text-xs font-bold tracking-[0.16em] text-slate-400 uppercase">
-                      {t.allergens}
-                    </h3>
-                    <p className="mt-1.5 whitespace-pre-wrap text-base leading-relaxed font-medium text-slate-700">
-                      {localizedProduct(selected, locale).allergens?.trim()
-                        ? localizedProduct(selected, locale).allergens
-                        : t.allergensNone}
+                  {localizedProduct(selected, locale).description ? (
+                    <p className="whitespace-pre-wrap text-base leading-relaxed text-slate-700">
+                      {localizedProduct(selected, locale).description}
                     </p>
-                  </section>
+                  ) : null}
+                  {localizedProduct(selected, locale).allergens?.trim() ? (
+                    <p className="text-sm leading-relaxed text-slate-500">
+                      {t.allergens}:{" "}
+                      {localizedProduct(selected, locale).allergens}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -520,13 +450,12 @@ function CategoryChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-[13px] font-semibold transition-colors",
+        "inline-flex shrink-0 items-center rounded-full px-3 py-2 text-[13px] font-semibold transition-colors",
         active
           ? "bg-[#007AFF] text-white shadow-[0_4px_12px_rgba(0,122,255,0.28)]"
           : "bg-[#fcfbf9] text-slate-700 shadow-[0_2px_6px_rgba(40,32,20,0.06)] ring-1 ring-black/[0.04] hover:shadow-[0_4px_12px_rgba(40,32,20,0.09)]"
       )}
     >
-      <UtensilsCrossed className="size-3.5 opacity-90" aria-hidden />
       {label}
     </button>
   );

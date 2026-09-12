@@ -2079,7 +2079,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 }
                 className="size-4 rounded border-white/20 bg-white/5"
               />
-              İmza seçkisinde göster
+              {(
+                menu.signature?.name?.trim() ||
+                signatureForm.name.trim() ||
+                defaultSignature.name
+              )}{" "}
+              bölümünde göster
             </label>
 
             {productError ? (

@@ -122,7 +122,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [passwordError, setPasswordError] = useState("");
   const [passwordBusy, setPasswordBusy] = useState(false);
   const [venueForm, setVenueForm] = useState<VenueInfo>(
-    () => initialMenu.venue ?? defaultVenue
+    () => structuredClone(initialMenu.venue ?? defaultVenue)
   );
   const [signatureForm, setSignatureForm] = useState<SignatureSection>(
     () => initialMenu.signature ?? defaultSignature
@@ -225,8 +225,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   }, [menu]);
 
   useEffect(() => {
-    setVenueForm(menu.venue ?? defaultVenue);
-    setSignatureForm(menu.signature ?? defaultSignature);
+    setVenueForm(structuredClone(menu.venue ?? defaultVenue));
+    setSignatureForm(structuredClone(menu.signature ?? defaultSignature));
   }, [menu.venue, menu.signature]);
 
 
@@ -532,32 +532,22 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     value: HeroCornerConfig[K]
   ) {
     setVenueForm((current) => {
-      const nextCorners = { ...current.heroCorners };
-      const corner = { ...nextCorners[id], [key]: value };
+      // Deep-clone every corner so the four regions never share references.
+      const nextCorners = {
+        topLeft: { ...current.heroCorners.topLeft },
+        topRight: { ...current.heroCorners.topRight },
+        bottomLeft: { ...current.heroCorners.bottomLeft },
+        bottomRight: { ...current.heroCorners.bottomRight },
+      };
+      nextCorners[id] = { ...nextCorners[id], [key]: value };
 
+      // Logo can live in only one corner at a time.
       if (key === "showLogo" && value === true) {
         for (const other of HERO_CORNER_IDS) {
-          if (other !== id) {
-            nextCorners[other] = { ...nextCorners[other], showLogo: false };
-          }
-        }
-      }
-      if (key === "showLocation" && value === true) {
-        for (const other of HERO_CORNER_IDS) {
-          if (other !== id) {
-            nextCorners[other] = { ...nextCorners[other], showLocation: false };
-          }
-        }
-      }
-      if (key === "showBrand" && value === true) {
-        for (const other of HERO_CORNER_IDS) {
-          if (other !== id) {
-            nextCorners[other] = { ...nextCorners[other], showBrand: false };
-          }
+          if (other !== id) nextCorners[other].showLogo = false;
         }
       }
 
-      nextCorners[id] = corner;
       return {
         ...current,
         heroCorners: nextCorners,
@@ -617,7 +607,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           venueForm.pageBackground.trim() || defaultVenue.pageBackground,
         productCardColor:
           venueForm.productCardColor.trim() || defaultVenue.productCardColor,
-        heroCorners: venueForm.heroCorners,
+        heroCorners: {
+          topLeft: { ...venueForm.heroCorners.topLeft },
+          topRight: { ...venueForm.heroCorners.topRight },
+          bottomLeft: { ...venueForm.heroCorners.bottomLeft },
+          bottomRight: { ...venueForm.heroCorners.bottomRight },
+        },
         hours: venueForm.hours.map((row) => ({
           ...row,
           label: row.label.trim(),
@@ -1074,15 +1069,15 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
         <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
-            <CardTitle className="text-white">İşletme & iletişim</CardTitle>
+            <CardTitle className="text-white">Kapak (Header)</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Kapak fotoğrafı, köşe rozetleri, logo, balonlar, renkler, saatler
-              ve iletişim bilgileri.
+              Kapak fotoğrafı, logo, balonlar, renkler ve dört köşe rozeti. Her
+              köşe birbirinden bağımsızdır.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             <div className="grid gap-1.5">
-              <Label htmlFor="hero-photo">Header / kapak fotoğrafı</Label>
+              <Label htmlFor="hero-photo">Kapak fotoğrafı</Label>
               <Input
                 id="hero-photo"
                 type="file"
@@ -1115,216 +1110,255 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               </Button>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1.5 sm:col-span-2">
-                <Label htmlFor="brand-name">Marka adı (köşelerde gösterilebilir)</Label>
-                <Input
-                  id="brand-name"
-                  value={venueForm.brandName}
+            <div className="grid gap-1.5">
+              <Label htmlFor="brand-name">Marka adı</Label>
+              <Input
+                id="brand-name"
+                value={venueForm.brandName}
+                onChange={(event) =>
+                  updateVenueField("brandName", event.target.value)
+                }
+                placeholder="Köşelerde göstermek için — boş bırakılabilir"
+                className="h-10 bg-white/5 text-white"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="logo-photo">Marka logosu</Label>
+              <Input
+                id="logo-photo"
+                type="file"
+                accept="image/*"
+                className="h-10 bg-white/5 file:text-sky-100"
+                onChange={(event) => void onLogoChange(event.target.files?.[0])}
+              />
+              {logoBusy ? (
+                <p className="text-xs text-sky-200">Logo hazırlanıyor…</p>
+              ) : null}
+              {logoError ? (
+                <p className="text-sm text-red-300">{logoError}</p>
+              ) : null}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={venueForm.logoImage || defaultVenue.logoImage}
+                alt="Logo önizleme"
+                className="mt-1 h-16 w-auto max-w-[10rem] rounded-lg bg-white/90 object-contain p-2 ring-1 ring-white/10"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn("w-fit", darkOutline)}
+                onClick={() =>
+                  updateVenueField("logoImage", defaultVenue.logoImage)
+                }
+              >
+                Varsayılan logoya dön
+              </Button>
+            </div>
+
+            <div className="grid gap-1.5 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+              <Label>Görünüm</Label>
+              <label className="mt-1 flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                <span>Arka plan balonları</span>
+                <input
+                  type="checkbox"
+                  checked={venueForm.showBalloons}
                   onChange={(event) =>
-                    updateVenueField("brandName", event.target.value)
+                    updateVenueField("showBalloons", event.target.checked)
                   }
-                  placeholder="Boş bırakılabilir"
-                  className="h-10 bg-white/5 text-white"
+                  className="size-4 accent-sky-400"
                 />
+              </label>
+              <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="page-bg">Sayfa arka plan rengi</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="page-bg"
+                      type="color"
+                      value={venueForm.pageBackground || "#fdfcfb"}
+                      onChange={(event) =>
+                        updateVenueField("pageBackground", event.target.value)
+                      }
+                      className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                    <Input
+                      value={venueForm.pageBackground}
+                      onChange={(event) =>
+                        updateVenueField("pageBackground", event.target.value)
+                      }
+                      className="h-10 bg-white/5 text-white"
+                    />
+                  </div>
+                </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="card-bg">Ürün kartı rengi</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      id="card-bg"
+                      type="color"
+                      value={venueForm.productCardColor || "#e9ecef"}
+                      onChange={(event) =>
+                        updateVenueField("productCardColor", event.target.value)
+                      }
+                      className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent"
+                    />
+                    <Input
+                      value={venueForm.productCardColor}
+                      onChange={(event) =>
+                        updateVenueField("productCardColor", event.target.value)
+                      }
+                      className="h-10 bg-white/5 text-white"
+                    />
+                  </div>
+                </div>
               </div>
+            </div>
 
-              <div className="grid gap-1.5 sm:col-span-2">
-                <Label>Kapak köşeleri</Label>
-                <p className="text-xs text-sky-100/55">
-                  Her köşeyi açıp rozet, marka adı, logo veya konum ekleyin. Logo ve
-                  konum aynı anda yalnızca bir köşede durur.
-                </p>
-                <div className="space-y-2">
-                  {HERO_CORNER_IDS.map((cornerId) => {
-                    const corner = venueForm.heroCorners[cornerId];
-                    const open = openCorner === cornerId;
-                    return (
-                      <div
-                        key={cornerId}
-                        className="overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10"
+            <div className="grid gap-1.5">
+              <Label>Kapak köşeleri</Label>
+              <p className="text-xs text-sky-100/55">
+                Bir köşeyi açın; alttaki alanlar yalnızca o köşeyi düzenler. Sol
+                alt ile sağ alt birbirinden bağımsızdır.
+              </p>
+              <div className="space-y-2">
+                {HERO_CORNER_IDS.map((cornerId) => {
+                  const corner = venueForm.heroCorners[cornerId];
+                  const open = openCorner === cornerId;
+                  const summary = [
+                    corner.badgeText.trim() ? "rozet" : null,
+                    corner.showBrand ? "marka" : null,
+                    corner.showLogo ? "logo" : null,
+                    corner.showLocation ? "konum" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ");
+                  return (
+                    <div
+                      key={cornerId}
+                      className="overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10"
+                    >
+                      <button
+                        type="button"
+                        className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"
+                        onClick={() =>
+                          setOpenCorner(open ? null : cornerId)
+                        }
                       >
-                        <button
-                          type="button"
-                          className="flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-sm font-medium text-white hover:bg-white/5"
-                          onClick={() =>
-                            setOpenCorner(open ? null : cornerId)
-                          }
-                        >
-                          <span>{HERO_CORNER_LABELS[cornerId]}</span>
-                          <ChevronDown
-                            className={cn(
-                              "size-4 text-sky-100/70 transition",
-                              open ? "rotate-180" : ""
-                            )}
-                          />
-                        </button>
-                        {open ? (
-                          <div className="space-y-3 border-t border-white/10 px-3 py-3">
-                            <div className="grid gap-1.5">
-                              <Label htmlFor={`badge-${cornerId}`}>
-                                Rozet metni (boş = gizli)
-                              </Label>
-                              <Input
-                                id={`badge-${cornerId}`}
-                                value={corner.badgeText}
-                                onChange={(event) =>
-                                  updateCornerField(
-                                    cornerId,
-                                    "badgeText",
-                                    event.target.value
-                                  )
-                                }
-                                placeholder="Örn. Açık · 11:00 - 01:30"
-                                className="h-10 bg-white/5 text-white"
-                              />
-                            </div>
-                            <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                              <span>Marka adını göster</span>
-                              <input
-                                type="checkbox"
-                                checked={corner.showBrand}
-                                onChange={(event) =>
-                                  updateCornerField(
-                                    cornerId,
-                                    "showBrand",
-                                    event.target.checked
-                                  )
-                                }
-                                className="size-4 accent-sky-400"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                              <span>Logoyu burada göster</span>
-                              <input
-                                type="checkbox"
-                                checked={corner.showLogo}
-                                onChange={(event) =>
-                                  updateCornerField(
-                                    cornerId,
-                                    "showLogo",
-                                    event.target.checked
-                                  )
-                                }
-                                className="size-4 accent-sky-400"
-                              />
-                            </label>
-                            <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                              <span>Konum rozetini burada göster</span>
-                              <input
-                                type="checkbox"
-                                checked={corner.showLocation}
-                                onChange={(event) =>
-                                  updateCornerField(
-                                    cornerId,
-                                    "showLocation",
-                                    event.target.checked
-                                  )
-                                }
-                                className="size-4 accent-sky-400"
-                              />
-                            </label>
+                        <span className="min-w-0">
+                          <span className="block">{HERO_CORNER_LABELS[cornerId]}</span>
+                          <span className="block truncate text-xs font-normal text-sky-100/50">
+                            {summary || "Boş"}
+                          </span>
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            "size-4 shrink-0 text-sky-100/70 transition",
+                            open ? "rotate-180" : ""
+                          )}
+                        />
+                      </button>
+                      {open ? (
+                        <div className="space-y-3 border-t border-white/10 px-3 py-3">
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`badge-${cornerId}`}>
+                              Bu köşenin rozet metni
+                            </Label>
+                            <Input
+                              id={`badge-${cornerId}`}
+                              value={corner.badgeText}
+                              onChange={(event) =>
+                                updateCornerField(
+                                  cornerId,
+                                  "badgeText",
+                                  event.target.value
+                                )
+                              }
+                              placeholder="Boş bırakırsanız rozet gizlenir"
+                              className="h-10 bg-white/5 text-white"
+                            />
                           </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="grid gap-1.5 sm:col-span-2">
-                <Label htmlFor="logo-photo">Marka logosu</Label>
-                <Input
-                  id="logo-photo"
-                  type="file"
-                  accept="image/*"
-                  className="h-10 bg-white/5 file:text-sky-100"
-                  onChange={(event) => void onLogoChange(event.target.files?.[0])}
-                />
-                {logoBusy ? (
-                  <p className="text-xs text-sky-200">Logo hazırlanıyor…</p>
-                ) : null}
-                {logoError ? (
-                  <p className="text-sm text-red-300">{logoError}</p>
-                ) : null}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={venueForm.logoImage || defaultVenue.logoImage}
-                  alt="Logo önizleme"
-                  className="mt-1 h-16 w-auto max-w-[10rem] rounded-lg bg-white/90 object-contain p-2 ring-1 ring-white/10"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className={cn("w-fit", darkOutline)}
-                  onClick={() =>
-                    updateVenueField("logoImage", defaultVenue.logoImage)
-                  }
-                >
-                  Varsayılan logoya dön
-                </Button>
-              </div>
-
-              <div className="grid gap-1.5 sm:col-span-2 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
-                <Label>Görünüm</Label>
-                <label className="mt-1 flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                  <span>Arka plan balonları</span>
-                  <input
-                    type="checkbox"
-                    checked={venueForm.showBalloons}
-                    onChange={(event) =>
-                      updateVenueField("showBalloons", event.target.checked)
-                    }
-                    className="size-4 accent-sky-400"
-                  />
-                </label>
-                <div className="mt-2 grid gap-3 sm:grid-cols-2">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="page-bg">Sayfa arka plan rengi</Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="page-bg"
-                        type="color"
-                        value={venueForm.pageBackground || "#fdfcfb"}
-                        onChange={(event) =>
-                          updateVenueField("pageBackground", event.target.value)
-                        }
-                        className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent"
-                      />
-                      <Input
-                        value={venueForm.pageBackground}
-                        onChange={(event) =>
-                          updateVenueField("pageBackground", event.target.value)
-                        }
-                        className="h-10 bg-white/5 text-white"
-                      />
+                          <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                            <span>Marka adını bu köşede göster</span>
+                            <input
+                              type="checkbox"
+                              checked={corner.showBrand}
+                              onChange={(event) =>
+                                updateCornerField(
+                                  cornerId,
+                                  "showBrand",
+                                  event.target.checked
+                                )
+                              }
+                              className="size-4 accent-sky-400"
+                            />
+                          </label>
+                          <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                            <span>Logoyu bu köşede göster</span>
+                            <input
+                              type="checkbox"
+                              checked={corner.showLogo}
+                              onChange={(event) =>
+                                updateCornerField(
+                                  cornerId,
+                                  "showLogo",
+                                  event.target.checked
+                                )
+                              }
+                              className="size-4 accent-sky-400"
+                            />
+                          </label>
+                          <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
+                            <span>Konum rozetini bu köşede göster</span>
+                            <input
+                              type="checkbox"
+                              checked={corner.showLocation}
+                              onChange={(event) =>
+                                updateCornerField(
+                                  cornerId,
+                                  "showLocation",
+                                  event.target.checked
+                                )
+                              }
+                              className="size-4 accent-sky-400"
+                            />
+                          </label>
+                          <p className="text-[11px] text-sky-100/45">
+                            Konum linki İşletme & iletişim kartındaki Google Maps
+                            alanından gelir; yalnızca hangi köşede görüneceğini
+                            burada seçersiniz.
+                          </p>
+                        </div>
+                      ) : null}
                     </div>
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="card-bg">Ürün kartı rengi</Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="card-bg"
-                        type="color"
-                        value={venueForm.productCardColor || "#e9ecef"}
-                        onChange={(event) =>
-                          updateVenueField("productCardColor", event.target.value)
-                        }
-                        className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent"
-                      />
-                      <Input
-                        value={venueForm.productCardColor}
-                        onChange={(event) =>
-                          updateVenueField("productCardColor", event.target.value)
-                        }
-                        className="h-10 bg-white/5 text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
+            </div>
 
+            {venueMessage ? (
+              <p className="text-sm text-sky-200">{venueMessage}</p>
+            ) : null}
+            <Button
+              className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+              onClick={saveVenue}
+              disabled={saving || heroBusy || logoBusy}
+            >
+              Kapak ayarlarını kaydet
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">İşletme & iletişim</CardTitle>
+            <CardDescription className="text-sky-100/60">
+              Adres, Google Maps ve sosyal iletişim bilgileri.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="grid gap-1.5 sm:col-span-2">
                 <Label htmlFor="brand-subtitle">Alt başlık</Label>
                 <Input
@@ -1408,6 +1442,34 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               </div>
             </div>
 
+            {venueMessage ? (
+              <p className="text-sm text-sky-200">{venueMessage}</p>
+            ) : null}
+            <Button
+              className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+              onClick={saveVenue}
+              disabled={saving}
+            >
+              İletişim bilgilerini kaydet
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Footer</CardTitle>
+            <CardDescription className="text-sky-100/60">
+              Menünün en altında görünen marka, iletişim ikonları ve açılış
+              saatleri.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <p className="rounded-xl bg-white/5 px-3 py-2 text-xs text-sky-100/60 ring-1 ring-white/10">
+              Footer’daki marka adı Kapak kartındaki marka adından gelir.
+              Telefon / WhatsApp / Instagram / konum ikonları İşletme & iletişim
+              kartından gelir.
+            </p>
+
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <Label>Açılış saatleri</Label>
@@ -1465,9 +1527,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             <Button
               className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
               onClick={saveVenue}
-              disabled={saving || heroBusy}
+              disabled={saving}
             >
-              İşletme bilgilerini kaydet
+              Footer ayarlarını kaydet
             </Button>
           </CardContent>
         </Card>

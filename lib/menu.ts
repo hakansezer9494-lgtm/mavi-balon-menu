@@ -43,10 +43,16 @@ export type VenueInfo = {
   hours: HoursRow[];
 };
 
+export type SignatureSection = {
+  name: string;
+  nameEn: string;
+};
+
 export type MenuData = {
   categories: Category[];
   products: Product[];
   venue: VenueInfo;
+  signature?: SignatureSection;
   /** Bumped in code when the packaged catalog must replace stale Turso data. */
   catalogRevision?: number;
 };
@@ -79,6 +85,11 @@ export const defaultVenue: VenueInfo = {
     { id: "fri-sat", label: "Cuma – Cumartesi", value: "11:00 - 01:30" },
     { id: "sun", label: "Pazar", value: "12:00 - 23:00" },
   ],
+};
+
+export const defaultSignature: SignatureSection = {
+  name: "İmza Seçkisi",
+  nameEn: "Signature Picks",
 };
 
 export const defaultMenu: MenuData = {
@@ -378,6 +389,7 @@ export const defaultMenu: MenuData = {
     },
   ],
   venue: defaultVenue,
+  signature: defaultSignature,
   catalogRevision: MENU_CATALOG_REVISION,
 };
 
@@ -452,23 +464,35 @@ export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
           }))
       : defaultVenue.hours;
   return {
-    brandName: String(base.brandName ?? defaultVenue.brandName).trim(),
-    brandSubtitle: String(base.brandSubtitle ?? defaultVenue.brandSubtitle).trim(),
-    tagline: String(base.tagline ?? defaultVenue.tagline).trim(),
-    headline: String(base.headline ?? defaultVenue.headline).trim(),
-    subheadline: String(base.subheadline ?? defaultVenue.subheadline).trim(),
-    addressLine1: String(base.addressLine1 ?? defaultVenue.addressLine1).trim(),
-    addressLine2: String(base.addressLine2 ?? defaultVenue.addressLine2).trim(),
-    city: String(base.city ?? defaultVenue.city).trim(),
-    mapsUrl: String(base.mapsUrl ?? defaultVenue.mapsUrl).trim(),
-    phone: String(base.phone ?? defaultVenue.phone).trim(),
-    whatsapp: String(base.whatsapp ?? defaultVenue.whatsapp).trim(),
-    instagram: String(base.instagram ?? defaultVenue.instagram).trim(),
-    statusLabel: String(base.statusLabel ?? defaultVenue.statusLabel).trim(),
+    brandName: String(base.brandName ?? "").trim(),
+    brandSubtitle: String(base.brandSubtitle ?? "").trim(),
+    tagline: String(base.tagline ?? "").trim(),
+    headline: String(base.headline ?? "").trim(),
+    subheadline: String(base.subheadline ?? "").trim(),
+    addressLine1: String(base.addressLine1 ?? "").trim(),
+    addressLine2: String(base.addressLine2 ?? "").trim(),
+    city: String(base.city ?? "").trim(),
+    mapsUrl: String(base.mapsUrl ?? "").trim(),
+    phone: String(base.phone ?? "").trim(),
+    whatsapp: String(base.whatsapp ?? "").trim(),
+    instagram: String(base.instagram ?? "").trim(),
+    statusLabel: String(base.statusLabel ?? "").trim(),
     heroImage:
       String(base.heroImage ?? defaultVenue.heroImage).trim() ||
       defaultVenue.heroImage,
     hours,
+  };
+}
+
+export function normalizeSignature(
+  signature?: Partial<SignatureSection> | null
+): SignatureSection {
+  const name = String(signature?.name ?? "").trim();
+  const nameEn = String(signature?.nameEn ?? "").trim();
+  return {
+    name: name || defaultSignature.name,
+    // Empty EN is allowed — guest menu falls back to the Turkish title.
+    nameEn,
   };
 }
 
@@ -497,6 +521,9 @@ export function normalizeMenu(data: MenuData): MenuData {
       featured: Boolean(product.featured),
     })),
     venue: normalizeVenue(data.venue),
+    signature: normalizeSignature(
+      (data as MenuData & { signature?: SignatureSection }).signature
+    ),
     catalogRevision: Number.isFinite(revision) && revision > 0 ? revision : 0,
   };
 }

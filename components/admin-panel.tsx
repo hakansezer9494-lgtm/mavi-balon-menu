@@ -40,12 +40,14 @@ import {
 } from "@/hooks/use-menu";
 import { compressImage } from "@/lib/image";
 import {
+  defaultSignature,
   defaultVenue,
   formatPrice,
   newId,
   type Category,
   type MenuData,
   type Product,
+  type SignatureSection,
   type VenueInfo,
 } from "@/lib/menu";
 
@@ -118,6 +120,10 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [venueForm, setVenueForm] = useState<VenueInfo>(
     () => initialMenu.venue ?? defaultVenue
   );
+  const [signatureForm, setSignatureForm] = useState<SignatureSection>(
+    () => initialMenu.signature ?? defaultSignature
+  );
+  const [editingSignature, setEditingSignature] = useState(false);
   const [venueMessage, setVenueMessage] = useState("");
   const [heroBusy, setHeroBusy] = useState(false);
   const [heroError, setHeroError] = useState("");
@@ -210,6 +216,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     }
     return counts;
   }, [menu]);
+
+  useEffect(() => {
+    setVenueForm(menu.venue ?? defaultVenue);
+    setSignatureForm(menu.signature ?? defaultSignature);
+  }, [menu.venue, menu.signature]);
+
 
   if (!authChecked) {
     return (
@@ -305,6 +317,23 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     } finally {
       setPasswordBusy(false);
     }
+  }
+
+  function saveSignatureEdit() {
+    const name = signatureForm.name.trim();
+    if (!name) {
+      setCategoryError("İmza seçkisi adı boş olamaz.");
+      return;
+    }
+    updateMenu((current) => ({
+      ...current,
+      signature: {
+        name,
+        nameEn: signatureForm.nameEn.trim(),
+      },
+    }));
+    setEditingSignature(false);
+    setCategoryError("");
   }
 
   function addCategory() {
@@ -494,7 +523,19 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       ...current,
       venue: {
         ...venueForm,
-        brandName: venueForm.brandName.trim() || defaultVenue.brandName,
+        brandName: venueForm.brandName.trim(),
+        brandSubtitle: venueForm.brandSubtitle.trim(),
+        tagline: venueForm.tagline.trim(),
+        headline: venueForm.headline.trim(),
+        subheadline: venueForm.subheadline.trim(),
+        addressLine1: venueForm.addressLine1.trim(),
+        addressLine2: venueForm.addressLine2.trim(),
+        city: venueForm.city.trim(),
+        mapsUrl: venueForm.mapsUrl.trim(),
+        phone: venueForm.phone.trim(),
+        whatsapp: venueForm.whatsapp.trim(),
+        instagram: venueForm.instagram.trim(),
+        statusLabel: venueForm.statusLabel.trim(),
         heroImage: venueForm.heroImage.trim() || defaultVenue.heroImage,
         hours: venueForm.hours.map((row) => ({
           ...row,
@@ -653,6 +694,92 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="rounded-xl bg-[#007AFF]/15 px-3 py-3 ring-1 ring-[#007AFF]/25">
+              <div className="flex items-start gap-2">
+                {editingSignature ? (
+                  <div className="grid min-w-0 flex-1 gap-1.5">
+                    <Input
+                      value={signatureForm.name}
+                      onChange={(event) =>
+                        setSignatureForm((current) => ({
+                          ...current,
+                          name: event.target.value,
+                        }))
+                      }
+                      className="h-9 bg-white/5 text-white"
+                      autoFocus
+                      placeholder="İmza seçkisi (TR)"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") saveSignatureEdit();
+                        if (event.key === "Escape") {
+                          setSignatureForm(menu.signature ?? defaultSignature);
+                          setEditingSignature(false);
+                        }
+                      }}
+                    />
+                    <Input
+                      value={signatureForm.nameEn}
+                      onChange={(event) =>
+                        setSignatureForm((current) => ({
+                          ...current,
+                          nameEn: event.target.value,
+                        }))
+                      }
+                      className="h-9 bg-white/5 text-white"
+                      placeholder="Signature (EN)"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") saveSignatureEdit();
+                        if (event.key === "Escape") {
+                          setSignatureForm(menu.signature ?? defaultSignature);
+                          setEditingSignature(false);
+                        }
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">
+                      {menu.signature?.name ?? defaultSignature.name}
+                    </p>
+                    <p className="truncate text-xs text-sky-100/50">
+                      {menu.signature?.nameEn
+                        ? `EN: ${menu.signature.nameEn} · `
+                        : ""}
+                      Öne çıkan ürünler (silinemez kategori)
+                    </p>
+                  </div>
+                )}
+                <div className="flex shrink-0 items-center gap-1">
+                  {editingSignature ? (
+                    <Button
+                      size="sm"
+                      className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                      onClick={saveSignatureEdit}
+                    >
+                      Kaydet
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className={darkGhost}
+                      onClick={() => {
+                        setSignatureForm(menu.signature ?? defaultSignature);
+                        setEditingSignature(true);
+                      }}
+                      aria-label="İmza seçkisini düzenle"
+                    >
+                      <Pencil />
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-sky-100/55">
+                Bu özel kategori silinemez. Ürünleri ürün kartındaki “İmza
+                seçkisinde göster” ile ekleyin.
+              </p>
+            </div>
+
             <div className="flex flex-col gap-2 sm:flex-row">
               <Input
                 value={categoryName}
@@ -921,7 +1048,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="brand-name">Marka adı</Label>
+                <Label htmlFor="brand-name">
+                  Marka adı (kapak sol alt — boş bırakılabilir)
+                </Label>
                 <Input
                   id="brand-name"
                   value={venueForm.brandName}

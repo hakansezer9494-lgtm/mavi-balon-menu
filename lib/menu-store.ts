@@ -183,6 +183,7 @@ async function upgradeCloudCatalogIfNeeded(
     categories: pack.categories,
     products: pack.products,
     venue: fromCloud.venue,
+    signature: fromCloud.signature ?? pack.signature,
     catalogRevision: MENU_CATALOG_REVISION,
   });
   console.info(

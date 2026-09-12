@@ -356,5 +356,9 @@
       }
     ]
   },
+  "signature": {
+    "name": "İmza Seçkisi",
+    "nameEn": "Signature Picks"
+  },
   "catalogRevision": 2
 }

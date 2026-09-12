@@ -6,7 +6,6 @@ type UiCopy = {
   searchEmpty: string;
   searchEmptyBody: string;
   signature: string;
-  signatureHint: string;
   chefPick: string;
   chefPickShort: string;
   content: string;
@@ -23,8 +22,6 @@ type UiCopy = {
   noPhoto: string;
   langSwitch: string;
   langSwitchAria: string;
-  productsAvailable: (count: number) => string;
-  productsInCategory: (count: number) => string;
 };
 
 const ui: Record<Locale, UiCopy> = {
@@ -34,7 +31,6 @@ const ui: Record<Locale, UiCopy> = {
     searchEmpty: "Sonuç bulunamadı",
     searchEmptyBody: "Farklı bir isim deneyin.",
     signature: "İmza Seçkisi",
-    signatureHint: "Kaydırarak bakın.",
     chefPick: "Şefin Seçimi",
     chefPickShort: "İmza",
     content: "İçerik",
@@ -51,8 +47,6 @@ const ui: Record<Locale, UiCopy> = {
     noPhoto: "Fotoğraf yok",
     langSwitch: "EN",
     langSwitchAria: "Switch to English",
-    productsAvailable: (count) => `${count} ürün mevcut`,
-    productsInCategory: (count) => `${count} ürün`,
   },
   en: {
     menuExplore: "Explore Menu",
@@ -60,7 +54,6 @@ const ui: Record<Locale, UiCopy> = {
     searchEmpty: "No results",
     searchEmptyBody: "Try a different name.",
     signature: "Signature Picks",
-    signatureHint: "Swipe to browse.",
     chefPick: "Chef's Pick",
     chefPickShort: "Sig.",
     content: "Ingredients",
@@ -77,10 +70,6 @@ const ui: Record<Locale, UiCopy> = {
     noPhoto: "No photo",
     langSwitch: "TR",
     langSwitchAria: "Türkçeye geç",
-    productsAvailable: (count) =>
-      count === 1 ? "1 product available" : `${count} products available`,
-    productsInCategory: (count) =>
-      count === 1 ? "1 product" : `${count} products`,
   },
 };
 

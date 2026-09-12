@@ -88,7 +88,10 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
     if (filteredFeatured.length > 0) {
       list.push({
         id: "imza",
-        title: translateCategory(locale, "imza", t.signature),
+        title:
+          locale === "en"
+            ? menu.signature?.nameEn || menu.signature?.name || t.signature
+            : menu.signature?.name || t.signature,
         products: filteredFeatured,
       });
     }
@@ -112,7 +115,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
       }
     }
     return list;
-  }, [categories, featured, locale, menu.products, query, t.signature]);
+  }, [categories, featured, locale, menu.products, menu.signature, query, t.signature]);
 
   useEffect(() => {
     const nodes = sections
@@ -178,7 +181,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={venue.heroImage || "/brand/hero.webp"}
-            alt={venue.brandName}
+            alt={venue.brandName || "Menü kapağı"}
             className="absolute inset-0 h-full w-full object-cover [filter:contrast(1.08)_saturate(1.06)_brightness(1.04)]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/15 to-slate-950/5" />
@@ -189,7 +192,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src="/brand/logo-banner.webp"
-                  alt={venue.brandName}
+                  alt={venue.brandName || "Logo"}
                   className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
                   onError={(event) => {
                     event.currentTarget.style.display = "none";
@@ -201,7 +204,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 />
                 <BalloonMark
                   className="hidden h-12 w-9"
-                  title={venue.brandName}
+                  title={venue.brandName || "Logo"}
                 />
               </div>
             </div>
@@ -213,9 +216,11 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     {venue.statusLabel}
                   </div>
                 ) : null}
-                <h1 className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
-                  {venue.brandName}
-                </h1>
+                {venue.brandName ? (
+                  <h1 className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
+                    {venue.brandName}
+                  </h1>
+                ) : null}
               </div>
               <div className="shrink-0 text-right">
                 {maps ? (
@@ -332,10 +337,12 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         <footer className="mt-2 border-t border-slate-200 py-10">
           <div className="grid gap-8 sm:grid-cols-2">
             <div>
-              <p className="font-heading text-2xl text-slate-900">
-                {venue.brandName}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
+              {venue.brandName ? (
+                <p className="font-heading text-2xl text-slate-900">
+                  {venue.brandName}
+                </p>
+              ) : null}
+              <div className={cn("flex flex-wrap gap-2", venue.brandName ? "mt-4" : "")}>
                 {tel ? (
                   <ContactIcon href={tel} label={t.phone}>
                     <Phone className="size-4" />

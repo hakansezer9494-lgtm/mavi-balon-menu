@@ -334,67 +334,64 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         </main>
 
         <footer className="mt-2 border-t border-slate-200 py-10">
-          <div className="space-y-8">
-            {venue.brandName ? (
-              <div className="border-b border-slate-200/80 pb-6">
-                <p className="font-heading text-2xl text-slate-900">
-                  {venue.brandName}
-                </p>
-                {venue.brandSubtitle ? (
-                  <p className="mt-1 text-sm text-slate-500">
-                    {venue.brandSubtitle}
-                  </p>
+          <div className="grid gap-8 sm:grid-cols-2">
+            <div>
+              <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
+                İletişim
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tel ? (
+                  <ContactIcon href={tel} label={t.phone}>
+                    <Phone className="size-4" />
+                  </ContactIcon>
+                ) : null}
+                {wa ? (
+                  <ContactIcon href={wa} label="WhatsApp">
+                    <MessageCircle className="size-4" />
+                  </ContactIcon>
+                ) : null}
+                {ig ? (
+                  <ContactIcon href={ig} label="Instagram">
+                    <InstagramGlyph />
+                  </ContactIcon>
+                ) : null}
+                {maps ? (
+                  <ContactIcon href={maps} label={t.location}>
+                    <MapPin className="size-4" />
+                  </ContactIcon>
                 ) : null}
               </div>
-            ) : null}
-
-            <div className="grid gap-8 sm:grid-cols-2">
-              <div>
-                <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
-                  İletişim
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {tel ? (
-                    <ContactIcon href={tel} label={t.phone}>
-                      <Phone className="size-4" />
-                    </ContactIcon>
-                  ) : null}
-                  {wa ? (
-                    <ContactIcon href={wa} label="WhatsApp">
-                      <MessageCircle className="size-4" />
-                    </ContactIcon>
-                  ) : null}
-                  {ig ? (
-                    <ContactIcon href={ig} label="Instagram">
-                      <InstagramGlyph />
-                    </ContactIcon>
-                  ) : null}
-                  {maps ? (
-                    <ContactIcon href={maps} label={t.location}>
-                      <MapPin className="size-4" />
-                    </ContactIcon>
+              {venue.brandName ? (
+                <div className="mt-4">
+                  <p className="font-heading text-2xl text-slate-900">
+                    {venue.brandName}
+                  </p>
+                  {venue.brandSubtitle ? (
+                    <p className="mt-1 text-sm text-slate-500">
+                      {venue.brandSubtitle}
+                    </p>
                   ) : null}
                 </div>
-              </div>
+              ) : null}
+            </div>
 
-              <div>
-                <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
-                  {t.hours}
-                </p>
-                <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
-                  {venue.hours.map((row) => (
-                    <li
-                      key={row.id}
-                      className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4"
-                    >
-                      <span>{translateHourLabel(locale, row.label)}</span>
-                      <span className="text-right tabular-nums text-slate-800">
-                        {translateHourValue(locale, row.value)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div>
+              <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
+                {t.hours}
+              </p>
+              <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
+                {venue.hours.map((row) => (
+                  <li
+                    key={row.id}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4"
+                  >
+                    <span>{translateHourLabel(locale, row.label)}</span>
+                    <span className="text-right tabular-nums text-slate-800">
+                      {translateHourValue(locale, row.value)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </footer>

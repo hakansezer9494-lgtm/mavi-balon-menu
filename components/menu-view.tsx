@@ -206,7 +206,6 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 <HeroCorner
                   config={corners.topLeft}
                   venue={venue}
-                  locationLabel={t.location}
                   align="start"
                 />
               </div>
@@ -214,7 +213,6 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 <HeroCorner
                   config={corners.topRight}
                   venue={venue}
-                  locationLabel={t.location}
                   align="end"
                 />
               </div>
@@ -225,16 +223,14 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                 <HeroCorner
                   config={corners.bottomLeft}
                   venue={venue}
-                  locationLabel={t.location}
                   align="start"
-                  brandAsTitle
+                  titleAsHeading
                 />
               </div>
               <div className="min-w-0 flex-1">
                 <HeroCorner
                   config={corners.bottomRight}
                   venue={venue}
-                  locationLabel={t.location}
                   align="end"
                 />
               </div>
@@ -523,22 +519,27 @@ function EmptyState({ title, body }: { title: string; body: string }) {
 function HeroCorner({
   config,
   venue,
-  locationLabel,
   align,
-  brandAsTitle = false,
+  titleAsHeading = false,
 }: {
   config: HeroCornerConfig;
   venue: VenueInfo;
-  locationLabel: string;
   align: "start" | "end";
-  brandAsTitle?: boolean;
+  titleAsHeading?: boolean;
 }) {
   const badge = config.badgeText.trim();
-  const maps = venue.mapsUrl.trim();
-  const showBrand = config.showBrand && Boolean(venue.brandName.trim());
+  const title = config.title.trim();
+  const subtitle = config.subtitle.trim();
   const showLogo = config.showLogo;
-  const showLocation = config.showLocation && Boolean(maps);
-  if (!badge && !showBrand && !showLogo && !showLocation) return null;
+  const maps = venue.mapsUrl.trim();
+  const linkMaps = config.linkMaps && Boolean(maps);
+  if (!badge && !title && !subtitle && !showLogo) return null;
+
+  const subtitleNode = subtitle ? (
+    <p className="max-w-[16rem] whitespace-pre-line text-xs font-medium leading-snug text-white/95 sm:text-sm">
+      {subtitle}
+    </p>
+  ) : null;
 
   return (
     <div
@@ -552,7 +553,7 @@ function HeroCorner({
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={venue.logoImage || "/brand/logo-banner.webp"}
-            alt={venue.brandName || "Logo"}
+            alt={title || venue.brandName || "Logo"}
             className="h-12 w-auto max-w-[7.5rem] object-contain sm:h-14"
             onError={(event) => {
               event.currentTarget.style.display = "none";
@@ -564,7 +565,7 @@ function HeroCorner({
           />
           <BalloonMark
             className="hidden h-12 w-9"
-            title={venue.brandName || "Logo"}
+            title={title || venue.brandName || "Logo"}
           />
         </div>
       ) : null}
@@ -575,28 +576,36 @@ function HeroCorner({
         </div>
       ) : null}
 
-      {showBrand ? (
-        brandAsTitle ? (
+      {title ? (
+        titleAsHeading ? (
           <h1 className="font-heading text-3xl font-semibold tracking-wide text-white sm:text-4xl">
-            {venue.brandName}
+            {title}
           </h1>
         ) : (
           <p className="font-heading text-xl font-semibold tracking-wide text-white sm:text-2xl">
-            {venue.brandName}
+            {title}
           </p>
         )
       ) : null}
 
-      {showLocation ? (
-        <a
-          href={maps}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-2.5 py-1.5 text-xs font-medium text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
-        >
-          <MapPin className="size-3.5" />
-          {locationLabel}
-        </a>
+      {subtitleNode ? (
+        linkMaps ? (
+          <a
+            href={maps}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex max-w-[16rem] items-start gap-1.5 rounded-2xl bg-white/95 px-2.5 py-1.5 text-left text-[#007AFF] shadow-sm ring-1 ring-white/70 transition hover:bg-white"
+          >
+            <MapPin className="mt-0.5 size-3.5 shrink-0" />
+            <span className="whitespace-pre-line text-xs font-medium leading-snug sm:text-sm">
+              {subtitle}
+            </span>
+          </a>
+        ) : (
+          <div className="rounded-2xl bg-black/25 px-2.5 py-1.5 backdrop-blur-[2px]">
+            {subtitleNode}
+          </div>
+        )
       ) : null}
     </div>
   );

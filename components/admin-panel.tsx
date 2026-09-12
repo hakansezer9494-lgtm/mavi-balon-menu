@@ -1071,8 +1071,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">Kapak (Header)</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Kapak fotoğrafı, logo, balonlar, renkler ve dört köşe rozeti. Her
-              köşe birbirinden bağımsızdır.
+              Kapak fotoğrafı, logo, balonlar, renkler ve dört köşe. Her köşeye
+              kendi başlık, alt başlık (adres metni) ve logosunu yazabilirsiniz.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
@@ -1111,16 +1111,16 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div className="grid gap-1.5">
-              <Label htmlFor="brand-name">Marka adı</Label>
-              <Input
-                id="brand-name"
-                value={venueForm.brandName}
-                onChange={(event) =>
-                  updateVenueField("brandName", event.target.value)
-                }
-                placeholder="Köşelerde göstermek için — boş bırakılabilir"
-                className="h-10 bg-white/5 text-white"
-              />
+                <Label htmlFor="brand-name">Marka adı (footer için)</Label>
+                <Input
+                  id="brand-name"
+                  value={venueForm.brandName}
+                  onChange={(event) =>
+                    updateVenueField("brandName", event.target.value)
+                  }
+                  placeholder="Sayfa altında görünür — kapak metni köşelerden gelir"
+                  className="h-10 bg-white/5 text-white"
+                />
             </div>
 
             <div className="grid gap-1.5">
@@ -1228,9 +1228,10 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                   const open = openCorner === cornerId;
                   const summary = [
                     corner.badgeText.trim() ? "rozet" : null,
-                    corner.showBrand ? "marka" : null,
+                    corner.title.trim() ? "başlık" : null,
+                    corner.subtitle.trim() ? "alt başlık" : null,
                     corner.showLogo ? "logo" : null,
-                    corner.showLocation ? "konum" : null,
+                    corner.linkMaps ? "harita" : null,
                   ]
                     .filter(Boolean)
                     .join(" · ");
@@ -1263,7 +1264,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                         <div className="space-y-3 border-t border-white/10 px-3 py-3">
                           <div className="grid gap-1.5">
                             <Label htmlFor={`badge-${cornerId}`}>
-                              Bu köşenin rozet metni
+                              Rozet (isteğe bağlı)
                             </Label>
                             <Input
                               id={`badge-${cornerId}`}
@@ -1275,27 +1276,68 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                                   event.target.value
                                 )
                               }
-                              placeholder="Boş bırakırsanız rozet gizlenir"
+                              placeholder="Örn. Açık · 11:00 - 01:30"
                               className="h-10 bg-white/5 text-white"
                             />
                           </div>
-                          <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                            <span>Marka adını bu köşede göster</span>
-                            <input
-                              type="checkbox"
-                              checked={corner.showBrand}
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`title-${cornerId}`}>Başlık</Label>
+                            <Input
+                              id={`title-${cornerId}`}
+                              value={corner.title}
                               onChange={(event) =>
                                 updateCornerField(
                                   cornerId,
-                                  "showBrand",
-                                  event.target.checked
+                                  "title",
+                                  event.target.value
                                 )
                               }
-                              className="size-4 accent-sky-400"
+                              placeholder="Bu köşeye özel başlık"
+                              className="h-10 bg-white/5 text-white"
                             />
-                          </label>
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`subtitle-${cornerId}`}>
+                              Alt başlık / adres metni
+                            </Label>
+                            <textarea
+                              id={`subtitle-${cornerId}`}
+                              value={corner.subtitle}
+                              onChange={(event) =>
+                                updateCornerField(
+                                  cornerId,
+                                  "subtitle",
+                                  event.target.value
+                                )
+                              }
+                              placeholder={"Örn. Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy"}
+                              rows={3}
+                              className="min-h-[4.5rem] w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-sky-100/35 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className={cn("w-fit", darkOutline)}
+                              onClick={() => {
+                                const address = [
+                                  venueForm.addressLine1.trim(),
+                                  venueForm.addressLine2.trim(),
+                                ]
+                                  .filter(Boolean)
+                                  .join("\n");
+                                updateCornerField(
+                                  cornerId,
+                                  "subtitle",
+                                  address
+                                );
+                              }}
+                            >
+                              İşletme adresini buraya doldur
+                            </Button>
+                          </div>
                           <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                            <span>Logoyu bu köşede göster</span>
+                            <span>Marka logosunu bu köşede göster</span>
                             <input
                               type="checkbox"
                               checked={corner.showLogo}
@@ -1310,14 +1352,14 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                             />
                           </label>
                           <label className="flex items-center justify-between gap-3 text-sm text-sky-100/80">
-                            <span>Konum rozetini bu köşede göster</span>
+                            <span>Alt başlığı Google Maps’e bağla</span>
                             <input
                               type="checkbox"
-                              checked={corner.showLocation}
+                              checked={corner.linkMaps}
                               onChange={(event) =>
                                 updateCornerField(
                                   cornerId,
-                                  "showLocation",
+                                  "linkMaps",
                                   event.target.checked
                                 )
                               }
@@ -1325,9 +1367,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                             />
                           </label>
                           <p className="text-[11px] text-sky-100/45">
-                            Konum linki İşletme & iletişim kartındaki Google Maps
-                            alanından gelir; yalnızca hangi köşede görüneceğini
-                            burada seçersiniz.
+                            Her köşenin başlık / alt başlık / logo seçimi kendine
+                            aittir. Adres metnini sağ alta yazmak için Sağ alt
+                            çekmecesini açıp alt başlığa yazın.
                           </p>
                         </div>
                       ) : null}

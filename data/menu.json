@@ -362,27 +362,31 @@
     "heroCorners": {
       "topLeft": {
         "badgeText": "",
-        "showBrand": false,
+        "title": "",
+        "subtitle": "",
         "showLogo": false,
-        "showLocation": false
+        "linkMaps": false
       },
       "topRight": {
         "badgeText": "",
-        "showBrand": false,
+        "title": "",
+        "subtitle": "",
         "showLogo": true,
-        "showLocation": false
+        "linkMaps": false
       },
       "bottomLeft": {
         "badgeText": "Açık · 11:00 - 01:30",
-        "showBrand": true,
+        "title": "Mavi Balloon",
+        "subtitle": "",
         "showLogo": false,
-        "showLocation": false
+        "linkMaps": false
       },
       "bottomRight": {
         "badgeText": "",
-        "showBrand": false,
+        "title": "",
+        "subtitle": "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
         "showLogo": false,
-        "showLocation": true
+        "linkMaps": true
       }
     }
   },

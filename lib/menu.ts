@@ -32,14 +32,16 @@ export type HeroCornerId =
   | "bottomRight";
 
 export type HeroCornerConfig = {
-  /** Rozet metni; boşsa rozet gizlenir */
+  /** Opsiyonel rozet; boşsa gizlenir */
   badgeText: string;
-  /** Bu köşede marka adını göster */
-  showBrand: boolean;
+  /** Bu köşeye özel başlık */
+  title: string;
+  /** Bu köşeye özel alt başlık (adres, slogan vb.) */
+  subtitle: string;
   /** Bu köşede marka logosunu göster */
   showLogo: boolean;
-  /** Bu köşede konum rozetini göster */
-  showLocation: boolean;
+  /** Alt başlığı Google Maps linkine bağla */
+  linkMaps: boolean;
 };
 
 export const HERO_CORNER_IDS: HeroCornerId[] = [
@@ -69,7 +71,7 @@ export type VenueInfo = {
   phone: string;
   whatsapp: string;
   instagram: string;
-  /** @deprecated Prefer heroCorners[*].badgeText; kept for older clients */
+  /** @deprecated Prefer heroCorners.bottomLeft.badgeText; kept for older clients */
   statusLabel: string;
   heroImage: string;
   logoImage: string;
@@ -104,27 +106,31 @@ const img = (file: string) => `/products/${file}`;
 export const defaultHeroCorners: Record<HeroCornerId, HeroCornerConfig> = {
   topLeft: {
     badgeText: "",
-    showBrand: false,
+    title: "",
+    subtitle: "",
     showLogo: false,
-    showLocation: false,
+    linkMaps: false,
   },
   topRight: {
     badgeText: "",
-    showBrand: false,
+    title: "",
+    subtitle: "",
     showLogo: true,
-    showLocation: false,
+    linkMaps: false,
   },
   bottomLeft: {
     badgeText: "Açık · 11:00 - 01:30",
-    showBrand: true,
+    title: "Mavi Balloon",
+    subtitle: "",
     showLogo: false,
-    showLocation: false,
+    linkMaps: false,
   },
   bottomRight: {
     badgeText: "",
-    showBrand: false,
+    title: "",
+    subtitle: "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
     showLogo: false,
-    showLocation: true,
+    linkMaps: true,
   },
 };
 
@@ -521,8 +527,13 @@ export function isMenuData(value: unknown): value is MenuData {
 }
 
 export function normalizeHeroCorners(
-  corners?: Partial<Record<HeroCornerId, Partial<HeroCornerConfig>>> | null,
-  legacyStatusLabel = ""
+  corners?: Partial<Record<HeroCornerId, Partial<HeroCornerConfig> & {
+    showBrand?: boolean;
+    showLocation?: boolean;
+  }>> | null,
+  legacyStatusLabel = "",
+  legacyBrandName = "",
+  legacyAddress = ""
 ): Record<HeroCornerId, HeroCornerConfig> {
   const hasSaved =
     corners != null &&
@@ -533,17 +544,37 @@ export function normalizeHeroCorners(
     const migrated = structuredClone(defaultHeroCorners);
     const legacy = legacyStatusLabel.trim();
     if (legacy) migrated.bottomLeft.badgeText = legacy;
+    if (legacyBrandName.trim()) migrated.bottomLeft.title = legacyBrandName.trim();
+    if (legacyAddress.trim()) {
+      migrated.bottomRight.subtitle = legacyAddress.trim();
+      migrated.bottomRight.linkMaps = true;
+    }
     return migrated;
   }
 
   const result = {} as Record<HeroCornerId, HeroCornerConfig>;
   for (const id of HERO_CORNER_IDS) {
-    const row = corners?.[id];
+    const row = (corners?.[id] ?? {}) as Partial<HeroCornerConfig> & {
+      showBrand?: boolean;
+      showLocation?: boolean;
+    };
+    const titleFromLegacyBrand =
+      !String(row.title ?? "").trim() && row.showBrand
+        ? legacyBrandName.trim()
+        : "";
+    const subtitleFromLegacyLocation =
+      !String(row.subtitle ?? "").trim() && row.showLocation
+        ? legacyAddress.trim()
+        : "";
     result[id] = {
-      badgeText: String(row?.badgeText ?? "").trim(),
-      showBrand: Boolean(row?.showBrand),
-      showLogo: Boolean(row?.showLogo),
-      showLocation: Boolean(row?.showLocation),
+      badgeText: String(row.badgeText ?? "").trim(),
+      title: String(row.title ?? titleFromLegacyBrand).trim(),
+      subtitle: String(row.subtitle ?? subtitleFromLegacyLocation).trim(),
+      showLogo: Boolean(row.showLogo),
+      linkMaps:
+        typeof row.linkMaps === "boolean"
+          ? row.linkMaps
+          : Boolean(row.showLocation),
     };
   }
   return result;
@@ -564,9 +595,17 @@ export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
 
   const savedCorners =
     venue && "heroCorners" in venue ? venue.heroCorners : undefined;
+  const legacyAddress = [
+    String(venue?.addressLine1 ?? base.addressLine1 ?? "").trim(),
+    String(venue?.addressLine2 ?? base.addressLine2 ?? "").trim(),
+  ]
+    .filter(Boolean)
+    .join("\n");
   const heroCorners = normalizeHeroCorners(
     savedCorners,
-    String(venue?.statusLabel ?? "")
+    String(venue?.statusLabel ?? ""),
+    String(venue?.brandName ?? base.brandName ?? ""),
+    legacyAddress
   );
   const statusLabel =
     heroCorners.bottomLeft.badgeText ||

@@ -100,6 +100,81 @@ const darkOutline =
   "border-white/30 bg-white/15 text-white hover:bg-white/25 hover:text-white";
 const darkGhost = "text-sky-100 hover:bg-white/15 hover:text-white";
 
+function CornerTextField({
+  id,
+  label,
+  value,
+  placeholder,
+  textStyle,
+  multiline = false,
+  onValueChange,
+  onStyleChange,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  placeholder?: string;
+  textStyle: HeroTextStyle;
+  multiline?: boolean;
+  onValueChange: (value: string) => void;
+  onStyleChange: (patch: Partial<HeroTextStyle>) => void;
+}) {
+  return (
+    <div className="grid gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-start gap-2">
+        {multiline ? (
+          <textarea
+            id={id}
+            value={value}
+            onChange={(event) => onValueChange(event.target.value)}
+            placeholder={placeholder}
+            rows={3}
+            className="min-h-[4.5rem] min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-sky-100/35 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
+          />
+        ) : (
+          <Input
+            id={id}
+            value={value}
+            onChange={(event) => onValueChange(event.target.value)}
+            placeholder={placeholder}
+            className="h-10 min-w-0 flex-1 bg-white/5 text-white"
+          />
+        )}
+        <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
+          <select
+            aria-label={`${label} yazı boyutu`}
+            value={textStyle.size}
+            onChange={(event) =>
+              onStyleChange({
+                size: event.target.value as HeroTextStyle["size"],
+              })
+            }
+            className="h-10 rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-sky-400/50"
+          >
+            {HERO_TEXT_SIZE_OPTIONS.map((option) => (
+              <option
+                key={option.value}
+                value={option.value}
+                className="bg-slate-900"
+              >
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <input
+            type="color"
+            aria-label={`${label} yazı rengi`}
+            value={textStyle.color || "#ffffff"}
+            onChange={(event) => onStyleChange({ color: event.target.value })}
+            className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 bg-transparent p-1"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const { menu, updateMenu, saving, saveError } = useMenu(initialMenu, {
     pollMs: false,
@@ -1346,7 +1421,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       label="Rozet (isteğe bağlı)"
                       value={corner.badgeText}
                       placeholder="Örn. Açık · 11:00 - 01:30"
-                      style={corner.badgeStyle}
+                      textStyle={corner.badgeStyle}
                       onValueChange={(value) =>
                         updateCornerField(cornerId, "badgeText", value)
                       }
@@ -1359,7 +1434,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       label="Başlık"
                       value={corner.title}
                       placeholder="Bu köşeye özel başlık"
-                      style={corner.titleStyle}
+                      textStyle={corner.titleStyle}
                       onValueChange={(value) =>
                         updateCornerField(cornerId, "title", value)
                       }
@@ -1372,7 +1447,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       label="Alt başlık"
                       value={corner.subtitle}
                       placeholder="Slogan"
-                      style={corner.subtitleStyle}
+                      textStyle={corner.subtitleStyle}
                       onValueChange={(value) =>
                         updateCornerField(cornerId, "subtitle", value)
                       }
@@ -1386,7 +1461,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                       value={corner.description}
                       placeholder="Alt başlığın altında kısa açıklama"
                       multiline
-                      style={corner.descriptionStyle}
+                      textStyle={corner.descriptionStyle}
                       onValueChange={(value) =>
                         updateCornerField(cornerId, "description", value)
                       }
@@ -1407,7 +1482,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                           "Örn. Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy"
                         }
                         multiline
-                        style={corner.addressStyle}
+                        textStyle={corner.addressStyle}
                         onValueChange={(value) =>
                           updateCornerField(cornerId, "addressText", value)
                         }
@@ -2030,77 +2105,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function CornerTextField({
-  id,
-  label,
-  value,
-  placeholder,
-  style,
-  multiline = false,
-  onValueChange,
-  onStyleChange,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  placeholder?: string;
-  style: HeroTextStyle;
-  multiline?: boolean;
-  onValueChange: (value: string) => void;
-  onStyleChange: (patch: Partial<HeroTextStyle>) => void;
-}) {
-  return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="flex items-start gap-2">
-        {multiline ? (
-          <textarea
-            id={id}
-            value={value}
-            onChange={(event) => onValueChange(event.target.value)}
-            placeholder={placeholder}
-            rows={3}
-            className="min-h-[4.5rem] min-w-0 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white outline-none placeholder:text-sky-100/35 focus:border-sky-400/50 focus:ring-2 focus:ring-sky-400/20"
-          />
-        ) : (
-          <Input
-            id={id}
-            value={value}
-            onChange={(event) => onValueChange(event.target.value)}
-            placeholder={placeholder}
-            className="h-10 min-w-0 flex-1 bg-white/5 text-white"
-          />
-        )}
-        <div className="flex shrink-0 items-center gap-1.5 pt-0.5">
-          <select
-            aria-label={`${label} yazı boyutu`}
-            value={style.size}
-            onChange={(event) =>
-              onStyleChange({
-                size: event.target.value as HeroTextStyle["size"],
-              })
-            }
-            className="h-10 rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-sky-400/50"
-          >
-            {HERO_TEXT_SIZE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value} className="bg-slate-900">
-                {option.label}
-              </option>
-            ))}
-          </select>
-          <input
-            type="color"
-            aria-label={`${label} yazı rengi`}
-            value={style.color || "#ffffff"}
-            onChange={(event) => onStyleChange({ color: event.target.value })}
-            className="h-10 w-10 cursor-pointer rounded-lg border border-white/10 bg-transparent p-1"
-          />
-        </div>
-      </div>
     </div>
   );
 }

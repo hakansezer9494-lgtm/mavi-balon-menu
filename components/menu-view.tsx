@@ -377,9 +377,14 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
             </div>
 
             <div>
-              <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
-                {t.hours}
-              </p>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4">
+                <p className="text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
+                  {t.days}
+                </p>
+                <p className="text-right text-[11px] font-medium tracking-[0.2em] text-[#007AFF] uppercase">
+                  {t.hours}
+                </p>
+              </div>
               <ul className="mt-3 space-y-1.5 text-sm text-slate-600">
                 {venue.hours.map((row) => (
                   <li

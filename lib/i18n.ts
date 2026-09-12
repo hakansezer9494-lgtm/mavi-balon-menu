@@ -14,6 +14,7 @@ type UiCopy = {
   productFallback: string;
   location: string;
   phone: string;
+  days: string;
   hours: string;
   closed: string;
   footerTagline: string;
@@ -39,6 +40,7 @@ const ui: Record<Locale, UiCopy> = {
     productFallback: "Mavi Balloon menü ürünü",
     location: "Konum",
     phone: "Telefon",
+    days: "Günler",
     hours: "Saatler",
     closed: "Kapalı",
     footerTagline: "Antakya Döner ve Özel Burgerler",
@@ -62,6 +64,7 @@ const ui: Record<Locale, UiCopy> = {
     productFallback: "Mavi Balloon menu item",
     location: "Location",
     phone: "Phone",
+    days: "Days",
     hours: "Hours",
     closed: "Closed",
     footerTagline: "Antakya Döner & Specialty Burgers",

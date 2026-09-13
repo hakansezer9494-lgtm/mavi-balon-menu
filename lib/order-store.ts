@@ -2,7 +2,9 @@ import { createClient, type Client } from "@libsql/client";
 import { promises as fs } from "fs";
 import path from "path";
 import {
+  getBusinessDayStart,
   isOrder,
+  isWithinCurrentBusinessDay,
   normalizeOrder,
   type Order,
   type OrderStatus,
@@ -104,17 +106,49 @@ export function getLastOrderStoreError() {
   return lastError;
 }
 
-export async function listOrders(): Promise<Order[]> {
+async function purgeExpiredOrders(): Promise<void> {
+  const cutoff = getBusinessDayStart().toISOString();
   const client = getTurso();
   if (client) {
     try {
       await ensureSchema(client);
-      const result = await client.execute(
-        `SELECT id, table_number, items_json, total, status, created_at, updated_at
+      await client.execute({
+        sql: `DELETE FROM orders WHERE created_at < ?`,
+        args: [cutoff],
+      });
+      lastError = "";
+      return;
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error.message : "Eski siparişler silinemedi.";
+      console.error("Order purge (Turso) failed:", lastError);
+    }
+  }
+
+  const current = await readFromFile();
+  const next = current.filter((order) =>
+    isWithinCurrentBusinessDay(order.createdAt)
+  );
+  if (next.length !== current.length) {
+    await writeToFile(next);
+  }
+}
+
+export async function listOrders(): Promise<Order[]> {
+  await purgeExpiredOrders();
+  const client = getTurso();
+  if (client) {
+    try {
+      await ensureSchema(client);
+      const cutoff = getBusinessDayStart().toISOString();
+      const result = await client.execute({
+        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
          FROM orders
+         WHERE created_at >= ?
          ORDER BY created_at DESC
-         LIMIT 200`
-      );
+         LIMIT 200`,
+        args: [cutoff],
+      });
       lastError = "";
       return result.rows
         .map((row) => rowToOrder(row as Record<string, unknown>))
@@ -123,10 +157,14 @@ export async function listOrders(): Promise<Order[]> {
       lastError =
         error instanceof Error ? error.message : "Siparişler okunamadı.";
       console.error("Order list (Turso) failed:", lastError);
-      return readFromFile();
+      return (await readFromFile()).filter((order) =>
+        isWithinCurrentBusinessDay(order.createdAt)
+      );
     }
   }
-  return readFromFile();
+  return (await readFromFile()).filter((order) =>
+    isWithinCurrentBusinessDay(order.createdAt)
+  );
 }
 
 export async function createOrder(

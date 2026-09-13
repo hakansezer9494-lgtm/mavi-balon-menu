@@ -213,6 +213,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [logoError, setLogoError] = useState("");
   const [heroBusy, setHeroBusy] = useState(false);
   const [heroError, setHeroError] = useState("");
+  const [newTableNumber, setNewTableNumber] = useState("");
+  const [tableMessage, setTableMessage] = useState("");
   const menuOrigin = useSyncExternalStore(
     subscribeOrigin,
     () => window.location.origin,
@@ -772,6 +774,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           label: row.label.trim(),
           value: row.value.trim(),
         })),
+        tables: [...(venueForm.tables ?? [])],
       },
     }));
     setVenueMessage("İşletme bilgileri kaydedildi.");
@@ -857,6 +860,50 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       ...current,
       hours: current.hours.filter((row) => row.id !== id),
     }));
+  }
+
+  function addTable() {
+    const table = newTableNumber.trim();
+    setTableMessage("");
+    if (!table) {
+      setTableMessage("Masa numarası yazın.");
+      return;
+    }
+    if ((venueForm.tables ?? []).includes(table)) {
+      setTableMessage("Bu masa zaten var.");
+      return;
+    }
+    setVenueForm((current) => ({
+      ...current,
+      tables: [...(current.tables ?? []), table].sort((a, b) => {
+        const na = Number(a);
+        const nb = Number(b);
+        if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+        return a.localeCompare(b, "tr");
+      }),
+    }));
+    setNewTableNumber("");
+    setVenueMessage("");
+  }
+
+  function removeTable(table: string) {
+    setVenueForm((current) => ({
+      ...current,
+      tables: (current.tables ?? []).filter((row) => row !== table),
+    }));
+    setTableMessage("");
+    setVenueMessage("");
+  }
+
+  function saveTables() {
+    updateMenu((current) => ({
+      ...current,
+      venue: {
+        ...current.venue,
+        tables: [...(venueForm.tables ?? [])],
+      },
+    }));
+    setTableMessage("Masalar kaydedildi.");
   }
 
   return (
@@ -1802,6 +1849,79 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               disabled={saving}
             >
               Footer ayarlarını kaydet
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <CardTitle className="text-white">Masalar</CardTitle>
+            <CardDescription className="text-sky-100/60">
+              Sipariş ekranında görünecek masa numaralarını buradan ekleyin.
+              Misafir yalnızca bu listeden masa seçebilir.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="grid flex-1 gap-1.5">
+                <Label htmlFor="new-table-number">Masa numarası</Label>
+                <Input
+                  id="new-table-number"
+                  value={newTableNumber}
+                  onChange={(event) => setNewTableNumber(event.target.value)}
+                  placeholder="Örn. 12"
+                  className="h-10 bg-white/5 text-white"
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") addTable();
+                  }}
+                />
+              </div>
+              <Button
+                type="button"
+                className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                onClick={addTable}
+              >
+                <Plus />
+                Masa ekle
+              </Button>
+            </div>
+
+            {(venueForm.tables ?? []).length === 0 ? (
+              <p className="rounded-xl bg-white/5 px-4 py-6 text-center text-sm text-sky-100/60">
+                Henüz masa yok. Numara yazıp Masa ekle’ye basın.
+              </p>
+            ) : (
+              <ul className="flex flex-wrap gap-2">
+                {(venueForm.tables ?? []).map((table) => (
+                  <li
+                    key={table}
+                    className="inline-flex items-center gap-1 rounded-full bg-white/10 py-1 pr-1 pl-3 text-sm ring-1 ring-white/15"
+                  >
+                    <span>Masa {table}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className={darkGhost}
+                      onClick={() => removeTable(table)}
+                      aria-label={`Masa ${table} sil`}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {tableMessage ? (
+              <p className="text-sm text-sky-200">{tableMessage}</p>
+            ) : null}
+            <Button
+              className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+              onClick={saveTables}
+              disabled={saving}
+            >
+              Masaları kaydet
             </Button>
           </CardContent>
         </Card>

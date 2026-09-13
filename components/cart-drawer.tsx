@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/menu";
-import { DEFAULT_TABLE_NUMBERS, type OrderItem } from "@/lib/orders";
+import type { OrderItem } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
 export type CartLine = OrderItem & {
@@ -39,6 +39,7 @@ type CartDrawerProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   items: CartLine[];
+  tables: string[];
   onChangeQty: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
   onClear: () => void;
@@ -48,6 +49,7 @@ export function CartDrawer({
   open,
   onOpenChange,
   items,
+  tables,
   onChangeQty,
   onRemove,
   onClear,
@@ -247,24 +249,30 @@ export function CartDrawer({
             </button>
             {tableOpen ? (
               <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
-                {DEFAULT_TABLE_NUMBERS.map((table) => (
-                  <button
-                    key={table}
-                    type="button"
-                    className={cn(
-                      "flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium hover:bg-slate-50",
-                      tableNumber === table &&
-                        "bg-[#007AFF]/10 text-[#007AFF]"
-                    )}
-                    onClick={() => {
-                      setTableNumber(table);
-                      setTableOpen(false);
-                      setError("");
-                    }}
-                  >
-                    Masa {table}
-                  </button>
-                ))}
+                {tables.length === 0 ? (
+                  <p className="px-3 py-2 text-sm text-slate-500">
+                    Henüz masa tanımlanmamış. Yönetim panelinden masa ekleyin.
+                  </p>
+                ) : (
+                  tables.map((table) => (
+                    <button
+                      key={table}
+                      type="button"
+                      className={cn(
+                        "flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium hover:bg-slate-50",
+                        tableNumber === table &&
+                          "bg-[#007AFF]/10 text-[#007AFF]"
+                      )}
+                      onClick={() => {
+                        setTableNumber(table);
+                        setTableOpen(false);
+                        setError("");
+                      }}
+                    >
+                      Masa {table}
+                    </button>
+                  ))
+                )}
               </div>
             ) : null}
           </div>

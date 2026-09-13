@@ -549,6 +549,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         open={cartOpen}
         onOpenChange={setCartOpen}
         items={cartItems}
+        tables={venue.tables ?? []}
         onChangeQty={changeCartQty}
         onRemove={(productId) =>
           setCartItems((current) =>

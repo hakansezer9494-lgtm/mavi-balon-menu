@@ -151,6 +151,8 @@ export type VenueInfo = {
   productCardColor: string;
   heroCorners: Record<HeroCornerId, HeroCornerConfig>;
   hours: HoursRow[];
+  /** Guest-selectable table numbers configured in admin */
+  tables: string[];
 };
 
 export type SignatureSection = {
@@ -257,6 +259,7 @@ export const defaultVenue: VenueInfo = {
     { id: "fri-sat", label: "Cuma – Cumartesi", value: "11:00 - 01:30" },
     { id: "sun", label: "Pazar", value: "12:00 - 23:00" },
   ],
+  tables: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
 };
 
 export const defaultSignature: SignatureSection = {
@@ -768,7 +771,23 @@ export function normalizeVenue(venue?: Partial<VenueInfo> | null): VenueInfo {
       defaultVenue.productCardColor,
     heroCorners,
     hours,
+    tables: normalizeTables(venue?.tables ?? base.tables),
   };
+}
+
+function normalizeTables(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [...defaultVenue.tables];
+  }
+  const seen = new Set<string>();
+  const tables: string[] = [];
+  for (const row of value) {
+    const table = String(row ?? "").trim();
+    if (!table || seen.has(table)) continue;
+    seen.add(table);
+    tables.push(table);
+  }
+  return tables;
 }
 
 export function normalizeSignature(

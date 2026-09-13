@@ -86,3 +86,75 @@ export function normalizeOrder(input: Partial<Order> & { items: OrderItem[] }): 
     updatedAt: String(input.updatedAt || now),
   };
 }
+
+function istanbulParts(date: Date) {
+  const dtf = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    hourCycle: "h23",
+  });
+  const parts = dtf.formatToParts(date);
+  const read = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value ?? "0");
+  return {
+    year: read("year"),
+    month: read("month"),
+    day: read("day"),
+    hour: read("hour"),
+  };
+}
+
+/** Convert an Istanbul wall-clock time to a UTC Date. */
+function istanbulWallTimeToDate(
+  year: number,
+  month: number,
+  day: number,
+  hour: number
+) {
+  const utcGuess = Date.UTC(year, month - 1, day, hour, 0, 0);
+  const shown = istanbulParts(new Date(utcGuess));
+  const shownAsUtc = Date.UTC(
+    shown.year,
+    shown.month - 1,
+    shown.day,
+    shown.hour,
+    0,
+    0
+  );
+  const desiredAsUtc = Date.UTC(year, month - 1, day, hour, 0, 0);
+  return new Date(utcGuess + (desiredAsUtc - shownAsUtc));
+}
+
+/**
+ * Service day starts at 08:00 Istanbul and runs until 03:00 next calendar day.
+ * Between 03:00–08:00 the previous day is cleared (start = today's 08:00).
+ */
+export function getBusinessDayStart(now = new Date()): Date {
+  const parts = istanbulParts(now);
+  let year = parts.year;
+  let month = parts.month;
+  let day = parts.day;
+
+  if (parts.hour < 3) {
+    const previous = istanbulWallTimeToDate(year, month, day, 12);
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    const prevParts = istanbulParts(previous);
+    year = prevParts.year;
+    month = prevParts.month;
+    day = prevParts.day;
+  }
+
+  return istanbulWallTimeToDate(year, month, day, 8);
+}
+
+export function isWithinCurrentBusinessDay(
+  isoDate: string,
+  now = new Date()
+): boolean {
+  const created = Date.parse(isoDate);
+  if (!Number.isFinite(created)) return false;
+  return created >= getBusinessDayStart(now).getTime();
+}

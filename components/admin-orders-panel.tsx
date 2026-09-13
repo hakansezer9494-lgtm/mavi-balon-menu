@@ -325,11 +325,16 @@ export function AdminOrdersPanel() {
               <ul className="space-y-2">
                 {selected.items.map((item) => (
                   <li
-                    key={`${selected.id}-${item.productId}-past`}
+                    key={`${selected.id}-${item.productId}-past-${item.note ?? ""}`}
                     className="flex items-start justify-between gap-3 text-sm"
                   >
                     <span className="text-sky-50">
                       {item.quantity}× {item.name}
+                      {item.note?.trim() ? (
+                        <span className="mt-0.5 block text-xs text-sky-200/70">
+                          Not: {item.note}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="shrink-0 tabular-nums text-sky-100/80">
                       {formatPrice(item.unitPrice * item.quantity)}

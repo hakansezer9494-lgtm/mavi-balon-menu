@@ -1116,7 +1116,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         </div>
 
         
-        <div className="grid grid-cols-1 gap-2 rounded-2xl bg-slate-900/40 p-2 ring-1 ring-white/20 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200 sm:grid-cols-3">
           {(
             [
               { id: "menu" as const, label: "Menü ayarları" },
@@ -1131,8 +1131,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               className={cn(
                 "rounded-xl px-3.5 py-2.5 text-sm font-semibold tracking-wide transition",
                 adminSettingsTab === tab.id
-                  ? "bg-sky-400 text-slate-950 shadow-md ring-2 ring-sky-200/80"
-                  : "bg-white/15 text-white ring-1 ring-white/25 hover:bg-white/25"
+                  ? "bg-sky-600 text-white shadow-md"
+                  : "bg-slate-100 text-slate-800 ring-1 ring-slate-300 hover:bg-slate-200"
               )}
             >
               {tab.label}

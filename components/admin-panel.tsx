@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronDown, Download, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Download, Pencil, Plus, Trash2, Volume2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -39,6 +39,14 @@ import {
   useMenu,
 } from "@/hooks/use-menu";
 import { compressImage } from "@/lib/image";
+import {
+  ORDER_ALERT_SOUNDS,
+  getOrderAlertSoundId,
+  previewOrderAlertSound,
+  setOrderAlertSoundId,
+  type OrderAlertSoundId,
+  unlockOrderAlerts,
+} from "@/lib/order-alerts";
 import {
   defaultSignature,
   defaultVenue,
@@ -198,6 +206,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [passwordBusy, setPasswordBusy] = useState(false);
+  const [alertSoundId, setAlertSoundId] =
+    useState<OrderAlertSoundId>("classic");
+  const [savedAlertSoundId, setSavedAlertSoundId] =
+    useState<OrderAlertSoundId>("classic");
+  const [alertSoundMessage, setAlertSoundMessage] = useState("");
   const [venueForm, setVenueForm] = useState<VenueInfo>(
     () => structuredClone(initialMenu.venue ?? defaultVenue)
   );
@@ -310,6 +323,11 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     setSignatureForm(structuredClone(menu.signature ?? defaultSignature));
   }, [menu.venue, menu.signature]);
 
+  useEffect(() => {
+    const saved = getOrderAlertSoundId();
+    setAlertSoundId(saved);
+    setSavedAlertSoundId(saved);
+  }, []);
 
   if (!authChecked) {
     return (
@@ -1962,6 +1980,94 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 QR sayfasını aç
               </Link>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 rounded-xl bg-sky-400/15 p-2 text-sky-300">
+                <Volume2 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-white">Sipariş bildirim sesi</CardTitle>
+                <CardDescription className="mt-1 text-sky-100/60">
+                  Yeni sipariş geldiğinde çalacak sesi seçin. Seçim bu tarayıcıda
+                  saklanır; sipariş ekranı aynı sesi kullanır.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {ORDER_ALERT_SOUNDS.map((sound) => {
+              const selected = alertSoundId === sound.id;
+              const saved = savedAlertSoundId === sound.id;
+              return (
+                <div
+                  key={sound.id}
+                  className={`flex flex-col gap-2 rounded-xl px-3 py-3 ring-1 transition sm:flex-row sm:items-center sm:justify-between ${
+                    selected
+                      ? "bg-sky-400/15 ring-sky-400/50"
+                      : "bg-white/5 ring-white/10"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setAlertSoundId(sound.id)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <p
+                      className={`text-sm font-semibold ${
+                        selected ? "text-sky-200" : "text-white"
+                      }`}
+                    >
+                      {sound.label}
+                      {saved ? " · Aktif" : ""}
+                    </p>
+                    <p className="mt-0.5 text-xs text-sky-100/55">
+                      {sound.description}
+                    </p>
+                  </button>
+                  <div className="flex shrink-0 gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className={darkOutline}
+                      onClick={() => {
+                        setAlertSoundId(sound.id);
+                        unlockOrderAlerts();
+                        previewOrderAlertSound(sound.id);
+                      }}
+                    >
+                      Dinle
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className={
+                        saved
+                          ? "bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                          : "bg-white/15 text-white hover:bg-white/25"
+                      }
+                      onClick={() => {
+                        setOrderAlertSoundId(sound.id);
+                        setAlertSoundId(sound.id);
+                        setSavedAlertSoundId(sound.id);
+                        setAlertSoundMessage(
+                          `${sound.label} bildirim sesi olarak kaydedildi.`
+                        );
+                      }}
+                    >
+                      {saved ? "Aktif" : "Seç"}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+            {alertSoundMessage ? (
+              <p className="text-sm text-sky-200">{alertSoundMessage}</p>
+            ) : null}
           </CardContent>
         </Card>
 

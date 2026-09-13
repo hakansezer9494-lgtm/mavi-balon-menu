@@ -1,10 +1,159 @@
-/** Cross-tab / background-friendly order alerts. */
+/** Cross-tab / background-friendly order alerts with selectable chimes. */
 
+export type OrderAlertSoundId =
+  | "classic"
+  | "soft"
+  | "kitchen"
+  | "urgent"
+  | "bright";
+
+export type OrderAlertSoundOption = {
+  id: OrderAlertSoundId;
+  label: string;
+  description: string;
+};
+
+type Tone = {
+  freq: number;
+  type: OscillatorType;
+  at: number;
+  dur: number;
+  peak: number;
+};
+
+type WavTone = { freq: number; start: number; dur: number; gain?: number };
+
+const SOUND_KEY = "mavi-order-alert-sound";
 const TITLE_BASE_KEY = "mavi-order-title-base";
+
+export const ORDER_ALERT_SOUNDS: OrderAlertSoundOption[] = [
+  {
+    id: "classic",
+    label: "Klasik",
+    description: "Net yükselen dört ton — varsayılan mutfak zili.",
+  },
+  {
+    id: "soft",
+    label: "Yumuşak",
+    description: "Daha sakin, düşük frekanslı yumuşak uyarı.",
+  },
+  {
+    id: "kitchen",
+    label: "Mutfak zili",
+    description: "Kısa çift ding — hızlı fark edilir.",
+  },
+  {
+    id: "urgent",
+    label: "Acil",
+    description: "Keskin ve tekrarlı — yoğun saatler için.",
+  },
+  {
+    id: "bright",
+    label: "Parlak",
+    description: "Parlak üçlü melodi — ferah bildirim.",
+  },
+];
+
+const WEB_PATTERNS: Record<OrderAlertSoundId, Tone[]> = {
+  classic: [
+    { freq: 660, type: "square", at: 0, dur: 0.22, peak: 0.42 },
+    { freq: 880, type: "sawtooth", at: 0.12, dur: 0.28, peak: 0.48 },
+    { freq: 1175, type: "square", at: 0.26, dur: 0.34, peak: 0.52 },
+    { freq: 1568, type: "triangle", at: 0.42, dur: 0.42, peak: 0.4 },
+  ],
+  soft: [
+    { freq: 523, type: "sine", at: 0, dur: 0.35, peak: 0.28 },
+    { freq: 659, type: "triangle", at: 0.2, dur: 0.4, peak: 0.26 },
+    { freq: 784, type: "sine", at: 0.42, dur: 0.45, peak: 0.22 },
+  ],
+  kitchen: [
+    { freq: 1320, type: "square", at: 0, dur: 0.12, peak: 0.5 },
+    { freq: 1760, type: "square", at: 0.14, dur: 0.14, peak: 0.46 },
+    { freq: 1320, type: "triangle", at: 0.32, dur: 0.18, peak: 0.34 },
+  ],
+  urgent: [
+    { freq: 880, type: "sawtooth", at: 0, dur: 0.12, peak: 0.5 },
+    { freq: 880, type: "sawtooth", at: 0.16, dur: 0.12, peak: 0.5 },
+    { freq: 988, type: "square", at: 0.32, dur: 0.14, peak: 0.52 },
+    { freq: 1175, type: "square", at: 0.5, dur: 0.22, peak: 0.48 },
+  ],
+  bright: [
+    { freq: 784, type: "triangle", at: 0, dur: 0.16, peak: 0.36 },
+    { freq: 988, type: "sine", at: 0.12, dur: 0.16, peak: 0.34 },
+    { freq: 1319, type: "triangle", at: 0.24, dur: 0.22, peak: 0.38 },
+    { freq: 1568, type: "sine", at: 0.42, dur: 0.32, peak: 0.3 },
+  ],
+};
+
+const WAV_PATTERNS: Record<OrderAlertSoundId, { tones: WavTone[]; totalSec: number }> =
+  {
+    classic: {
+      totalSec: 0.7,
+      tones: [
+        { freq: 880, start: 0, dur: 0.18 },
+        { freq: 1175, start: 0.16, dur: 0.2 },
+        { freq: 1568, start: 0.34, dur: 0.28 },
+      ],
+    },
+    soft: {
+      totalSec: 0.9,
+      tones: [
+        { freq: 523, start: 0, dur: 0.28, gain: 0.4 },
+        { freq: 659, start: 0.22, dur: 0.32, gain: 0.35 },
+        { freq: 784, start: 0.48, dur: 0.35, gain: 0.3 },
+      ],
+    },
+    kitchen: {
+      totalSec: 0.55,
+      tones: [
+        { freq: 1320, start: 0, dur: 0.12, gain: 0.6 },
+        { freq: 1760, start: 0.14, dur: 0.14, gain: 0.55 },
+        { freq: 1320, start: 0.32, dur: 0.16, gain: 0.4 },
+      ],
+    },
+    urgent: {
+      totalSec: 0.8,
+      tones: [
+        { freq: 880, start: 0, dur: 0.1, gain: 0.6 },
+        { freq: 880, start: 0.16, dur: 0.1, gain: 0.6 },
+        { freq: 988, start: 0.32, dur: 0.12, gain: 0.62 },
+        { freq: 1175, start: 0.5, dur: 0.2, gain: 0.55 },
+      ],
+    },
+    bright: {
+      totalSec: 0.75,
+      tones: [
+        { freq: 784, start: 0, dur: 0.14, gain: 0.45 },
+        { freq: 988, start: 0.12, dur: 0.14, gain: 0.42 },
+        { freq: 1319, start: 0.24, dur: 0.18, gain: 0.48 },
+        { freq: 1568, start: 0.42, dur: 0.26, gain: 0.4 },
+      ],
+    },
+  };
+
 let audioCtx: AudioContext | null = null;
 let unlocked = false;
 let titleTimer: number | null = null;
 let chimeAudio: HTMLAudioElement | null = null;
+let chimeSoundId: OrderAlertSoundId | null = null;
+
+function isSoundId(value: string | null): value is OrderAlertSoundId {
+  return ORDER_ALERT_SOUNDS.some((sound) => sound.id === value);
+}
+
+export function getOrderAlertSoundId(): OrderAlertSoundId {
+  if (typeof window === "undefined") return "classic";
+  const saved = window.localStorage.getItem(SOUND_KEY);
+  return isSoundId(saved) ? saved : "classic";
+}
+
+export function setOrderAlertSoundId(id: OrderAlertSoundId) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(SOUND_KEY, id);
+  // Force HTML audio element rebuild on next play.
+  chimeAudio = null;
+  chimeSoundId = null;
+}
 
 function getAudioContext() {
   if (typeof window === "undefined") return null;
@@ -17,6 +166,64 @@ function getAudioContext() {
   return audioCtx;
 }
 
+function buildWavDataUri(id: OrderAlertSoundId) {
+  const sampleRate = 22050;
+  const pattern = WAV_PATTERNS[id];
+  const samples = Math.floor(sampleRate * pattern.totalSec);
+  const data = new Int16Array(samples);
+  for (const tone of pattern.tones) {
+    const start = Math.floor(tone.start * sampleRate);
+    const len = Math.floor(tone.dur * sampleRate);
+    const gain = tone.gain ?? 0.55;
+    for (let i = 0; i < len; i++) {
+      const idx = start + i;
+      if (idx >= samples) break;
+      const t = i / sampleRate;
+      const env = Math.min(1, i / 200) * Math.min(1, (len - i) / 400);
+      const sample = Math.sin(2 * Math.PI * tone.freq * t) * env * gain;
+      data[idx] = Math.max(
+        -32767,
+        Math.min(32767, data[idx] + Math.floor(sample * 32767))
+      );
+    }
+  }
+  const buffer = new ArrayBuffer(44 + data.length * 2);
+  const view = new DataView(buffer);
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + data.length * 2, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeStr(36, "data");
+  view.setUint32(40, data.length * 2, true);
+  for (let i = 0; i < data.length; i++) {
+    view.setInt16(44 + i * 2, data[i], true);
+  }
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return `data:audio/wav;base64,${btoa(binary)}`;
+}
+
+function getHtmlChime(id: OrderAlertSoundId) {
+  if (!chimeAudio || chimeSoundId !== id) {
+    chimeAudio = new Audio(buildWavDataUri(id));
+    chimeAudio.preload = "auto";
+    chimeAudio.volume = 1;
+    chimeSoundId = id;
+  }
+  return chimeAudio;
+}
+
 /** Call from a user gesture so browsers allow later background playback. */
 export function unlockOrderAlerts() {
   if (typeof window === "undefined") return;
@@ -25,30 +232,20 @@ export function unlockOrderAlerts() {
   if (ctx && ctx.state === "suspended") {
     void ctx.resume();
   }
-  if (!chimeAudio) {
-    chimeAudio = new Audio(ORDER_CHIME_DATA_URI);
-    chimeAudio.preload = "auto";
-    chimeAudio.volume = 1;
-  }
-  // Prime the element with a muted play/pause cycle.
-  chimeAudio.muted = true;
-  void chimeAudio
+  const audio = getHtmlChime(getOrderAlertSoundId());
+  audio.muted = true;
+  void audio
     .play()
     .then(() => {
-      chimeAudio?.pause();
-      if (chimeAudio) {
-        chimeAudio.currentTime = 0;
-        chimeAudio.muted = false;
-      }
+      audio.pause();
+      audio.currentTime = 0;
+      audio.muted = false;
     })
     .catch(() => {
-      if (chimeAudio) chimeAudio.muted = false;
+      audio.muted = false;
     });
 
-  if (
-    "Notification" in window &&
-    Notification.permission === "default"
-  ) {
+  if ("Notification" in window && Notification.permission === "default") {
     void Notification.requestPermission();
   }
 }
@@ -60,7 +257,7 @@ export function ensureNotificationPermission() {
   }
 }
 
-function playWebAudioChime() {
+function playWebAudioChime(id: OrderAlertSoundId) {
   const ctx = getAudioContext();
   if (!ctx) return;
   void ctx.resume();
@@ -69,20 +266,7 @@ function playWebAudioChime() {
   master.gain.value = 1;
   master.connect(ctx.destination);
 
-  const pattern: Array<{
-    freq: number;
-    type: OscillatorType;
-    at: number;
-    dur: number;
-    peak: number;
-  }> = [
-    { freq: 660, type: "square", at: 0, dur: 0.22, peak: 0.42 },
-    { freq: 880, type: "sawtooth", at: 0.12, dur: 0.28, peak: 0.48 },
-    { freq: 1175, type: "square", at: 0.26, dur: 0.34, peak: 0.52 },
-    { freq: 1568, type: "triangle", at: 0.42, dur: 0.42, peak: 0.4 },
-  ];
-
-  for (const tone of pattern) {
+  for (const tone of WEB_PATTERNS[id]) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = tone.type;
@@ -98,13 +282,10 @@ function playWebAudioChime() {
   }
 }
 
-function playHtmlAudioChime() {
-  if (!chimeAudio) {
-    chimeAudio = new Audio(ORDER_CHIME_DATA_URI);
-    chimeAudio.volume = 1;
-  }
-  chimeAudio.currentTime = 0;
-  void chimeAudio.play().catch(() => {
+function playHtmlAudioChime(id: OrderAlertSoundId) {
+  const audio = getHtmlChime(id);
+  audio.currentTime = 0;
+  void audio.play().catch(() => {
     // ignore autoplay blocks; Notification still fires when hidden
   });
 }
@@ -147,19 +328,28 @@ function showDesktopNotification(title: string, body: string) {
   }
 }
 
+export function previewOrderAlertSound(id?: OrderAlertSoundId) {
+  const soundId = id ?? getOrderAlertSoundId();
+  unlockOrderAlerts();
+  playWebAudioChime(soundId);
+  playHtmlAudioChime(soundId);
+}
+
 export function announceNewOrder(detail?: {
   tableNumber?: string;
   totalLabel?: string;
 }) {
   if (!unlocked) {
-    // Still try — may work if browser already allowed audio.
     unlocked = true;
   }
 
-  playWebAudioChime();
-  playHtmlAudioChime();
+  const soundId = getOrderAlertSoundId();
+  playWebAudioChime(soundId);
+  playHtmlAudioChime(soundId);
 
-  const table = detail?.tableNumber ? `Masa ${detail.tableNumber}` : "Yeni sipariş";
+  const table = detail?.tableNumber
+    ? `Masa ${detail.tableNumber}`
+    : "Yeni sipariş";
   const body = detail?.totalLabel
     ? `${table} · ${detail.totalLabel}`
     : table;
@@ -170,56 +360,3 @@ export function announceNewOrder(detail?: {
     showDesktopNotification("Yeni sipariş", body);
   }
 }
-
-/** Short multi-beep WAV (mono 16-bit) as data URI — works with HTMLAudio in background tabs. */
-const ORDER_CHIME_DATA_URI = (() => {
-  const sampleRate = 22050;
-  const tones = [
-    { freq: 880, start: 0, dur: 0.18 },
-    { freq: 1175, start: 0.16, dur: 0.2 },
-    { freq: 1568, start: 0.34, dur: 0.28 },
-  ];
-  const totalSec = 0.7;
-  const samples = Math.floor(sampleRate * totalSec);
-  const data = new Int16Array(samples);
-  for (const tone of tones) {
-    const start = Math.floor(tone.start * sampleRate);
-    const len = Math.floor(tone.dur * sampleRate);
-    for (let i = 0; i < len; i++) {
-      const idx = start + i;
-      if (idx >= samples) break;
-      const t = i / sampleRate;
-      const env = Math.min(1, i / 200) * Math.min(1, (len - i) / 400);
-      const sample = Math.sin(2 * Math.PI * tone.freq * t) * env * 0.55;
-      data[idx] = Math.max(
-        -32767,
-        Math.min(32767, data[idx] + Math.floor(sample * 32767))
-      );
-    }
-  }
-  const buffer = new ArrayBuffer(44 + data.length * 2);
-  const view = new DataView(buffer);
-  const writeStr = (offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
-  };
-  writeStr(0, "RIFF");
-  view.setUint32(4, 36 + data.length * 2, true);
-  writeStr(8, "WAVE");
-  writeStr(12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * 2, true);
-  view.setUint16(32, 2, true);
-  view.setUint16(34, 16, true);
-  writeStr(36, "data");
-  view.setUint32(40, data.length * 2, true);
-  for (let i = 0; i < data.length; i++) {
-    view.setInt16(44 + i * 2, data[i], true);
-  }
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return `data:audio/wav;base64,${btoa(binary)}`;
-})();

@@ -1053,57 +1053,56 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     : "Yerel kayıt. Yayında Turso bağlayın."}
             </p>
           </div>
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[22rem]">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Link
-                href="/yonetim/siparisler"
-                className={cn(
-                  buttonVariants({ variant: "default" }),
-                  "justify-center rounded-xl bg-sky-600 text-white shadow-sm hover:bg-sky-500"
-                )}
-              >
-                Siparişler
-              </Link>
-              <Link
-                href="/portal"
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "justify-center rounded-xl border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50"
-                )}
-              >
-                Portal
-              </Link>
-              <Link
-                href="/?preview=1"
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "justify-center rounded-xl border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50"
-                )}
-              >
-                Müşteri menüsü
-              </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setAdminSettingsTab("system");
-                  window.setTimeout(() => {
-                    document.getElementById("system-qr")?.scrollIntoView({
-                      behavior: "smooth",
-                      block: "start",
-                    });
-                  }, 50);
-                }}
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "justify-center rounded-xl border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50"
-                )}
-              >
-                QR kod
-              </button>
-            </div>
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto">
+            <Link
+              href="/yonetim/siparisler"
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "rounded-full bg-sky-600 px-4 text-white shadow-sm hover:bg-sky-500"
+              )}
+            >
+              Siparişler
+            </Link>
+            <Link
+              href="/portal"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "rounded-full border-slate-300 bg-white px-4 text-slate-800 shadow-sm hover:bg-slate-50"
+              )}
+            >
+              Portal
+            </Link>
+            <Link
+              href="/?preview=1"
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "rounded-full border-slate-300 bg-white px-4 text-slate-800 shadow-sm hover:bg-slate-50"
+              )}
+            >
+              Müşteri menüsü
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setAdminSettingsTab("system");
+                window.setTimeout(() => {
+                  document.getElementById("system-qr")?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                  });
+                }, 50);
+              }}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                "rounded-full border-slate-300 bg-white px-4 text-slate-800 shadow-sm hover:bg-slate-50"
+              )}
+            >
+              QR kod
+            </button>
             <Button
               variant="outline"
-              className="rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+              size="sm"
+              className="rounded-full border-rose-200 bg-rose-50 px-4 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
               onClick={() => {
                 clearStoredAdminPassword();
                 setUnlocked(false);

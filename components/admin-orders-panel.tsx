@@ -75,20 +75,20 @@ function OrderCard({
       type="button"
       onClick={onSelect}
       className={cn(
-        "group relative overflow-hidden rounded-3xl p-4 text-left transition-all duration-300",
+        "group relative overflow-hidden rounded-2xl p-3 text-left transition-all duration-300 sm:rounded-3xl sm:p-4",
         light
           ? "bg-white ring-1 ring-slate-200/90 shadow-sm hover:-translate-y-0.5 hover:shadow-md"
           : "bg-gradient-to-br from-white/[0.09] to-white/[0.03] ring-1 ring-white/10 hover:-translate-y-0.5 hover:from-white/[0.14]",
         active &&
           (light
             ? cn(
-                "z-[1] scale-[1.02] shadow-[0_18px_40px_rgba(14,165,233,0.22)]",
+                "z-[1] scale-[1.01] shadow-[0_18px_40px_rgba(14,165,233,0.22)] sm:scale-[1.02]",
                 "ring-2 ring-sky-500 bg-sky-50",
                 tone === "past" &&
                   "ring-emerald-500 bg-emerald-50 shadow-[0_18px_40px_rgba(16,185,129,0.2)]"
               )
             : cn(
-                "z-[1] scale-[1.02]",
+                "z-[1] scale-[1.01] sm:scale-[1.02]",
                 tone === "active"
                   ? "from-sky-400/35 to-sky-500/10 ring-2 ring-sky-300 shadow-[0_16px_44px_rgba(56,189,248,0.35)]"
                   : "from-emerald-400/35 to-emerald-500/10 ring-2 ring-emerald-300 shadow-[0_16px_44px_rgba(52,211,153,0.3)]"
@@ -166,7 +166,7 @@ function OrderCard({
                 : "bg-violet-300/20 text-violet-100 ring-1 ring-violet-200/30")
           )}
         >
-          {forgotten ? "Unutuldu" : awaitingConfirm ? "Onay bekliyor" : statusLabel(order.status)}
+          {forgotten ? "Sipariş bekliyor" : awaitingConfirm ? "Onay bekliyor" : statusLabel(order.status)}
         </span>
       </div>
       <p
@@ -254,7 +254,7 @@ function OrderDetail({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[1.75rem] p-5 ring-2",
+        "relative overflow-hidden rounded-2xl p-3.5 ring-2 sm:rounded-[1.75rem] sm:p-5",
         light
           ? mode === "active"
             ? "bg-white ring-sky-400 shadow-[0_20px_50px_rgba(14,165,233,0.18)]"
@@ -272,11 +272,11 @@ function OrderDetail({
             : "bg-gradient-to-r from-transparent via-white/40 to-transparent"
         )}
       />
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1">
           <p
             className={cn(
-              "font-heading text-2xl",
+              "font-heading text-xl leading-snug sm:text-2xl",
               light ? "text-slate-900" : "text-white"
             )}
           >
@@ -293,7 +293,7 @@ function OrderDetail({
         </div>
         <p
           className={cn(
-            "font-heading text-2xl tabular-nums",
+            "font-heading text-xl tabular-nums sm:text-2xl",
             mode === "past"
               ? light
                 ? "text-emerald-700"
@@ -307,12 +307,12 @@ function OrderDetail({
         </p>
       </div>
 
-      <ul className="mt-5 space-y-2.5">
+      <ul className="mt-4 space-y-2 sm:mt-5 sm:space-y-2.5">
         {order.items.map((item) => (
           <li
             key={`${order.id}-${item.productId}-${item.note ?? ""}-${mode}`}
             className={cn(
-              "flex items-start justify-between gap-3 rounded-2xl px-3.5 py-3 ring-1",
+              "flex items-start justify-between gap-3 rounded-xl px-3 py-2.5 ring-1 sm:rounded-2xl sm:px-3.5 sm:py-3",
               light
                 ? "bg-slate-50 ring-slate-200"
                 : "bg-black/20 ring-white/5"
@@ -353,7 +353,7 @@ function OrderDetail({
         ))}
       </ul>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-col gap-2 sm:mt-5 sm:flex-row sm:flex-wrap">
         {mode === "active" ? (
           !confirmed ? (
             <>
@@ -366,7 +366,7 @@ function OrderDetail({
                       : "bg-rose-500/15 text-rose-100 ring-1 ring-rose-300/30"
                   )}
                 >
-                  Onay süresi doldu — sipariş unutulmuş görünüyor. Lütfen onaylayın.
+                  Onay süresi doldu — sipariş bekliyor. Lütfen onaylayın.
                 </p>
               ) : (
                 <p
@@ -381,7 +381,7 @@ function OrderDetail({
               )}
               <Button
                 type="button"
-                className="bg-violet-600 text-white hover:bg-violet-500"
+                className="w-full bg-violet-600 text-white hover:bg-violet-500 sm:w-auto"
                 disabled={busy}
                 onClick={onConfirm}
               >
@@ -394,11 +394,12 @@ function OrderDetail({
             <Button
               type="button"
               variant="outline"
-              className={
+              className={cn(
+                "w-full sm:w-auto",
                 light
                   ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
                   : "border-rose-300/40 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25"
-              }
+              )}
               disabled={busy}
               onClick={() => setCancelOpen(true)}
             >
@@ -407,11 +408,12 @@ function OrderDetail({
             </Button>
             <Button
               type="button"
-              className={
+              className={cn(
+                "w-full sm:w-auto",
                 order.status === "sent"
                   ? "bg-amber-600/70 text-white hover:bg-amber-600/70"
                   : "bg-amber-500 text-white hover:bg-amber-400"
-              }
+              )}
               disabled={busy || order.status === "sent"}
               onClick={onSent}
             >
@@ -420,7 +422,7 @@ function OrderDetail({
             </Button>
             <Button
               type="button"
-              className="ml-auto bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-45"
+              className="w-full bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-45 sm:ml-auto sm:w-auto"
               disabled={busy || !canMarkPaid}
               title={
                 canMarkPaid
@@ -448,11 +450,12 @@ function OrderDetail({
             <Button
               type="button"
               variant="outline"
-              className={
+              className={cn(
+                "w-full sm:w-auto",
                 light
                   ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
                   : "border-white/25 bg-white/10 text-white hover:bg-white/20"
-              }
+              )}
               disabled={busy}
               onClick={onRestore}
             >
@@ -667,7 +670,7 @@ export function AdminOrdersPanel({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[2rem] p-5 sm:p-6 ring-1",
+        "relative overflow-hidden rounded-2xl p-3.5 ring-1 sm:rounded-[2rem] sm:p-5 md:p-6",
         light
           ? showActive
             ? "bg-[radial-gradient(circle_at_top_left,rgba(125,211,252,0.45),transparent_36%),linear-gradient(165deg,#f8fafc_0%,#eef6ff_55%,#f8fafc_100%)] ring-sky-200/80"
@@ -686,11 +689,11 @@ export function AdminOrdersPanel({
         )}
       />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div
             className={cn(
-              "inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium tracking-wide ring-1",
+              "inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-[11px] font-medium tracking-wide ring-1 sm:px-3",
               light
                 ? "bg-white/80 text-slate-600 ring-slate-200"
                 : "bg-white/5 text-sky-100/70 ring-white/10"
@@ -715,7 +718,7 @@ export function AdminOrdersPanel({
           </div>
           <h3
             className={cn(
-              "font-heading mt-3 text-2xl sm:text-3xl",
+              "font-heading mt-2 text-xl sm:mt-3 sm:text-3xl",
               light ? "text-slate-900" : "text-white"
             )}
           >
@@ -723,19 +726,19 @@ export function AdminOrdersPanel({
           </h3>
           <p
             className={cn(
-              "mt-1.5 max-w-xl text-sm leading-relaxed",
+              "mt-1 hidden max-w-xl text-sm leading-relaxed sm:mt-1.5 sm:block",
               light ? "text-slate-600" : "text-sky-100/60"
             )}
           >
             {showActive
-              ? "Yeni siparişler önce onaylanır; ardından iptal / gönderildi / ödendi açılır. Onay gecikirse unutulan uyarısı çalar."
+              ? "Yeni siparişler önce onaylanır; ardından iptal / gönderildi / ödendi açılır. Onay gecikirse “sipariş bekliyor” uyarısı çalar."
               : "Ödenen siparişler hizmet gününe göre ayrılır (08:00–03:00). Burada yalnızca Geri al vardır; iptal yoktur."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <div
             className={cn(
-              "rounded-2xl px-4 py-3 ring-1",
+              "rounded-xl px-3 py-2 ring-1 sm:rounded-2xl sm:px-4 sm:py-3",
               light
                 ? "bg-white/90 ring-slate-200"
                 : "bg-white/5 ring-white/10"
@@ -751,7 +754,7 @@ export function AdminOrdersPanel({
             </p>
             <p
               className={cn(
-                "text-lg font-semibold",
+                "text-base font-semibold sm:text-lg",
                 light ? "text-slate-900" : "text-white"
               )}
             >
@@ -761,7 +764,7 @@ export function AdminOrdersPanel({
           {showActive ? (
             <div
               className={cn(
-                "rounded-2xl px-4 py-3 ring-1",
+                "rounded-xl px-3 py-2 ring-1 sm:rounded-2xl sm:px-4 sm:py-3",
                 light
                   ? "bg-amber-50 ring-amber-200"
                   : "bg-amber-300/10 ring-amber-200/20"
@@ -777,7 +780,7 @@ export function AdminOrdersPanel({
               </p>
               <p
                 className={cn(
-                  "text-lg font-semibold",
+                  "text-base font-semibold sm:text-lg",
                   light ? "text-amber-900" : "text-amber-100"
                 )}
               >
@@ -788,7 +791,7 @@ export function AdminOrdersPanel({
         </div>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="mt-4 space-y-3 sm:mt-6 sm:space-y-4">
         {error ? (
           <p className={cn("text-sm", light ? "text-red-600" : "text-red-300")}>
             {error}
@@ -834,9 +837,15 @@ export function AdminOrdersPanel({
             </p>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="grid gap-3 sm:gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+            <div
+              className={cn(
+                "order-2 lg:order-1",
+                selectedId ? "max-lg:opacity-90" : ""
+              )}
+            >
             {showActive ? (
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                 {list.map((order) => (
                   <OrderCard
                     key={order.id}
@@ -868,7 +877,7 @@ export function AdminOrdersPanel({
                         ({group.orders.length})
                       </span>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                    <div className="grid gap-2.5 sm:gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                       {group.orders.map((order) => (
                         <OrderCard
                           key={order.id}
@@ -888,7 +897,8 @@ export function AdminOrdersPanel({
                 ))}
               </div>
             )}
-            <div className="lg:sticky lg:top-4 lg:self-start">
+            </div>
+            <div className="order-1 lg:sticky lg:top-4 lg:order-2 lg:self-start">
               {selected &&
               ((showActive &&
                 selected.status !== "paid" &&
@@ -909,7 +919,7 @@ export function AdminOrdersPanel({
               ) : (
                 <div
                   className={cn(
-                    "rounded-[1.75rem] px-5 py-12 text-center ring-1",
+                    "hidden rounded-[1.75rem] px-5 py-12 text-center ring-1 lg:block",
                     light
                       ? "bg-white/70 ring-slate-200"
                       : "bg-white/[0.03] ring-white/10"

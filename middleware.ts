@@ -2,8 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   clearGuestSessionCookieOptions,
   GUEST_SESSION_COOKIE,
-  guestSessionCookieOptions,
-  signGuestSession,
   signStaffPreview,
   STAFF_PREVIEW_COOKIE,
   staffPreviewCookieOptions,
@@ -75,14 +73,14 @@ export async function middleware(request: NextRequest) {
     );
 
     if (tableFromQr) {
-      const token = await signGuestSession(tableFromQr);
-      const response = NextResponse.next();
-      response.cookies.set(
-        GUEST_SESSION_COOKIE,
-        token,
-        guestSessionCookieOptions()
-      );
-      return response;
+      // Aynı masa için geçerli oturum varsa yeniden imzalama.
+      if (guestSession?.tableNumber === tableFromQr) {
+        return NextResponse.next();
+      }
+      // TTL sistem ayarından okunur (Node route).
+      const start = new URL("/api/guest-session/start", request.url);
+      start.searchParams.set("table", tableFromQr);
+      return NextResponse.redirect(start);
     }
 
     if (guestSession || staffPreview) {

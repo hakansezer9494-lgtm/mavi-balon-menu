@@ -73,6 +73,10 @@ import {
   DEFAULT_ORDER_CONFIRM_REMINDER_MINUTES,
   ORDER_CONFIRM_REMINDER_OPTIONS,
 } from "@/lib/order-confirm-reminder";
+import {
+  DEFAULT_GUEST_SESSION_TTL_MINUTES,
+  GUEST_SESSION_TTL_OPTIONS,
+} from "@/lib/guest-session-ttl";
 
 import {
   defaultSignature,
@@ -247,6 +251,15 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [reminderBusy, setReminderBusy] = useState(false);
   const [reminderMessage, setReminderMessage] = useState("");
   const [reminderError, setReminderError] = useState("");
+  const [guestTtlMinutes, setGuestTtlMinutes] = useState(
+    DEFAULT_GUEST_SESSION_TTL_MINUTES
+  );
+  const [guestTtlDraft, setGuestTtlDraft] = useState(
+    String(DEFAULT_GUEST_SESSION_TTL_MINUTES)
+  );
+  const [guestTtlBusy, setGuestTtlBusy] = useState(false);
+  const [guestTtlMessage, setGuestTtlMessage] = useState("");
+  const [guestTtlError, setGuestTtlError] = useState("");
   const [retentionDays, setRetentionDays] = useState<PaidOrderRetentionDays>(
     DEFAULT_PAID_ORDER_RETENTION_DAYS
   );
@@ -413,6 +426,21 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         } catch {
           // keep default
         }
+        try {
+          const ttlRes = await fetch("/api/admin/guest-session-ttl", {
+            cache: "no-store",
+            headers: { "x-admin-password": getStoredAdminPassword() },
+          });
+          if (ttlRes.ok) {
+            const ttlData = (await ttlRes.json()) as { minutes?: number };
+            if (typeof ttlData.minutes === "number") {
+              setGuestTtlMinutes(ttlData.minutes);
+              setGuestTtlDraft(String(ttlData.minutes));
+            }
+          }
+        } catch {
+          // keep default
+        }
         setSavedRetentionDays(match.days);
       } catch {
         // keep defaults
@@ -430,6 +458,22 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         if (typeof data.minutes === "number") {
           setReminderMinutes(data.minutes);
           setReminderDraft(String(data.minutes));
+        }
+      } catch {
+        // keep default
+      }
+    })();
+    void (async () => {
+      try {
+        const response = await fetch("/api/admin/guest-session-ttl", {
+          cache: "no-store",
+          headers: { "x-admin-password": getStoredAdminPassword() },
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { minutes?: number };
+        if (typeof data.minutes === "number") {
+          setGuestTtlMinutes(data.minutes);
+          setGuestTtlDraft(String(data.minutes));
         }
       } catch {
         // keep default
@@ -1112,7 +1156,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       setReminderMinutes(data.minutes);
       setReminderDraft(String(data.minutes));
       setReminderMessage(
-        `Onaylanmayan siparişler ${data.minutes} dakika sonra unutulan uyarısı verir.`
+        `Onaylanmayan siparişler ${data.minutes} dakika sonra “sipariş bekliyor” uyarısı verir.`
       );
     } catch (error) {
       setReminderError(
@@ -1122,6 +1166,43 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       );
     } finally {
       setReminderBusy(false);
+    }
+  }
+
+  async function saveGuestTtlMinutes(minutes?: number) {
+    const value = minutes ?? Number(guestTtlDraft);
+    setGuestTtlBusy(true);
+    setGuestTtlError("");
+    setGuestTtlMessage("");
+    try {
+      const response = await fetch("/api/admin/guest-session-ttl", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": getStoredAdminPassword(),
+        },
+        body: JSON.stringify({ minutes: value }),
+      });
+      const data = (await response.json()) as {
+        minutes?: number;
+        error?: string;
+      };
+      if (!response.ok || typeof data.minutes !== "number") {
+        throw new Error(data.error || "Oturum süresi kaydedilemedi.");
+      }
+      setGuestTtlMinutes(data.minutes);
+      setGuestTtlDraft(String(data.minutes));
+      setGuestTtlMessage(
+        `Sipariş vermeyen müşteri oturumu ${data.minutes} dakika sonra sona erer.`
+      );
+    } catch (error) {
+      setGuestTtlError(
+        error instanceof Error
+          ? error.message
+          : "Oturum süresi kaydedilemedi."
+      );
+    } finally {
+      setGuestTtlBusy(false);
     }
   }
 
@@ -2421,8 +2502,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                   Sipariş onay hatırlatıcısı
                 </CardTitle>
                 <CardDescription className="mt-1 text-sky-100/60">
-                  Yeni sipariş bu süre içinde onaylanmazsa farklı bir unutulan
-                  bildirimi çalar ve listede kırmızı görünür.
+                  Yeni sipariş bu süre içinde onaylanmazsa “sipariş bekliyor”
+                  bildirimi çalar (cama tıklatma) ve listede kırmızı görünür.
                 </CardDescription>
               </div>
             </div>
@@ -2485,7 +2566,83 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </CardContent>
         </Card>
 
-<Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 rounded-xl bg-sky-400/15 p-2 text-sky-300">
+                <Clock3 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-white">
+                  Misafir oturum süresi
+                </CardTitle>
+                <CardDescription className="mt-1 text-sky-100/60">
+                  Sipariş vermeyen müşterinin masa oturumu bu süre (dakika) sonra
+                  sona erer. Sipariş verildikten sonra oturum sipariş sürecine
+                  bağlanır.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {GUEST_SESSION_TTL_OPTIONS.map((option) => {
+                const selected = guestTtlMinutes === option.minutes;
+                return (
+                  <Button
+                    key={option.minutes}
+                    type="button"
+                    size="sm"
+                    disabled={guestTtlBusy}
+                    className={
+                      selected
+                        ? "bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                        : "bg-white/15 text-white hover:bg-white/25"
+                    }
+                    onClick={() => {
+                      setGuestTtlDraft(String(option.minutes));
+                      void saveGuestTtlMinutes(option.minutes);
+                    }}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="guest-session-ttl-minutes" className="text-sky-100/70">
+                  Dakika (5–480)
+                </Label>
+                <Input
+                  id="guest-session-ttl-minutes"
+                  type="number"
+                  min={5}
+                  max={480}
+                  value={guestTtlDraft}
+                  onChange={(event) => setGuestTtlDraft(event.target.value)}
+                  className="h-10 w-28 bg-white/5 text-white"
+                />
+              </div>
+              <Button
+                type="button"
+                disabled={guestTtlBusy}
+                className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                onClick={() => void saveGuestTtlMinutes()}
+              >
+                Kaydet
+              </Button>
+            </div>
+            {guestTtlError ? (
+              <p className="text-sm text-red-300">{guestTtlError}</p>
+            ) : null}
+            {guestTtlMessage ? (
+              <p className="text-sm text-sky-200">{guestTtlMessage}</p>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <div className="flex items-start gap-3">
               <div className="mt-0.5 rounded-xl bg-sky-400/15 p-2 text-sky-300">

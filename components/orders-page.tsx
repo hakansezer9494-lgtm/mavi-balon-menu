@@ -193,7 +193,7 @@ export function OrdersPage() {
   const outline = light ? lightOutline : darkOutline;
   const tabDescription =
     tab === "active"
-      ? "Gelen siparişler önce onaylanır. Onaydan sonra iptal / gönderildi / ödendi çıkar; gecikirirse unutulan uyarısı çalar."
+      ? "Gelen siparişler önce onaylanır. Onaydan sonra iptal / gönderildi / ödendi çıkar; gecikirirse “sipariş bekliyor” uyarısı çalar."
       : tab === "past"
         ? "Ödenen siparişler hizmet gününe göre ayrılır (08:00–03:00). Burada yalnızca Geri al vardır; iptal yoktur."
         : "Gün / ay / yıl bazında ciro, ürün tercihi ve yoğunluk grafikleri.";
@@ -215,7 +215,7 @@ export function OrdersPage() {
           size="icon"
           aria-label={light ? "Koyu moda geç" : "Açık moda geç"}
           className={cn(
-            "absolute top-4 right-4 z-20 size-10 rounded-full shadow-sm sm:top-5 sm:right-6",
+            "absolute top-3 right-3 z-20 size-9 rounded-full shadow-sm sm:top-5 sm:right-6 sm:size-10",
             outline
           )}
           onClick={toggleTheme}
@@ -224,18 +224,18 @@ export function OrdersPage() {
         </Button>
       </div>
 
-      <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-16">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 space-y-3">
+      <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-3 pb-12 sm:gap-6 sm:px-4 sm:pb-16">
+        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-2 sm:space-y-3">
             <div
-              className="flex flex-wrap gap-2"
+              className="flex gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] sm:flex-wrap sm:gap-2 [&::-webkit-scrollbar]:hidden"
               role="tablist"
               aria-label="Sipariş sekmeleri"
             >
               {(
                 [
                   ["active", "Siparişler"],
-                  ["past", "Geçmiş siparişler"],
+                  ["past", "Geçmiş"],
                   ["report", "Rapor"],
                 ] as const
               ).map(([value, label]) => (
@@ -243,9 +243,11 @@ export function OrdersPage() {
                   key={value}
                   type="button"
                   role="tab"
+                  size="sm"
                   aria-selected={tab === value}
                   variant={tab === value ? "default" : "outline"}
                   className={cn(
+                    "shrink-0",
                     tab === value
                       ? light
                         ? "bg-sky-600 text-white hover:bg-sky-600"
@@ -254,23 +256,27 @@ export function OrdersPage() {
                   )}
                   onClick={() => setTab(value)}
                 >
-                  {label}
+                  <span className="sm:hidden">{label}</span>
+                  <span className="hidden sm:inline">
+                    {value === "past" ? "Geçmiş siparişler" : label}
+                  </span>
                 </Button>
               ))}
             </div>
             <p
               className={cn(
-                "max-w-xl text-sm",
+                "hidden max-w-xl text-sm sm:block",
                 light ? "text-slate-600" : "text-sky-100/65"
               )}
             >
               {tabDescription}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               className={cn(
                 outline,
                 notificationsEnabled &&
@@ -289,13 +295,20 @@ export function OrdersPage() {
             </Button>
             <Link
               href="/yonetim"
-              className={cn(buttonVariants({ variant: "outline" }), outline)}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                outline,
+                "hidden sm:inline-flex"
+              )}
             >
               Menü yönetimi
             </Link>
             <Link
               href="/portal"
-              className={cn(buttonVariants({ variant: "outline" }), outline)}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "sm" }),
+                outline
+              )}
             >
               Portal
             </Link>

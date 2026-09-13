@@ -70,15 +70,17 @@ export function clearGuestSessionCookieOptions() {
 
 export async function signGuestSession(
   tableNumber: string,
-  now = Date.now()
+  now = Date.now(),
+  ttlMs = GUEST_SESSION_TTL_MS
 ): Promise<string> {
   const table = String(tableNumber || "").trim();
   if (!table) {
     throw new Error("Masa gerekli.");
   }
+  const ttl = Number.isFinite(ttlMs) && ttlMs > 0 ? ttlMs : GUEST_SESSION_TTL_MS;
   const payload: GuestSessionPayload = {
     t: table,
-    e: now + GUEST_SESSION_TTL_MS,
+    e: now + ttl,
     n: crypto.randomUUID(),
   };
   const body = bytesToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));

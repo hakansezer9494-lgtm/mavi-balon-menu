@@ -436,7 +436,7 @@ export function previewOrderAlertSound(id?: OrderAlertSoundId) {
 
 
 function playForgottenAlertSound() {
-  // Distinct from new-order chime: three sharp rising bursts.
+  // Glass-tap reminder: short bright clicks, then spoken cue.
   if (typeof window === "undefined") return;
   try {
     const Ctx =
@@ -446,37 +446,36 @@ function playForgottenAlertSound() {
     const ctx = new Ctx();
     void ctx.resume();
     const now = ctx.currentTime;
-    const bursts = [
-      [0, 720],
-      [0.28, 880],
-      [0.56, 1100],
-      [0.9, 1320],
+    const taps = [
+      [0, 2100],
+      [0.14, 2450],
+      [0.28, 2800],
     ] as const;
-    for (const [at, freq] of bursts) {
+    for (const [at, freq] of taps) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = "sawtooth";
-      osc.frequency.value = freq;
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + at);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.55, now + at + 0.08);
       const start = now + at;
       gain.gain.setValueAtTime(0.0001, start);
-      gain.gain.exponentialRampToValueAtTime(0.55, start + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+      gain.gain.exponentialRampToValueAtTime(0.42, start + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.09);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start(start);
-      osc.stop(start + 0.24);
+      osc.stop(start + 0.1);
     }
     window.setTimeout(() => {
       void ctx.close();
-    }, 1600);
+    }, 500);
   } catch {
-    // fall back to urgent voice if available
-    playAlertSound("urgent");
+    playAlertSound("kitchen");
   }
   if (typeof window !== "undefined" && window.speechSynthesis) {
     try {
       window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance("Sipariş unutuldu!");
+      const utter = new SpeechSynthesisUtterance("Sipariş bekliyor!");
       utter.lang = "tr-TR";
       utter.rate = 1.05;
       utter.volume = 1;
@@ -502,15 +501,15 @@ export function announceForgottenOrder(detail?: {
     ? detail.customerName
       ? `${tableDisplayName(detail.tableNumber)} · ${detail.customerName}`
       : tableDisplayName(detail.tableNumber)
-    : "Unutulan sipariş";
+    : "Sipariş bekliyor";
   const body = detail?.totalLabel
     ? `${table} · ${detail.totalLabel}`
     : table;
 
-  flashDocumentTitle("⚠️ Unutulan sipariş!");
+  flashDocumentTitle("🛎️ Sipariş bekliyor!");
 
   if (typeof document !== "undefined" && document.hidden) {
-    showDesktopNotification("Unutulan sipariş", body);
+    showDesktopNotification("Sipariş bekliyor", body);
   }
 }
 

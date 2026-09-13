@@ -16,7 +16,7 @@ import {
   type OrderItem,
   type OrderStatus,
 } from "@/lib/orders";
-import { isTakeawayTable } from "@/lib/table-qr";
+import { isTakeawayTable, TAKEAWAY_TABLE_ID } from "@/lib/table-qr";
 
 const ordersFile = path.join(process.cwd(), "data", "orders.json");
 let writeChain: Promise<unknown> = Promise.resolve();
@@ -281,6 +281,64 @@ async function findOpenTableSession(
   );
 }
 
+function normalizeCustomerNameKey(value: string | null | undefined) {
+  return String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("tr-TR")
+    .replace(/\s+/g, " ");
+}
+
+/** Aynı ad-soyad ile ödenmemiş Ayakta/Paket oturumu. */
+async function findOpenTakeawaySessionByName(
+  customerName: string
+): Promise<Order | null> {
+  const normalized = normalizeCustomerNameKey(customerName);
+  if (!normalized) return null;
+  const cutoff = getBusinessDayStart().toISOString();
+  const client = getTurso();
+  if (client) {
+    try {
+      await ensureSchema(client);
+      const result = await client.execute({
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, confirmed_at, created_at, updated_at
+              FROM orders
+              WHERE table_number = ?
+                AND status != 'paid'
+                AND status != 'cancelled'
+                AND created_at >= ?
+              ORDER BY created_at ASC
+              LIMIT 50`,
+        args: [TAKEAWAY_TABLE_ID, cutoff],
+      });
+      for (const row of result.rows) {
+        const order = rowToOrder(row as Record<string, unknown>);
+        if (
+          order &&
+          normalizeCustomerNameKey(order.customerName) === normalized
+        ) {
+          return order;
+        }
+      }
+    } catch {
+      // fall through to file
+    }
+  }
+
+  const current = await readFromFile();
+  return (
+    current
+      .filter(
+        (order) =>
+          isTakeawayTable(order.tableNumber) &&
+          order.status !== "paid" &&
+          order.status !== "cancelled" &&
+          isWithinCurrentBusinessDay(order.createdAt) &&
+          normalizeCustomerNameKey(order.customerName) === normalized
+      )
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0] ?? null
+  );
+}
+
 export async function createOrder(
   input: Omit<Order, "id" | "createdAt" | "updatedAt" | "status" | "total"> & {
     status?: OrderStatus;
@@ -303,9 +361,10 @@ export async function createOrder(
 
     await purgeExpiredOrders();
 
-    // Ayakta/Paket: her sipariş ayrı (farklı kişiler aynı QR'ı paylaşır).
+    // Masa: ödenmemiş oturuma ekle.
+    // Ayakta/Paket: aynı ad-soyad ile ödenmemiş sipariş varsa ona ekle.
     const openSession = isTakeawayTable(incoming.tableNumber)
-      ? null
+      ? await findOpenTakeawaySessionByName(incoming.customerName ?? "")
       : await findOpenTableSession(incoming.tableNumber);
     if (openSession) {
       const merged = buildMergedSession(openSession, incoming.items);

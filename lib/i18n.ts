@@ -57,6 +57,7 @@ type UiCopy = {
   emptyCartError: string;
   orderFailed: string;
   orderSuccess: string;
+  staffOrderHint: string;
 };
 
 const ui: Record<Locale, UiCopy> = {
@@ -118,6 +119,7 @@ const ui: Record<Locale, UiCopy> = {
     emptyCartError: "Sepet boş.",
     orderFailed: "Sipariş gönderilemedi.",
     orderSuccess: "Siparişiniz alındı. Afiyet olsun!",
+    staffOrderHint: "Personel siparişi: masa veya Ayakta/Paket seçin.",
   },
   en: {
     menuExplore: "Explore Menu",
@@ -178,6 +180,7 @@ const ui: Record<Locale, UiCopy> = {
     emptyCartError: "Cart is empty.",
     orderFailed: "Could not send the order.",
     orderSuccess: "Order received. Enjoy!",
+    staffOrderHint: "Staff order: pick a table or Standing/Takeaway.",
   },
 };
 

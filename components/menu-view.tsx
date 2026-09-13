@@ -190,8 +190,12 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
 
   function handleOrderComplete() {
     setCartItems([]);
-    setLockedTableNumber("");
     setCartOpen(false);
+    if (staffPreview) {
+      // Personel menüde kalır; yeni sipariş için masa seçmeye devam eder.
+      return;
+    }
+    setLockedTableNumber("");
     window.location.replace("/qr-gerekli");
   }
 
@@ -337,8 +341,9 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
       {venue.showBalloons ? <BalloonField /> : null}
 
       {staffPreview ? (
-        <div className="relative z-20 border-b border-amber-200 bg-amber-50 px-3 py-2 text-center text-sm text-amber-900">
-          Yönetici önizlemesi — sipariş için masadaki QR’ı okutun.{" "}
+        <div className="relative z-20 border-b border-sky-200 bg-sky-50 px-3 py-2 text-center text-sm text-sky-950">
+          Personel sipariş modu — sepette masa veya Ayakta/Paket seçerek sipariş
+          verebilirsiniz.{" "}
           <a href="/portal" className="font-medium underline">
             Portala dön
           </a>
@@ -672,6 +677,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         items={cartItems}
         tables={venue.tables ?? []}
         lockedTableNumber={lockedTableNumber}
+        staffMode={staffPreview}
         locale={locale}
         onChangeQty={changeCartQty}
         onRemove={(productId, note) =>

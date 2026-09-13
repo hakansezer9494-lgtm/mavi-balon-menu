@@ -1174,7 +1174,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                 "rounded-full border-slate-300 bg-white px-4 text-slate-800 shadow-sm hover:bg-slate-50"
               )}
             >
-              Müşteri menüsü
+              Menüden sipariş
             </Link>
             <button
               type="button"

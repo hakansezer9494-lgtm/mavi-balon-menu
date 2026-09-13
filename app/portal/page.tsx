@@ -31,8 +31,8 @@ export default function PortalPage() {
             />
             <PortalCard
               href="/?preview=1"
-              title="Müşteri menüsünü gör"
-              body="Misafir ekranını QR olmadan önizleyin. Sipariş için yine masa QR’si gerekir."
+              title="Menüden sipariş al"
+              body="Masa veya Ayakta/Paket seçerek menüden sipariş girebilirsiniz."
             />
           </div>
 

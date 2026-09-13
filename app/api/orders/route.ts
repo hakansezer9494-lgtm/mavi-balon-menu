@@ -4,7 +4,9 @@ import {
   clearGuestSessionCookieOptions,
   GUEST_SESSION_COOKIE,
   readGuestSessionCookie,
+  STAFF_PREVIEW_COOKIE,
   verifyGuestSession,
+  verifyStaffPreview,
 } from "@/lib/guest-session";
 import { createOrder, listOrders } from "@/lib/order-store";
 import { isOrderItem, type OrderItem } from "@/lib/orders";
@@ -13,6 +15,15 @@ import {
   isValidCustomerName,
   sanitizeCustomerName,
 } from "@/lib/table-qr";
+
+function readCookie(cookieHeader: string | null, name: string) {
+  if (!cookieHeader) return null;
+  for (const part of cookieHeader.split(";")) {
+    const [rawName, ...rest] = part.trim().split("=");
+    if (rawName === name) return decodeURIComponent(rest.join("="));
+  }
+  return null;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -68,9 +79,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const guestToken = readGuestSessionCookie(request.headers.get("cookie"));
+  const cookieHeader = request.headers.get("cookie");
+  const guestToken = readGuestSessionCookie(cookieHeader);
   const guestSession = await verifyGuestSession(guestToken);
-  if (!guestSession) {
+  const staffPreview = await verifyStaffPreview(
+    readCookie(cookieHeader, STAFF_PREVIEW_COOKIE)
+  );
+
+  if (!guestSession && !staffPreview) {
     return NextResponse.json(
       {
         error:
@@ -80,7 +96,11 @@ export async function POST(request: Request) {
       { status: 401 }
     );
   }
-  if (guestSession.tableNumber !== tableNumber) {
+  if (
+    guestSession &&
+    !staffPreview &&
+    guestSession.tableNumber !== tableNumber
+  ) {
     return NextResponse.json(
       {
         error:
@@ -128,16 +148,19 @@ export async function POST(request: Request) {
       customerName: customerName || undefined,
       items,
     });
+    // Personel portal siparişinde oturum açık kalsın; misafir QR oturumu kapanır.
+    const endGuestSession = Boolean(guestSession) && !staffPreview;
     const response = NextResponse.json(
-      { order, sessionEnded: true },
+      { order, sessionEnded: endGuestSession, staffOrder: Boolean(staffPreview) },
       { status: 201 }
     );
-    // Sipariş sonrası oturumu kapat — yeni sipariş için QR tekrar gerekir.
-    response.cookies.set(
-      GUEST_SESSION_COOKIE,
-      "",
-      clearGuestSessionCookieOptions()
-    );
+    if (endGuestSession) {
+      response.cookies.set(
+        GUEST_SESSION_COOKIE,
+        "",
+        clearGuestSessionCookieOptions()
+      );
+    }
     return response;
   } catch (error) {
     return NextResponse.json(

@@ -10,6 +10,7 @@ import {
   isTakeawayTable,
   isValidCustomerName,
   sanitizeCustomerName,
+  TAKEAWAY_TABLE_ID,
 } from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,8 @@ type CartDrawerProps = {
   items: CartLine[];
   tables: string[];
   lockedTableNumber?: string;
+  /** Personel portalından: masa / ayakta seçerek sipariş. */
+  staffMode?: boolean;
   locale?: Locale;
   onChangeQty: (productId: string, quantity: number, note?: string) => void;
   onRemove: (productId: string, note?: string) => void;
@@ -65,7 +68,9 @@ export function CartDrawer({
   open,
   onOpenChange,
   items,
+  tables,
   lockedTableNumber = "",
+  staffMode = false,
   locale = "tr",
   onChangeQty,
   onRemove,
@@ -107,7 +112,7 @@ export function CartDrawer({
     setError("");
     setSuccess("");
     if (!tableNumber) {
-      setError(t.scanTableQrError);
+      setError(staffMode ? t.selectTableError : t.scanTableQrError);
       return;
     }
     if (takeaway && !isValidCustomerName(customerName)) {
@@ -142,7 +147,7 @@ export function CartDrawer({
         throw new Error(data.error || t.orderFailed);
       }
       onClear();
-      if (!tableLocked) {
+      if (!tableLocked && !staffMode) {
         setTableNumber("");
       }
       setCustomerName("");
@@ -298,25 +303,54 @@ export function CartDrawer({
         </div>
 
         <div className="space-y-3 border-t border-slate-100 px-4 py-4">
-          <div className="rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200">
-            <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
-              {takeaway ? t.takeawayLabel : t.tableNo}
-            </p>
-            <p className="text-sm font-semibold text-slate-900">
-              {tableNumber
-                ? takeaway
-                  ? t.takeawayLabel
-                  : t.tableOption(tableNumber)
-                : t.scanTableQrHint}
-            </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {tableNumber
-                ? takeaway
-                  ? t.customerNameHint
-                  : t.tableLockedHint
-                : t.scanTableQrBody}
-            </p>
-          </div>
+          {staffMode && !tableLocked ? (
+            <div className="grid gap-1.5">
+              <label
+                htmlFor="staff-table-select"
+                className="text-sm font-medium text-slate-700"
+              >
+                {t.selectTable}
+                <span className="text-red-500"> *</span>
+              </label>
+              <select
+                id="staff-table-select"
+                value={tableNumber}
+                onChange={(event) => setTableNumber(event.target.value)}
+                className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none ring-[#007AFF]/30 focus:ring-2"
+              >
+                <option value="">{t.selectTable}</option>
+                <option value={TAKEAWAY_TABLE_ID}>{t.takeawayLabel}</option>
+                {tables
+                  .filter((table) => table && !isTakeawayTable(table))
+                  .map((table) => (
+                    <option key={table} value={table}>
+                      {t.tableOption(table)}
+                    </option>
+                  ))}
+              </select>
+              <p className="text-xs text-slate-500">{t.staffOrderHint}</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200">
+              <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
+                {takeaway ? t.takeawayLabel : t.tableNo}
+              </p>
+              <p className="text-sm font-semibold text-slate-900">
+                {tableNumber
+                  ? takeaway
+                    ? t.takeawayLabel
+                    : t.tableOption(tableNumber)
+                  : t.scanTableQrHint}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                {tableNumber
+                  ? takeaway
+                    ? t.customerNameHint
+                    : t.tableLockedHint
+                  : t.scanTableQrBody}
+              </p>
+            </div>
+          )}
 
           {takeaway ? (
             <div className="grid gap-1.5">

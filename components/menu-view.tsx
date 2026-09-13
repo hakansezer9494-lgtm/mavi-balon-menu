@@ -72,6 +72,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const [cartItems, setCartItems] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [lockedTableNumber, setLockedTableNumber] = useState("");
+  const [staffPreview, setStaffPreview] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,19 +86,33 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           tables.length === 0 ||
           tables.includes(fromUrl))
       ) {
-        if (!cancelled) setLockedTableNumber(fromUrl);
+        if (!cancelled) {
+          setLockedTableNumber(fromUrl);
+          setStaffPreview(false);
+        }
         return;
       }
       try {
         const response = await fetch("/api/guest-session", { cache: "no-store" });
         if (!response.ok) {
-          if (!cancelled) setLockedTableNumber("");
+          if (!cancelled) {
+            setLockedTableNumber("");
+            setStaffPreview(false);
+          }
           return;
         }
         const data = (await response.json()) as {
           active?: boolean;
+          staffPreview?: boolean;
           tableNumber?: string;
         };
+        if (data.staffPreview) {
+          if (!cancelled) {
+            setLockedTableNumber("");
+            setStaffPreview(true);
+          }
+          return;
+        }
         const fromSession = sanitizeTableParam(data.tableNumber);
         if (
           data.active &&
@@ -106,13 +121,19 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
             tables.length === 0 ||
             tables.includes(fromSession))
         ) {
-          if (!cancelled) setLockedTableNumber(fromSession);
+          if (!cancelled) {
+            setLockedTableNumber(fromSession);
+            setStaffPreview(false);
+          }
           return;
         }
       } catch {
         // ignore
       }
-      if (!cancelled) setLockedTableNumber("");
+      if (!cancelled) {
+        setLockedTableNumber("");
+        setStaffPreview(false);
+      }
     }
     void syncGuestTable();
     return () => {
@@ -314,6 +335,15 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
       }
     >
       {venue.showBalloons ? <BalloonField /> : null}
+
+      {staffPreview ? (
+        <div className="relative z-20 border-b border-amber-200 bg-amber-50 px-3 py-2 text-center text-sm text-amber-900">
+          Yönetici önizlemesi — sipariş için masadaki QR’ı okutun.{" "}
+          <a href="/portal" className="font-medium underline">
+            Portala dön
+          </a>
+        </div>
+      ) : null}
 
       <div className="relative z-10 mx-auto w-full max-w-lg px-3 py-4 sm:max-w-5xl sm:px-6 sm:py-5 lg:px-10">
         <header className="relative isolate min-h-[40svh] overflow-hidden rounded-[1.5rem] shadow-[0_4px_10px_rgba(40,32,20,0.06),0_18px_40px_rgba(40,32,20,0.14),0_36px_64px_rgba(40,32,20,0.08)] ring-1 ring-black/5 sm:min-h-[48svh] sm:rounded-[1.75rem]">

@@ -4,7 +4,11 @@ import {
   GUEST_SESSION_COOKIE,
   guestSessionCookieOptions,
   signGuestSession,
+  signStaffPreview,
+  STAFF_PREVIEW_COOKIE,
+  staffPreviewCookieOptions,
   verifyGuestSession,
+  verifyStaffPreview,
 } from "@/lib/guest-session";
 import { sanitizeTableParam } from "@/lib/table-qr";
 
@@ -36,17 +40,39 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isStaffPath(pathname)) {
+  if (isStaffPath(pathname) || pathname.startsWith("/qr-gerekli")) {
     return NextResponse.next();
   }
 
-  // Guest menu (/) — QR session required.
+  // Guest menu (/) — QR session or staff preview (from portal).
   if (pathname === "/") {
+    const previewFlag = request.nextUrl.searchParams.get("preview");
+    const wantsStaffPreview =
+      previewFlag === "1" ||
+      previewFlag === "staff" ||
+      previewFlag === "yonetici";
+
+    if (wantsStaffPreview) {
+      const token = await signStaffPreview();
+      const clean = request.nextUrl.clone();
+      clean.searchParams.delete("preview");
+      const response = NextResponse.redirect(clean);
+      response.cookies.set(
+        STAFF_PREVIEW_COOKIE,
+        token,
+        staffPreviewCookieOptions()
+      );
+      return response;
+    }
+
     const tableFromQr = sanitizeTableParam(
       request.nextUrl.searchParams.get("table")
     );
-    const existing = request.cookies.get(GUEST_SESSION_COOKIE)?.value;
-    const session = await verifyGuestSession(existing);
+    const existingGuest = request.cookies.get(GUEST_SESSION_COOKIE)?.value;
+    const guestSession = await verifyGuestSession(existingGuest);
+    const staffPreview = await verifyStaffPreview(
+      request.cookies.get(STAFF_PREVIEW_COOKIE)?.value
+    );
 
     if (tableFromQr) {
       const token = await signGuestSession(tableFromQr);
@@ -59,12 +85,12 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    if (session) {
+    if (guestSession || staffPreview) {
       return NextResponse.next();
     }
 
     const blocked = NextResponse.redirect(new URL("/qr-gerekli", request.url));
-    if (existing) {
+    if (existingGuest) {
       blocked.cookies.set(
         GUEST_SESSION_COOKIE,
         "",
@@ -75,11 +101,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Any other unknown guest path → QR gate
-  if (!pathname.startsWith("/qr-gerekli")) {
-    return NextResponse.redirect(new URL("/qr-gerekli", request.url));
-  }
-
-  return NextResponse.next();
+  return NextResponse.redirect(new URL("/qr-gerekli", request.url));
 }
 
 export const config = {

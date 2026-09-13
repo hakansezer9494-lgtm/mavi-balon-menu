@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header";
 export default function QrRequiredPage() {
   return (
     <div className="relative flex min-h-full flex-1 flex-col bg-[#f4f7fb]">
-      <SiteHeader eyebrow="Menü" compact />
+      <SiteHeader eyebrow="Menü" compact homeHref="/portal" />
       <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center px-4 pb-16 text-center">
         <div className="w-full rounded-3xl bg-white p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] ring-1 ring-slate-200">
           <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-[#007AFF]/10 text-[#007AFF]">

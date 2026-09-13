@@ -134,7 +134,7 @@ export function OrdersPage() {
   if (!unlocked) {
     return (
       <div className="relative flex min-h-full flex-1 flex-col">
-        <SiteHeader eyebrow="Siparişler" compact />
+        <SiteHeader eyebrow="Siparişler" compact  homeHref="/portal" />
         <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col px-4 pb-16">
           <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
             <CardHeader>
@@ -202,7 +202,7 @@ export function OrdersPage() {
       )}
     >
       <div className="relative">
-        <SiteHeader eyebrow="Siparişler" compact />
+        <SiteHeader eyebrow="Siparişler" compact  homeHref="/portal" />
         <Button
           type="button"
           variant="outline"

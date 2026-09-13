@@ -9,7 +9,7 @@ export default function PortalPage() {
     <div className="relative flex min-h-full flex-1 flex-col">
       <BalloonField />
       <div className="relative z-10 flex min-h-full flex-1 flex-col">
-        <SiteHeader eyebrow="İşletme portali" compact />
+        <SiteHeader eyebrow="İşletme portali" compact homeHref="/portal" />
 
         <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-16">
           <p className="mb-6 text-sm leading-relaxed text-slate-600">
@@ -35,9 +35,9 @@ export default function PortalPage() {
               body="Yazdırıp masaya koyun. Müşteri kamerayla menüyü açar."
             />
             <PortalCard
-              href="/"
+              href="/?preview=1"
               title="Müşteri menüsünü gör"
-              body="Misafirlerin telefonunda görünen sayfayı kontrol edin."
+              body="Misafir ekranını QR olmadan önizleyin. Sipariş için yine masa QR’si gerekir."
             />
           </div>
 

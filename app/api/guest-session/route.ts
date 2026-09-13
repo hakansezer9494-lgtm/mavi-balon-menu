@@ -3,22 +3,46 @@ import {
   clearGuestSessionCookieOptions,
   GUEST_SESSION_COOKIE,
   readGuestSessionCookie,
+  STAFF_PREVIEW_COOKIE,
   verifyGuestSession,
+  verifyStaffPreview,
 } from "@/lib/guest-session";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: Request) {
-  const token = readGuestSessionCookie(request.headers.get("cookie"));
-  const session = await verifyGuestSession(token);
-  if (!session) {
-    return NextResponse.json({ active: false }, { status: 401 });
+function readCookie(cookieHeader: string | null, name: string) {
+  if (!cookieHeader) return null;
+  for (const part of cookieHeader.split(";")) {
+    const [rawName, ...rest] = part.trim().split("=");
+    if (rawName === name) return decodeURIComponent(rest.join("="));
   }
-  return NextResponse.json({
-    active: true,
-    tableNumber: session.tableNumber,
-    expiresAt: session.expiresAt,
-  });
+  return null;
+}
+
+export async function GET(request: Request) {
+  const cookie = request.headers.get("cookie");
+  const guestToken = readGuestSessionCookie(cookie);
+  const guest = await verifyGuestSession(guestToken);
+  if (guest) {
+    return NextResponse.json({
+      active: true,
+      staffPreview: false,
+      tableNumber: guest.tableNumber,
+      expiresAt: guest.expiresAt,
+    });
+  }
+
+  const staff = await verifyStaffPreview(readCookie(cookie, STAFF_PREVIEW_COOKIE));
+  if (staff) {
+    return NextResponse.json({
+      active: true,
+      staffPreview: true,
+      tableNumber: "",
+      expiresAt: staff.expiresAt,
+    });
+  }
+
+  return NextResponse.json({ active: false, staffPreview: false }, { status: 401 });
 }
 
 /** End guest session (after order or manual logout). */

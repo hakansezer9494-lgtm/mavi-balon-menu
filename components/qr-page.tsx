@@ -122,7 +122,7 @@ export function QrPage() {
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
       <div className="print:hidden">
-        <SiteHeader eyebrow="Masa QR" compact />
+        <SiteHeader eyebrow="Masa QR" compact  homeHref="/portal" />
       </div>
 
       <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-16">

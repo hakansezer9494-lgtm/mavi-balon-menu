@@ -134,3 +134,83 @@ export function readGuestSessionCookie(cookieHeader: string | null) {
   }
   return null;
 }
+
+/** Staff menu preview from /portal (browse without table QR). */
+export const STAFF_PREVIEW_COOKIE = "mavi_staff_preview";
+export const STAFF_PREVIEW_TTL_MS = 8 * 60 * 60 * 1000; // 8 hours
+export const STAFF_PREVIEW_TTL_SECONDS = 8 * 60 * 60;
+
+type StaffPreviewPayload = {
+  s: "staff";
+  e: number;
+  n: string;
+};
+
+export function staffPreviewCookieOptions(
+  maxAgeSeconds = STAFF_PREVIEW_TTL_SECONDS
+) {
+  return {
+    httpOnly: true as const,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: maxAgeSeconds,
+  };
+}
+
+export function clearStaffPreviewCookieOptions() {
+  return {
+    httpOnly: true as const,
+    sameSite: "lax" as const,
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  };
+}
+
+export async function signStaffPreview(now = Date.now()): Promise<string> {
+  const payload: StaffPreviewPayload = {
+    s: "staff",
+    e: now + STAFF_PREVIEW_TTL_MS,
+    n: crypto.randomUUID(),
+  };
+  const body = bytesToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
+  const key = await hmacKey(guestSessionSecret());
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(body)
+  );
+  return `${body}.${bytesToBase64Url(signature)}`;
+}
+
+export async function verifyStaffPreview(
+  token: string | null | undefined,
+  now = Date.now()
+): Promise<{ expiresAt: number } | null> {
+  if (!token || !token.includes(".")) return null;
+  const [body, signature] = token.split(".");
+  if (!body || !signature) return null;
+
+  try {
+    const key = await hmacKey(guestSessionSecret());
+    const ok = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      base64UrlToBytes(signature),
+      new TextEncoder().encode(body)
+    );
+    if (!ok) return null;
+
+    const parsed = JSON.parse(
+      new TextDecoder().decode(base64UrlToBytes(body))
+    ) as Partial<StaffPreviewPayload>;
+    const expiresAt = Number(parsed.e);
+    if (parsed.s !== "staff" || !Number.isFinite(expiresAt) || expiresAt <= now) {
+      return null;
+    }
+    return { expiresAt };
+  } catch {
+    return null;
+  }
+}

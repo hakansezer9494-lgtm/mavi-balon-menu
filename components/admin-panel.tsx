@@ -394,7 +394,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   if (!unlocked) {
     return (
       <div className="relative flex min-h-full flex-1 flex-col">
-        <SiteHeader eyebrow="Yönetim" compact />
+        <SiteHeader eyebrow="Yönetim" compact homeHref="/portal" />
         <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col px-4 pb-16">
           <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
             <CardHeader>
@@ -1028,7 +1028,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
-      <SiteHeader eyebrow="Yönetim" compact />
+      <SiteHeader eyebrow="Yönetim" compact homeHref="/portal" />
 
       <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

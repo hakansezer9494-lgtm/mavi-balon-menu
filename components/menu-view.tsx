@@ -41,6 +41,7 @@ import {
   type VenueInfo,
   whatsappHref,
 } from "@/lib/menu";
+import { sanitizeTableParam } from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 
 const LANG_KEY = "mavi-balon-locale";
@@ -70,6 +71,18 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const [selectedNote, setSelectedNote] = useState("");
   const [cartItems, setCartItems] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [lockedTableNumber, setLockedTableNumber] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fromUrl = sanitizeTableParam(params.get("table"));
+    const tables = menu.venue?.tables ?? [];
+    if (fromUrl && (tables.length === 0 || tables.includes(fromUrl))) {
+      setLockedTableNumber(fromUrl);
+      return;
+    }
+    setLockedTableNumber("");
+  }, [menu.venue?.tables]);
   const scrollingToRef = useRef<string | null>(null);
   const t = getUi(locale);
 
@@ -585,6 +598,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         onOpenChange={setCartOpen}
         items={cartItems}
         tables={venue.tables ?? []}
+        lockedTableNumber={lockedTableNumber}
         locale={locale}
         onChangeQty={changeCartQty}
         onRemove={(productId, note) =>

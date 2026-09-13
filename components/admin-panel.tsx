@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUp, ChevronDown, Download, History, Pencil, Plus, Trash
 import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { tableMenuUrl } from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -241,6 +242,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [heroError, setHeroError] = useState("");
   const [newTableNumber, setNewTableNumber] = useState("");
   const [tableMessage, setTableMessage] = useState("");
+  const [openQrTable, setOpenQrTable] = useState<string | null>(null);
   const menuOrigin = useSyncExternalStore(
     subscribeOrigin,
     () => window.location.origin,
@@ -900,8 +902,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     }
   }
 
-  async function downloadAdminQr() {
-    const svg = document.getElementById("admin-menu-qr-svg");
+  async function downloadAdminQr(table: string) {
+    const svg = document.getElementById(`admin-menu-qr-svg-${table}`);
     if (!(svg instanceof SVGSVGElement)) return;
     const serializer = new XMLSerializer();
     const source = serializer.serializeToString(svg);
@@ -926,7 +928,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       const png = canvas.toDataURL("image/png");
       const anchor = document.createElement("a");
       anchor.href = png;
-      anchor.download = "mavi-balloon-menu-qr.png";
+      anchor.download = `masa-${table}-qr.png`;
       anchor.click();
     } finally {
       URL.revokeObjectURL(url);
@@ -1955,8 +1957,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">Masalar</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Sipariş ekranında görünecek masa numaralarını buradan ekleyin.
-              Misafir yalnızca bu listeden masa seçebilir.
+              Buradan eklediğiniz masalar QR çekmecelerinde görünür. Misafir
+              masadaki QR’ı okutunca o masa otomatik seçilir.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -2024,46 +2026,96 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </CardContent>
         </Card>
 
-        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+                <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <CardTitle className="text-white">Masa QR kodu</CardTitle>
             <CardDescription className="text-sky-100/60">
-              PNG olarak indirip yazdırın. Yayın adresiniz bu tarayıcıdaki site
-              adresidir.
+              Masaları kapalı çekmece olarak açın; seçili masa için QR üretin.
+              Misafir kodu okutunca menü o masa ile açılır.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-            <div className="rounded-2xl bg-white p-3">
-              <QRCodeSVG
-                id="admin-menu-qr-svg"
-                value={menuOrigin}
-                size={148}
-                bgColor="#ffffff"
-                fgColor="#0f172a"
-                level="M"
-                includeMargin={false}
-              />
-            </div>
-            <div className="space-y-2">
-              <p className="break-all text-xs text-sky-100/60">{menuOrigin}</p>
-              <Button
-                className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
-                onClick={() => void downloadAdminQr()}
-              >
-                <Download />
-                QR indir
-              </Button>
-              <Link
-                href="/qr"
-                className={cn(buttonVariants({ variant: "outline" }), darkOutline)}
-              >
-                QR sayfasını aç
-              </Link>
-            </div>
+          <CardContent className="space-y-2">
+            {(venueForm.tables ?? []).length === 0 ? (
+              <p className="rounded-xl bg-white/5 px-4 py-6 text-center text-sm text-sky-100/60">
+                Önce yukarıdan masa ekleyip kaydedin.
+              </p>
+            ) : (
+              (venueForm.tables ?? []).map((table) => {
+                const open = openQrTable === table;
+                const qrValue = tableMenuUrl(menuOrigin, table);
+                return (
+                  <div
+                    key={table}
+                    className="overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenQrTable((current) =>
+                          current === table ? null : table
+                        )
+                      }
+                      className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
+                    >
+                      <div>
+                        <p className="text-[11px] font-medium tracking-wide text-sky-300/80 uppercase">
+                          Masa çekmecesi
+                        </p>
+                        <p className="text-sm font-semibold text-white">
+                          Masa {table}
+                        </p>
+                      </div>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 text-sky-200/70 transition",
+                          open && "rotate-180"
+                        )}
+                      />
+                    </button>
+                    {open ? (
+                      <div className="space-y-3 border-t border-white/10 px-3 py-3">
+                        <div className="w-fit rounded-2xl bg-white p-3">
+                          <QRCodeSVG
+                            id={`admin-menu-qr-svg-${table}`}
+                            value={qrValue}
+                            size={148}
+                            bgColor="#ffffff"
+                            fgColor="#0f172a"
+                            level="M"
+                            includeMargin={false}
+                          />
+                        </div>
+                        <p className="break-all text-xs text-sky-100/60">
+                          {qrValue}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                            onClick={() => void downloadAdminQr(table)}
+                          >
+                            <Download />
+                            QR indir
+                          </Button>
+                          <Link
+                            href="/qr"
+                            className={cn(
+                              buttonVariants({ variant: "outline" }),
+                              darkOutline
+                            )}
+                          >
+                            QR sayfasını aç
+                          </Link>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })
+            )}
           </CardContent>
         </Card>
 
-        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+<Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <div className="flex items-start gap-3">
               <div className="mt-0.5 rounded-xl bg-sky-400/15 p-2 text-sky-300">

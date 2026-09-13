@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getUi, type Locale } from "@/lib/i18n";
@@ -48,6 +48,7 @@ type CartDrawerProps = {
   onOpenChange: (open: boolean) => void;
   items: CartLine[];
   tables: string[];
+  lockedTableNumber?: string;
   locale?: Locale;
   onChangeQty: (productId: string, quantity: number, note?: string) => void;
   onRemove: (productId: string, note?: string) => void;
@@ -58,7 +59,7 @@ export function CartDrawer({
   open,
   onOpenChange,
   items,
-  tables,
+  lockedTableNumber = "",
   locale = "tr",
   onChangeQty,
   onRemove,
@@ -66,11 +67,17 @@ export function CartDrawer({
 }: CartDrawerProps) {
   const t = getUi(locale);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [tableNumber, setTableNumber] = useState("");
-  const [tableOpen, setTableOpen] = useState(false);
+  const [tableNumber, setTableNumber] = useState(lockedTableNumber);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const tableLocked = Boolean(lockedTableNumber);
+
+  useEffect(() => {
+    if (lockedTableNumber) {
+      setTableNumber(lockedTableNumber);
+    }
+  }, [lockedTableNumber]);
 
   const total = useMemo(
     () =>
@@ -86,7 +93,7 @@ export function CartDrawer({
     setError("");
     setSuccess("");
     if (!tableNumber) {
-      setError(t.selectTableError);
+      setError(t.scanTableQrError);
       return;
     }
     if (items.length === 0) {
@@ -114,7 +121,9 @@ export function CartDrawer({
         throw new Error(data.error || t.orderFailed);
       }
       onClear();
-      setTableNumber("");
+      if (!tableLocked) {
+        setTableNumber("");
+      }
       setExpandedId(null);
       setSuccess(t.orderSuccess);
     } catch (err) {
@@ -262,57 +271,16 @@ export function CartDrawer({
         </div>
 
         <div className="space-y-3 border-t border-slate-100 px-4 py-4">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setTableOpen((current) => !current)}
-              className="flex w-full items-center justify-between rounded-2xl bg-slate-50 px-3 py-3 text-left ring-1 ring-slate-200"
-            >
-              <div>
-                <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
-                  {t.tableNo}
-                </p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {tableNumber
-                    ? t.tableOption(tableNumber)
-                    : t.selectTable}
-                </p>
-              </div>
-              <ChevronDown
-                className={cn(
-                  "size-4 text-slate-400 transition",
-                  tableOpen && "rotate-180"
-                )}
-              />
-            </button>
-            {tableOpen ? (
-              <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
-                {tables.length === 0 ? (
-                  <p className="px-3 py-2 text-sm text-slate-500">
-                    {t.noTablesDefined}
-                  </p>
-                ) : (
-                  tables.map((table) => (
-                    <button
-                      key={table}
-                      type="button"
-                      className={cn(
-                        "flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium hover:bg-slate-50",
-                        tableNumber === table &&
-                          "bg-[#007AFF]/10 text-[#007AFF]"
-                      )}
-                      onClick={() => {
-                        setTableNumber(table);
-                        setTableOpen(false);
-                        setError("");
-                      }}
-                    >
-                      {t.tableOption(table)}
-                    </button>
-                  ))
-                )}
-              </div>
-            ) : null}
+          <div className="rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200">
+            <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
+              {t.tableNo}
+            </p>
+            <p className="text-sm font-semibold text-slate-900">
+              {tableNumber ? t.tableOption(tableNumber) : t.scanTableQrHint}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {tableNumber ? t.tableLockedHint : t.scanTableQrBody}
+            </p>
           </div>
 
           <div className="flex items-center justify-between text-sm">
@@ -329,7 +297,7 @@ export function CartDrawer({
 
           <Button
             className="h-12 w-full rounded-2xl bg-[#007AFF] text-base font-semibold hover:bg-[#0066d6]"
-            disabled={submitting || items.length === 0}
+            disabled={submitting || items.length === 0 || !tableNumber}
             onClick={() => void placeOrder()}
           >
             {submitting ? t.placingOrder : t.placeOrder}

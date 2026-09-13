@@ -45,6 +45,10 @@ type UiCopy = {
   placeOrder: string;
   placingOrder: string;
   selectTableError: string;
+  scanTableQrError: string;
+  scanTableQrHint: string;
+  scanTableQrBody: string;
+  tableLockedHint: string;
   emptyCartError: string;
   orderFailed: string;
   orderSuccess: string;
@@ -97,6 +101,10 @@ const ui: Record<Locale, UiCopy> = {
     placeOrder: "Sipariş Ver",
     placingOrder: "Gönderiliyor…",
     selectTableError: "Sipariş vermek için masa seçin.",
+    scanTableQrError: "Sipariş için masadaki QR kodu okutun.",
+    scanTableQrHint: "Masa seçilmedi",
+    scanTableQrBody: "Bu menüyü masadaki QR kod ile açın. Masa numarası otomatik gelir.",
+    tableLockedHint: "Masa QR ile kilitlendi; değiştirilemez.",
     emptyCartError: "Sepet boş.",
     orderFailed: "Sipariş gönderilemedi.",
     orderSuccess: "Siparişiniz alındı. Afiyet olsun!",
@@ -148,6 +156,10 @@ const ui: Record<Locale, UiCopy> = {
     placeOrder: "Place order",
     placingOrder: "Sending…",
     selectTableError: "Select a table to place an order.",
+    scanTableQrError: "Scan the table QR code to order.",
+    scanTableQrHint: "No table selected",
+    scanTableQrBody: "Open this menu by scanning the QR on your table. The table number is set automatically.",
+    tableLockedHint: "Table locked from QR; it cannot be changed.",
     emptyCartError: "Cart is empty.",
     orderFailed: "Could not send the order.",
     orderSuccess: "Order received. Enjoy!",

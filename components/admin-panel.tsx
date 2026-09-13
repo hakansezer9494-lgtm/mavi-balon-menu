@@ -6,7 +6,12 @@ import { ArrowDown, ArrowUp, ChevronDown, Download, History, Pencil, Plus, Trash
 import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { tableMenuUrl } from "@/lib/table-qr";
+import {
+  qrTableOptions,
+  tableDisplayName,
+  tableMenuUrl,
+  TAKEAWAY_TABLE_ID,
+} from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 import {
   Card,
@@ -929,7 +934,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       const png = canvas.toDataURL("image/png");
       const anchor = document.createElement("a");
       anchor.href = png;
-      anchor.download = `masa-${table}-qr.png`;
+      anchor.download = `${table === TAKEAWAY_TABLE_ID ? "ayakta-paket" : `masa-${table}`}-qr.png`;
       anchor.click();
     } finally {
       URL.revokeObjectURL(url);
@@ -2047,18 +2052,13 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">Masa QR kodu</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Masayı seçin; alttaki QR yalnızca seçili masaya aittir. Misafir
-              kodu okutunca menü o masa ile açılır.
+              Masa veya Ayakta/Paket seçin; alttaki QR yalnızca seçili seçeneğe
+              aittir. Ayakta/Paket QR’ında misafir siparişte ad soyad yazar.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {(venueForm.tables ?? []).length === 0 ? (
-              <p className="rounded-xl bg-white/5 px-4 py-6 text-center text-sm text-sky-100/60">
-                Önce yukarıdan masa ekleyin.
-              </p>
-            ) : (
-              (() => {
-                const tables = venueForm.tables ?? [];
+            {(() => {
+                const tables = qrTableOptions(venueForm.tables ?? []);
                 const selected =
                   selectedQrTable && tables.includes(selectedQrTable)
                     ? selectedQrTable
@@ -2080,7 +2080,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                           onClick={() => setTableQrMenuOpen((open) => !open)}
                           aria-expanded={tableQrMenuOpen}
                         >
-                          <span>Masa {selected}</span>
+                          <span>{tableDisplayName(selected)}</span>
                           <ChevronDown
                             className={cn(
                               "size-4 shrink-0 text-sky-100/70 transition",
@@ -2105,7 +2105,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                                   setTableQrMenuOpen(false);
                                 }}
                               >
-                                <span>Masa {table}</span>
+                                <span>{tableDisplayName(table)}</span>
                                 {table === selected ? (
                                   <span className="text-[10px] tracking-wide text-sky-200 uppercase">
                                     Seçili
@@ -2121,7 +2121,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     {selected ? (
                       <div className="space-y-3 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
                         <p className="text-xs font-medium tracking-wide text-sky-200/80 uppercase">
-                          Masa {selected} QR
+                          {tableDisplayName(selected)} QR
                         </p>
                         <div className="w-fit rounded-2xl bg-white p-3">
                           <QRCodeSVG
@@ -2159,8 +2159,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     ) : null}
                   </>
                 );
-              })()
-            )}
+              })()}
           </CardContent>
         </Card>
 

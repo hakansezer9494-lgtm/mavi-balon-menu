@@ -1,4 +1,5 @@
 /** Cross-tab / background-friendly order alerts with selectable chimes. */
+import { tableDisplayName } from "@/lib/table-qr";
 
 export type OrderAlertSoundId =
   | "classic"
@@ -432,6 +433,7 @@ export function previewOrderAlertSound(id?: OrderAlertSoundId) {
 
 export function announceNewOrder(detail?: {
   tableNumber?: string;
+  customerName?: string;
   totalLabel?: string;
 }) {
   if (!unlocked) {
@@ -442,7 +444,9 @@ export function announceNewOrder(detail?: {
   playAlertSound(soundId);
 
   const table = detail?.tableNumber
-    ? `Masa ${detail.tableNumber}`
+    ? detail.customerName
+      ? `${tableDisplayName(detail.tableNumber)} · ${detail.customerName}`
+      : tableDisplayName(detail.tableNumber)
     : "Yeni sipariş";
   const body = detail?.totalLabel
     ? `${table} · ${detail.totalLabel}`

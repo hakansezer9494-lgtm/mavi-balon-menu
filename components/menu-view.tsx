@@ -41,7 +41,7 @@ import {
   type VenueInfo,
   whatsappHref,
 } from "@/lib/menu";
-import { sanitizeTableParam } from "@/lib/table-qr";
+import { isTakeawayTable, sanitizeTableParam } from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 
 const LANG_KEY = "mavi-balon-locale";
@@ -77,7 +77,12 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
     const params = new URLSearchParams(window.location.search);
     const fromUrl = sanitizeTableParam(params.get("table"));
     const tables = menu.venue?.tables ?? [];
-    if (fromUrl && (tables.length === 0 || tables.includes(fromUrl))) {
+    if (
+      fromUrl &&
+      (isTakeawayTable(fromUrl) ||
+        tables.length === 0 ||
+        tables.includes(fromUrl))
+    ) {
       setLockedTableNumber(fromUrl);
       return;
     }

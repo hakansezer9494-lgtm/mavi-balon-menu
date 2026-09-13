@@ -16,6 +16,7 @@ import {
   type OrderItem,
   type OrderStatus,
 } from "@/lib/orders";
+import { isTakeawayTable } from "@/lib/table-qr";
 
 const ordersFile = path.join(process.cwd(), "data", "orders.json");
 let writeChain: Promise<unknown> = Promise.resolve();
@@ -63,6 +64,7 @@ async function ensureSchema(client: Client) {
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY,
       table_number TEXT NOT NULL,
+      customer_name TEXT NOT NULL DEFAULT '',
       items_json TEXT NOT NULL,
       total REAL NOT NULL,
       status TEXT NOT NULL,
@@ -70,6 +72,13 @@ async function ensureSchema(client: Client) {
       updated_at TEXT NOT NULL
     )
   `);
+  try {
+    await client.execute(
+      `ALTER TABLE orders ADD COLUMN customer_name TEXT NOT NULL DEFAULT ''`
+    );
+  } catch {
+    // column already exists
+  }
   await client.execute(`
     CREATE INDEX IF NOT EXISTS orders_created_at_idx
     ON orders (created_at DESC)
@@ -84,6 +93,7 @@ function rowToOrder(row: Record<string, unknown>): Order | null {
     const order = normalizeOrder({
       id: String(row.id ?? ""),
       tableNumber: String(row.table_number ?? ""),
+      customerName: String(row.customer_name ?? ""),
       items: Array.isArray(items) ? items : [],
       total: Number(row.total) || 0,
       status: row.status as OrderStatus,
@@ -179,7 +189,7 @@ export async function listOrders(): Promise<Order[]> {
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
          FROM orders
          WHERE (status = 'paid' AND created_at >= ?)
             OR (status != 'paid' AND created_at >= ?)
@@ -229,7 +239,7 @@ async function findOpenTableSession(
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
               FROM orders
               WHERE table_number = ?
                 AND status != 'paid'
@@ -276,10 +286,16 @@ export async function createOrder(
     if (incoming.items.length === 0) {
       throw new Error("Sepet boş.");
     }
+    if (isTakeawayTable(incoming.tableNumber) && !incoming.customerName) {
+      throw new Error("Ayakta/Paket siparişinde ad soyad gerekli.");
+    }
 
     await purgeExpiredOrders();
 
-    const openSession = await findOpenTableSession(incoming.tableNumber);
+    // Ayakta/Paket: her sipariş ayrı (farklı kişiler aynı QR'ı paylaşır).
+    const openSession = isTakeawayTable(incoming.tableNumber)
+      ? null
+      : await findOpenTableSession(incoming.tableNumber);
     if (openSession) {
       const merged = buildMergedSession(openSession, incoming.items);
       const client = getTurso();
@@ -322,12 +338,13 @@ export async function createOrder(
         await client.execute({
           sql: `
             INSERT INTO orders
-              (id, table_number, items_json, total, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+              (id, table_number, customer_name, items_json, total, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
           `,
           args: [
             incoming.id,
             incoming.tableNumber,
+            incoming.customerName ?? "",
             JSON.stringify(incoming.items),
             incoming.total,
             incoming.status,
@@ -375,7 +392,7 @@ export async function updateOrderStatus(
         args: [status, updatedAt, id],
       });
       const result = await client.execute({
-        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
               FROM orders WHERE id = ?`,
         args: [id],
       });
@@ -403,7 +420,7 @@ export async function getOrder(id: string): Promise<Order | null> {
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
               FROM orders WHERE id = ?`,
         args: [id],
       });
@@ -427,7 +444,7 @@ export async function listPaidOrdersInRange(
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
               FROM orders
               WHERE status = 'paid'
                 AND created_at >= ?

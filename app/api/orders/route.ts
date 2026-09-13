@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { adminPasswordConfigured, isAdminAuthorized } from "@/lib/admin-auth";
 import { createOrder, listOrders } from "@/lib/order-store";
 import { isOrderItem, type OrderItem } from "@/lib/orders";
+import {
+  isTakeawayTable,
+  isValidCustomerName,
+  sanitizeCustomerName,
+} from "@/lib/table-qr";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +50,7 @@ export async function POST(request: Request) {
 
   const payload = body as {
     tableNumber?: unknown;
+    customerName?: unknown;
     items?: unknown;
   };
 
@@ -52,6 +58,16 @@ export async function POST(request: Request) {
   if (!tableNumber) {
     return NextResponse.json(
       { error: "Masa seçmeden sipariş verilemez." },
+      { status: 400 }
+    );
+  }
+
+  const customerName = sanitizeCustomerName(
+    typeof payload.customerName === "string" ? payload.customerName : ""
+  );
+  if (isTakeawayTable(tableNumber) && !isValidCustomerName(customerName)) {
+    return NextResponse.json(
+      { error: "Ayakta/Paket için ad ve soyad gerekli." },
       { status: 400 }
     );
   }
@@ -78,7 +94,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const order = await createOrder({ tableNumber, items });
+    const order = await createOrder({
+      tableNumber,
+      customerName: customerName || undefined,
+      items,
+    });
     return NextResponse.json({ order }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

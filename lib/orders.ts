@@ -11,6 +11,8 @@ export type OrderStatus = "new" | "sent" | "paid" | "cancelled";
 export type Order = {
   id: string;
   tableNumber: string;
+  /** Required for Ayakta/Paket (takeaway) QR orders. */
+  customerName?: string;
   items: OrderItem[];
   total: number;
   status: OrderStatus;
@@ -85,7 +87,9 @@ export function isOrder(value: unknown): value is Order {
       status === "paid" ||
       status === "cancelled") &&
     typeof row.createdAt === "string" &&
-    typeof row.updatedAt === "string"
+    typeof row.updatedAt === "string" &&
+    (row.customerName === undefined ||
+      typeof row.customerName === "string")
   );
 }
 
@@ -109,9 +113,12 @@ export function normalizeOrder(input: Partial<Order> & { items: OrderItem[] }): 
       ? input.status
       : "new";
 
+  const customerName = String(input.customerName || "").trim().replace(/\s+/g, " ");
+
   return {
     id: String(input.id || crypto.randomUUID()),
     tableNumber: String(input.tableNumber || "").trim(),
+    customerName: customerName || undefined,
     items,
     total: orderItemsTotal(items),
     status,

@@ -1,5 +1,6 @@
 "use client";
 
+import { tableDisplayName } from "@/lib/table-qr";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Ban,
@@ -110,7 +111,7 @@ function OrderCard({
               active && (light ? "text-sky-950" : "text-white")
             )}
           >
-            Masa {order.tableNumber}
+            {order.customerName ? `${tableDisplayName(order.tableNumber)} · ${order.customerName}` : tableDisplayName(order.tableNumber)}
           </p>
           <p
             className={cn(
@@ -248,7 +249,7 @@ function OrderDetail({
               light ? "text-slate-900" : "text-white"
             )}
           >
-            Masa {order.tableNumber}
+            {order.customerName ? `${tableDisplayName(order.tableNumber)} · ${order.customerName}` : tableDisplayName(order.tableNumber)}
           </p>
           <p
             className={cn(

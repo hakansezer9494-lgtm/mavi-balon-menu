@@ -49,6 +49,11 @@ type UiCopy = {
   scanTableQrHint: string;
   scanTableQrBody: string;
   tableLockedHint: string;
+  takeawayLabel: string;
+  customerNameLabel: string;
+  customerNamePlaceholder: string;
+  customerNameHint: string;
+  customerNameError: string;
   emptyCartError: string;
   orderFailed: string;
   orderSuccess: string;
@@ -105,6 +110,11 @@ const ui: Record<Locale, UiCopy> = {
     scanTableQrHint: "Masa seçilmedi",
     scanTableQrBody: "Bu menüyü masadaki QR kod ile açın. Masa numarası otomatik gelir.",
     tableLockedHint: "Masa QR ile kilitlendi; değiştirilemez.",
+    takeawayLabel: "Ayakta/Paket",
+    customerNameLabel: "Ad Soyad",
+    customerNamePlaceholder: "Adınız ve soyadınız",
+    customerNameHint: "Sipariş için ad ve soyadınızı yazın.",
+    customerNameError: "Lütfen ad ve soyadınızı yazın.",
     emptyCartError: "Sepet boş.",
     orderFailed: "Sipariş gönderilemedi.",
     orderSuccess: "Siparişiniz alındı. Afiyet olsun!",
@@ -160,6 +170,11 @@ const ui: Record<Locale, UiCopy> = {
     scanTableQrHint: "No table selected",
     scanTableQrBody: "Open this menu by scanning the QR on your table. The table number is set automatically.",
     tableLockedHint: "Table locked from QR; it cannot be changed.",
+    takeawayLabel: "Standing / Takeaway",
+    customerNameLabel: "Full name",
+    customerNamePlaceholder: "Your first and last name",
+    customerNameHint: "Enter your first and last name to order.",
+    customerNameError: "Please enter your first and last name.",
     emptyCartError: "Cart is empty.",
     orderFailed: "Could not send the order.",
     orderSuccess: "Order received. Enjoy!",

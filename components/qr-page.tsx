@@ -7,7 +7,12 @@ import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { buttonVariants } from "@/components/ui/button";
 import { MENU_UPDATED_EVENT } from "@/lib/menu";
-import { tableMenuUrl } from "@/lib/table-qr";
+import {
+  qrTableOptions,
+  tableDisplayName,
+  tableMenuUrl,
+  TAKEAWAY_TABLE_ID,
+} from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 
 function subscribe() {
@@ -72,9 +77,10 @@ export function QrPage() {
           venue?: { tables?: string[] };
         };
         if (cancelled) return;
-        const next = Array.isArray(menu.venue?.tables)
+        const raw = Array.isArray(menu.venue?.tables)
           ? menu.venue.tables.map((table) => String(table).trim()).filter(Boolean)
           : [];
+        const next = qrTableOptions(raw);
         setTables(next);
         setSelectedTable((current) =>
           current && next.includes(current) ? current : next[0] ?? ""
@@ -110,7 +116,7 @@ export function QrPage() {
 
   const handleDownload = useCallback(() => {
     if (!selectedTable) return;
-    void downloadQrPng("menu-qr-svg", `masa-${selectedTable}-qr.png`);
+    void downloadQrPng("menu-qr-svg", `${selectedTable === TAKEAWAY_TABLE_ID ? "ayakta-paket" : `masa-${selectedTable}`}-qr.png`);
   }, [selectedTable]);
 
   return (
@@ -139,7 +145,7 @@ export function QrPage() {
             </p>
           ) : tables.length === 0 ? (
             <p className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate-500 ring-1 ring-slate-200">
-              Henüz masa yok. Yönetim panelinden masa ekleyip kaydedin.
+              QR seçenekleri yüklenemedi. Sayfayı yenileyin.
             </p>
           ) : (
             <>
@@ -155,7 +161,7 @@ export function QrPage() {
                     onClick={() => setTableMenuOpen((open) => !open)}
                     aria-expanded={tableMenuOpen}
                   >
-                    <span>Masa {selectedTable}</span>
+                    <span>{tableDisplayName(selectedTable)}</span>
                     <ChevronDown
                       className={cn(
                         "size-4 shrink-0 text-slate-400 transition",
@@ -180,7 +186,7 @@ export function QrPage() {
                             setTableMenuOpen(false);
                           }}
                         >
-                          <span>Masa {table}</span>
+                          <span>{tableDisplayName(table)}</span>
                           {table === selectedTable ? (
                             <span className="text-[10px] tracking-wide text-[#007AFF] uppercase">
                               Seçili
@@ -199,7 +205,7 @@ export function QrPage() {
                     Dijital menü
                   </p>
                   <p className="font-heading text-3xl leading-none">
-                    Masa {selectedTable}
+                    {tableDisplayName(selectedTable)}
                   </p>
                   <div className="mt-4 flex justify-center">
                     <QRCodeSVG
@@ -252,7 +258,7 @@ export function QrPage() {
                 Dijital menü
               </p>
               <p className="font-heading text-3xl leading-none">
-                Masa {selectedTable}
+                {tableDisplayName(selectedTable)}
               </p>
               <div className="mt-4 flex justify-center">
                 <QRCodeSVG

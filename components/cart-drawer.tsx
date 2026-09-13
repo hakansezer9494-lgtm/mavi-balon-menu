@@ -6,6 +6,11 @@ import { Button } from "@/components/ui/button";
 import { getUi, type Locale } from "@/lib/i18n";
 import { formatPrice } from "@/lib/menu";
 import type { OrderItem } from "@/lib/orders";
+import {
+  isTakeawayTable,
+  isValidCustomerName,
+  sanitizeCustomerName,
+} from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 
 export type CartLine = OrderItem & {
@@ -68,10 +73,12 @@ export function CartDrawer({
   const t = getUi(locale);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [tableNumber, setTableNumber] = useState(lockedTableNumber);
+  const [customerName, setCustomerName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const tableLocked = Boolean(lockedTableNumber);
+  const takeaway = isTakeawayTable(tableNumber);
 
   useEffect(() => {
     if (lockedTableNumber) {
@@ -79,9 +86,14 @@ export function CartDrawer({
     }
   }, [lockedTableNumber]);
 
+  useEffect(() => {
+    if (!isTakeawayTable(tableNumber)) {
+      setCustomerName("");
+    }
+  }, [tableNumber]);
+
   const total = useMemo(
-    () =>
-      items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
+    () => items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0),
     [items]
   );
   const count = useMemo(
@@ -96,6 +108,10 @@ export function CartDrawer({
       setError(t.scanTableQrError);
       return;
     }
+    if (takeaway && !isValidCustomerName(customerName)) {
+      setError(t.customerNameError);
+      return;
+    }
     if (items.length === 0) {
       setError(t.emptyCartError);
       return;
@@ -107,6 +123,9 @@ export function CartDrawer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tableNumber,
+          customerName: takeaway
+            ? sanitizeCustomerName(customerName)
+            : undefined,
           items: items.map((item) => ({
             productId: item.productId,
             name: item.name,
@@ -124,6 +143,7 @@ export function CartDrawer({
       if (!tableLocked) {
         setTableNumber("");
       }
+      setCustomerName("");
       setExpandedId(null);
       setSuccess(t.orderSuccess);
     } catch (err) {
@@ -134,6 +154,12 @@ export function CartDrawer({
   }
 
   if (!open) return null;
+
+  const canSubmit =
+    !submitting &&
+    items.length > 0 &&
+    Boolean(tableNumber) &&
+    (!takeaway || isValidCustomerName(customerName));
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-start sm:items-stretch">
@@ -254,9 +280,7 @@ export function CartDrawer({
                           <button
                             type="button"
                             className="text-xs font-medium text-red-500 hover:underline"
-                            onClick={() =>
-                              onRemove(item.productId, item.note)
-                            }
+                            onClick={() => onRemove(item.productId, item.note)}
                           >
                             {t.remove}
                           </button>
@@ -273,15 +297,44 @@ export function CartDrawer({
         <div className="space-y-3 border-t border-slate-100 px-4 py-4">
           <div className="rounded-2xl bg-slate-50 px-3 py-3 ring-1 ring-slate-200">
             <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
-              {t.tableNo}
+              {takeaway ? t.takeawayLabel : t.tableNo}
             </p>
             <p className="text-sm font-semibold text-slate-900">
-              {tableNumber ? t.tableOption(tableNumber) : t.scanTableQrHint}
+              {tableNumber
+                ? takeaway
+                  ? t.takeawayLabel
+                  : t.tableOption(tableNumber)
+                : t.scanTableQrHint}
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              {tableNumber ? t.tableLockedHint : t.scanTableQrBody}
+              {tableNumber
+                ? takeaway
+                  ? t.customerNameHint
+                  : t.tableLockedHint
+                : t.scanTableQrBody}
             </p>
           </div>
+
+          {takeaway ? (
+            <div className="grid gap-1.5">
+              <label
+                htmlFor="takeaway-customer-name"
+                className="text-sm font-medium text-slate-700"
+              >
+                {t.customerNameLabel}
+                <span className="text-red-500"> *</span>
+              </label>
+              <input
+                id="takeaway-customer-name"
+                type="text"
+                autoComplete="name"
+                value={customerName}
+                onChange={(event) => setCustomerName(event.target.value)}
+                placeholder={t.customerNamePlaceholder}
+                className="h-11 rounded-2xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none ring-[#007AFF]/30 placeholder:text-slate-400 focus:ring-2"
+              />
+            </div>
+          ) : null}
 
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-slate-600">{t.total}</span>
@@ -297,7 +350,7 @@ export function CartDrawer({
 
           <Button
             className="h-12 w-full rounded-2xl bg-[#007AFF] text-base font-semibold hover:bg-[#0066d6]"
-            disabled={submitting || items.length === 0 || !tableNumber}
+            disabled={!canSubmit}
             onClick={() => void placeOrder()}
           >
             {submitting ? t.placingOrder : t.placeOrder}

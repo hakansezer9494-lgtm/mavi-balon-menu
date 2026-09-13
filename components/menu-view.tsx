@@ -4,11 +4,14 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSPro
 import {
   MapPin,
   MessageCircle,
+  Minus,
   Phone,
+  Plus,
   Search,
   X,
 } from "lucide-react";
 import { BalloonField, BalloonMark } from "@/components/balloon-mark";
+import { CartDrawer, CartFab, type CartLine } from "@/components/cart-drawer";
 import { ProductCard } from "@/components/product-card";
 import {
   Dialog,
@@ -63,8 +66,58 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("imza");
   const [selected, setSelected] = useState<Product | null>(null);
+  const [selectedQty, setSelectedQty] = useState(1);
+  const [cartItems, setCartItems] = useState<CartLine[]>([]);
+  const [cartOpen, setCartOpen] = useState(false);
   const scrollingToRef = useRef<string | null>(null);
   const t = getUi(locale);
+
+  const cartCount = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.quantity, 0),
+    [cartItems]
+  );
+
+  function openProduct(product: Product) {
+    setSelected(product);
+    setSelectedQty(1);
+  }
+
+  function addSelectedToCart() {
+    if (!selected) return;
+    const localized = localizedProduct(selected, locale);
+    setCartItems((current) => {
+      const existing = current.find((item) => item.productId === selected.id);
+      if (existing) {
+        return current.map((item) =>
+          item.productId === selected.id
+            ? { ...item, quantity: item.quantity + selectedQty }
+            : item
+        );
+      }
+      return [
+        ...current,
+        {
+          productId: selected.id,
+          name: localized.name,
+          unitPrice: selected.price,
+          quantity: selectedQty,
+          description: localized.description,
+        },
+      ];
+    });
+    setSelected(null);
+    setCartOpen(true);
+  }
+
+  function changeCartQty(productId: string, quantity: number) {
+    setCartItems((current) =>
+      current
+        .map((item) =>
+          item.productId === productId ? { ...item, quantity } : item
+        )
+        .filter((item) => item.quantity > 0)
+    );
+  }
 
   function toggleLocale() {
     const next: Locale = locale === "tr" ? "en" : "tr";
@@ -302,7 +355,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                           product={{ ...product, ...localized }}
                           featured
                           variant="featured"
-                          onSelect={() => setSelected(product)}
+                          onSelect={() => openProduct(product)}
                           chefPickLabel={t.chefPick}
                           chefPickShortLabel={t.chefPickShort}
                           noPhotoLabel={t.noPhoto}
@@ -320,7 +373,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                           key={product.id}
                           product={{ ...product, ...localized }}
                           variant="list"
-                          onSelect={() => setSelected(product)}
+                          onSelect={() => openProduct(product)}
                           chefPickLabel={t.chefPick}
                           chefPickShortLabel={t.chefPickShort}
                           noPhotoLabel={t.noPhoto}
@@ -451,10 +504,59 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                   ) : null}
                 </div>
               </div>
+              <div className="shrink-0 space-y-3 border-t border-slate-100 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-medium text-slate-600">Adet</span>
+                  <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 p-1 ring-1 ring-slate-200">
+                    <button
+                      type="button"
+                      className="inline-flex size-9 items-center justify-center rounded-full hover:bg-white"
+                      onClick={() =>
+                        setSelectedQty((current) => Math.max(1, current - 1))
+                      }
+                      aria-label="Azalt"
+                    >
+                      <Minus className="size-4" />
+                    </button>
+                    <span className="min-w-8 text-center text-base font-semibold">
+                      {selectedQty}
+                    </span>
+                    <button
+                      type="button"
+                      className="inline-flex size-9 items-center justify-center rounded-full hover:bg-white"
+                      onClick={() => setSelectedQty((current) => current + 1)}
+                      aria-label="Artır"
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={addSelectedToCart}
+                  className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#007AFF] text-base font-semibold text-white transition hover:bg-[#0066d6]"
+                >
+                  Sepete at · {formatPrice(selected.price * selectedQty)}
+                </button>
+              </div>
             </div>
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <CartFab count={cartCount} onClick={() => setCartOpen(true)} />
+      <CartDrawer
+        open={cartOpen}
+        onOpenChange={setCartOpen}
+        items={cartItems}
+        onChangeQty={changeCartQty}
+        onRemove={(productId) =>
+          setCartItems((current) =>
+            current.filter((item) => item.productId !== productId)
+          )
+        }
+        onClear={() => setCartItems([])}
+      />
     </div>
   );
 }

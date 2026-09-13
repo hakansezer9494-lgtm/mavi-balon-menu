@@ -202,3 +202,43 @@ export function isWithinCurrentBusinessDay(
   if (!Number.isFinite(created)) return false;
   return created >= getBusinessDayStart(now).getTime();
 }
+
+
+/** Service day: Istanbul 08:00 → next calendar day 03:00. */
+export function getServiceDayKey(isoDate: string): string {
+  const ms = Date.parse(isoDate);
+  if (!Number.isFinite(ms)) return "unknown";
+  const parts = istanbulParts(new Date(ms));
+  let year = parts.year;
+  let month = parts.month;
+  let day = parts.day;
+  // Before 08:00 still belongs to the previous service day.
+  if (parts.hour < 8) {
+    const previous = istanbulWallTimeToDate(year, month, day, 12);
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    const prev = istanbulParts(previous);
+    year = prev.year;
+    month = prev.month;
+    day = prev.day;
+  }
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function formatServiceDayLabel(key: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
+  if (!match) return key;
+  const date = istanbulWallTimeToDate(
+    Number(match[1]),
+    Number(match[2]),
+    Number(match[3]),
+    12
+  );
+  const label = new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+  return `${label} · 08:00–03:00`;
+}

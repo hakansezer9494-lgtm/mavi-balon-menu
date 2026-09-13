@@ -980,8 +980,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     });
   }
 
-  /** Keep Masalar + QR + /qr in sync by persisting immediately. */
-  function persistTables(tables: string[], message: string) {
+  function setLocalTables(tables: string[], message: string) {
     const nextTables = [...tables];
     setVenueForm((current) => ({
       ...current,
@@ -990,13 +989,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     setSelectedQrTable((selected) =>
       selected && nextTables.includes(selected) ? selected : nextTables[0] ?? ""
     );
-    updateMenu((current) => ({
-      ...current,
-      venue: {
-        ...current.venue,
-        tables: nextTables,
-      },
-    }));
     setTableMessage(message);
     setVenueMessage("");
   }
@@ -1014,16 +1006,28 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     }
     const nextTables = sortTables([...(venueForm.tables ?? []), table]);
     setNewTableNumber("");
-    persistTables(nextTables, "Masa eklendi ve kaydedildi.");
+    setLocalTables(nextTables, "Masa eklendi. Kaydetmeyi unutmayın.");
   }
 
   function removeTable(table: string) {
     const nextTables = (venueForm.tables ?? []).filter((row) => row !== table);
-    persistTables(nextTables, "Masa silindi ve kaydedildi.");
+    setLocalTables(nextTables, "Masa silindi. Kaydetmeyi unutmayın.");
   }
 
   function saveTables() {
-    persistTables([...(venueForm.tables ?? [])], "Masalar kaydedildi.");
+    const nextTables = [...(venueForm.tables ?? [])];
+    setSelectedQrTable((selected) =>
+      selected && nextTables.includes(selected) ? selected : nextTables[0] ?? ""
+    );
+    updateMenu((current) => ({
+      ...current,
+      venue: {
+        ...current.venue,
+        tables: nextTables,
+      },
+    }));
+    setTableMessage("Masalar kaydedildi.");
+    setVenueMessage("");
   }
 
   return (
@@ -1049,34 +1053,57 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     : "Yerel kayıt. Yayında Turso bağlayın."}
             </p>
           </div>
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:min-w-72 sm:justify-end">
-            <Link
-              href="/yonetim/siparisler"
-              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
-            >
-              Siparişler
-            </Link>
-            <Link
-              href="/portal"
-              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
-            >
-              Portal
-            </Link>
-            <Link
-              href="/"
-              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
-            >
-              Müşteri menüsü
-            </Link>
-            <Link
-              href="/qr"
-              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
-            >
-              QR kod
-            </Link>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:min-w-[22rem]">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Link
+                href="/yonetim/siparisler"
+                className={cn(
+                  buttonVariants({ variant: "default" }),
+                  "justify-center rounded-xl bg-sky-600 text-white shadow-sm hover:bg-sky-500"
+                )}
+              >
+                Siparişler
+              </Link>
+              <Link
+                href="/portal"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "justify-center rounded-xl border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50"
+                )}
+              >
+                Portal
+              </Link>
+              <Link
+                href="/?preview=1"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "justify-center rounded-xl border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50"
+                )}
+              >
+                Müşteri menüsü
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminSettingsTab("system");
+                  window.setTimeout(() => {
+                    document.getElementById("system-qr")?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }, 50);
+                }}
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "justify-center rounded-xl border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-50"
+                )}
+              >
+                QR kod
+              </button>
+            </div>
             <Button
-              variant="ghost"
-              className={cn(lightGhost, "ml-auto")}
+              variant="outline"
+              className="rounded-xl border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
               onClick={() => {
                 clearStoredAdminPassword();
                 setUnlocked(false);
@@ -1089,7 +1116,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         </div>
 
         
-        <div className="flex flex-wrap gap-2 rounded-2xl bg-white/5 p-1.5 ring-1 ring-white/10">
+        <div className="grid grid-cols-1 gap-2 rounded-2xl bg-slate-900/40 p-2 ring-1 ring-white/20 sm:grid-cols-3">
           {(
             [
               { id: "menu" as const, label: "Menü ayarları" },
@@ -1102,10 +1129,10 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               type="button"
               onClick={() => setAdminSettingsTab(tab.id)}
               className={cn(
-                "rounded-xl px-3.5 py-2 text-sm font-medium transition",
+                "rounded-xl px-3.5 py-2.5 text-sm font-semibold tracking-wide transition",
                 adminSettingsTab === tab.id
-                  ? "bg-sky-400 text-[oklch(0.18_0.05_250)] shadow"
-                  : "text-sky-100/75 hover:bg-white/5 hover:text-white"
+                  ? "bg-sky-400 text-slate-950 shadow-md ring-2 ring-sky-200/80"
+                  : "bg-white/15 text-white ring-1 ring-white/25 hover:bg-white/25"
               )}
             >
               {tab.label}
@@ -2012,8 +2039,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">Masalar</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Eklenen veya silinen masalar hemen kaydedilir ve QR listesinden
-              düşer. Misafir masadaki QR’ı okutunca o masa otomatik seçilir.
+              Masa ekleyip silin, ardından Masaları kaydet’e basın. Misafir
+              masadaki QR’ı okutunca o masa otomatik seçilir.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -2072,8 +2099,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
               <p className="text-sm text-sky-200">{tableMessage}</p>
             ) : (
               <p className="text-xs text-sky-100/55">
-                Masa ekleyince veya silince otomatik kaydedilir; QR listesi de
-                aynı anda güncellenir.
+                Değişiklikler “Masaları kaydet”e basınca kalıcı olur.
               </p>
             )}
             <Button
@@ -2088,7 +2114,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
                         <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
-            <CardTitle className="text-white">Masa QR kodu</CardTitle>
+            <CardTitle id="system-qr" className="scroll-mt-24 text-white">Masa QR kodu</CardTitle>
             <CardDescription className="text-sky-100/60">
               Masa veya Ayakta/Paket seçin; alttaki QR yalnızca seçili seçeneğe
               aittir. Ayakta/Paket QR’ında misafir siparişte ad soyad yazar.

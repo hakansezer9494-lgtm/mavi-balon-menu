@@ -189,7 +189,7 @@ export function OrdersPage() {
     tab === "active"
       ? "Gelen siparişler burada. İptal edilenler listeden düşer; başka sekmede de bildirim gelir."
       : tab === "past"
-        ? "Ödenen siparişler. Geri al ile aktife çekebilir, iptal ile kaldırabilirsin."
+        ? "Ödenen siparişler gün gün ayrılır (sabah 08:00 – gece 03:00). Geri al / iptal burada."
         : "Gün / ay / yıl bazında ciro, ürün tercihi ve yoğunluk grafikleri.";
 
   return (

@@ -22,7 +22,11 @@ import {
 } from "@/components/ui/dialog";
 import { getStoredAdminPassword } from "@/hooks/use-menu";
 import { formatPrice } from "@/lib/menu";
-import type { Order } from "@/lib/orders";
+import {
+  formatServiceDayLabel,
+  getServiceDayKey,
+  type Order,
+} from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
 export type OrdersTheme = "light" | "dark";
@@ -460,6 +464,24 @@ export function AdminOrdersPanel({
     () => orders.filter((order) => order.status === "paid"),
     [orders]
   );
+  const pastDayGroups = useMemo(() => {
+    const groups = new Map<string, Order[]>();
+    for (const order of pastOrders) {
+      const key = getServiceDayKey(order.updatedAt || order.createdAt);
+      const list = groups.get(key) ?? [];
+      list.push(order);
+      groups.set(key, list);
+    }
+    return [...groups.entries()]
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, dayOrders]) => ({
+        key,
+        label: formatServiceDayLabel(key),
+        orders: dayOrders.sort((a, b) =>
+          (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt)
+        ),
+      }));
+  }, [pastOrders]);
   const selected = orders.find((order) => order.id === selectedId) ?? null;
   const showActive = mode === "active";
   const list = showActive ? activeOrders : pastOrders;
@@ -600,7 +622,7 @@ export function AdminOrdersPanel({
           >
             {showActive
               ? "Masa ödenene kadar aynı oturumda kalır. İptal edilenler listeden düşer."
-              : "Ödenen siparişler burada. Geri al ile aktife çekebilir, iptal ile silebilirsin."}
+              : "Ödenen siparişler gün gün ayrılır (08:00–03:00). Geri al ile aktife çekebilir, iptal ile silebilirsin."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -706,20 +728,58 @@ export function AdminOrdersPanel({
           </div>
         ) : (
           <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              {list.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  tone={showActive ? "active" : "past"}
-                  theme={theme}
-                  active={selectedId === order.id}
-                  onSelect={() =>
-                    setSelectedId(selectedId === order.id ? null : order.id)
-                  }
-                />
-              ))}
-            </div>
+            {showActive ? (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {list.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    tone="active"
+                    theme={theme}
+                    active={selectedId === order.id}
+                    onSelect={() =>
+                      setSelectedId(selectedId === order.id ? null : order.id)
+                    }
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {pastDayGroups.map((group) => (
+                  <section key={group.key} className="space-y-3">
+                    <div
+                      className={cn(
+                        "sticky top-0 z-10 rounded-xl px-3 py-2 text-sm font-semibold backdrop-blur",
+                        light
+                          ? "bg-emerald-50/95 text-emerald-900 ring-1 ring-emerald-200"
+                          : "bg-emerald-950/80 text-emerald-100 ring-1 ring-emerald-400/30"
+                      )}
+                    >
+                      {group.label}
+                      <span className="ml-2 font-normal opacity-70">
+                        ({group.orders.length})
+                      </span>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                      {group.orders.map((order) => (
+                        <OrderCard
+                          key={order.id}
+                          order={order}
+                          tone="past"
+                          theme={theme}
+                          active={selectedId === order.id}
+                          onSelect={() =>
+                            setSelectedId(
+                              selectedId === order.id ? null : order.id
+                            )
+                          }
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
             <div className="lg:sticky lg:top-4 lg:self-start">
               {selected &&
               ((showActive &&

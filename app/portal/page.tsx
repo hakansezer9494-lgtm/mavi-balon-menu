@@ -14,7 +14,7 @@ export default function PortalPage() {
         <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-16">
           <p className="mb-6 text-sm leading-relaxed text-slate-600">
             Bu sayfa yalnızca işletme içindir. Müşteri menüsünde görünmez.
-            Siparişler, menü, iletişim ve masa QR’sini buradan yönetin.
+            Siparişler, menü ve görüntü ayarlarını buradan yönetin. Masa QR’si Yönetim → Sistem ayarlarında.
           </p>
 
           <div className="space-y-3">
@@ -28,11 +28,6 @@ export default function PortalPage() {
               href="/yonetim"
               title="Yönetim"
               body="Menü, görüntü ve sistem ayarlarını buradan yönetin."
-            />
-            <PortalCard
-              href="/qr"
-              title="Masa QR kodu"
-              body="Yazdırıp masaya koyun. Müşteri kamerayla menüyü açar."
             />
             <PortalCard
               href="/?preview=1"

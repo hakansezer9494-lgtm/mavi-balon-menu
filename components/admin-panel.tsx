@@ -242,7 +242,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [heroError, setHeroError] = useState("");
   const [newTableNumber, setNewTableNumber] = useState("");
   const [tableMessage, setTableMessage] = useState("");
-  const [openQrTable, setOpenQrTable] = useState<string | null>(null);
+  const [selectedQrTable, setSelectedQrTable] = useState("");
+  const [tableQrMenuOpen, setTableQrMenuOpen] = useState(false);
   const menuOrigin = useSyncExternalStore(
     subscribeOrigin,
     () => window.location.origin,
@@ -903,7 +904,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   }
 
   async function downloadAdminQr(table: string) {
-    const svg = document.getElementById(`admin-menu-qr-svg-${table}`);
+    const svg = document.getElementById("admin-menu-qr-svg");
     if (!(svg instanceof SVGSVGElement)) return;
     const serializer = new XMLSerializer();
     const source = serializer.serializeToString(svg);
@@ -2026,57 +2027,89 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </CardContent>
         </Card>
 
-                <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+                        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <CardTitle className="text-white">Masa QR kodu</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Masaları kapalı çekmece olarak açın; seçili masa için QR üretin.
-              Misafir kodu okutunca menü o masa ile açılır.
+              Masayı seçin; alttaki QR yalnızca seçili masaya aittir. Misafir
+              kodu okutunca menü o masa ile açılır.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-4">
             {(venueForm.tables ?? []).length === 0 ? (
               <p className="rounded-xl bg-white/5 px-4 py-6 text-center text-sm text-sky-100/60">
                 Önce yukarıdan masa ekleyip kaydedin.
               </p>
             ) : (
-              (venueForm.tables ?? []).map((table) => {
-                const open = openQrTable === table;
-                const qrValue = tableMenuUrl(menuOrigin, table);
+              (() => {
+                const tables = venueForm.tables ?? [];
+                const selected =
+                  selectedQrTable && tables.includes(selectedQrTable)
+                    ? selectedQrTable
+                    : tables[0] ?? "";
+                const qrValue = selected
+                  ? tableMenuUrl(menuOrigin, selected)
+                  : "";
                 return (
-                  <div
-                    key={table}
-                    className="overflow-hidden rounded-xl bg-white/5 ring-1 ring-white/10"
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setOpenQrTable((current) =>
-                          current === table ? null : table
-                        )
-                      }
-                      className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
-                    >
-                      <div>
-                        <p className="text-[11px] font-medium tracking-wide text-sky-300/80 uppercase">
-                          Masa çekmecesi
-                        </p>
-                        <p className="text-sm font-semibold text-white">
-                          Masa {table}
-                        </p>
+                  <>
+                    <div className="grid gap-1.5">
+                      <Label>Masa seçimi</Label>
+                      <p className="text-xs text-sky-100/55">
+                        Masayı seçin; alttaki QR yalnızca seçili masaya aittir.
+                      </p>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          className="flex w-full items-center justify-between gap-2 rounded-xl bg-white/5 px-3 py-2.5 text-left text-sm font-medium text-white ring-1 ring-white/10 hover:bg-white/[0.07]"
+                          onClick={() => setTableQrMenuOpen((open) => !open)}
+                          aria-expanded={tableQrMenuOpen}
+                        >
+                          <span>Masa {selected}</span>
+                          <ChevronDown
+                            className={cn(
+                              "size-4 shrink-0 text-sky-100/70 transition",
+                              tableQrMenuOpen ? "rotate-180" : ""
+                            )}
+                          />
+                        </button>
+                        {tableQrMenuOpen ? (
+                          <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl bg-[oklch(0.26_0.04_250)] shadow-xl ring-1 ring-white/15">
+                            {tables.map((table) => (
+                              <button
+                                key={table}
+                                type="button"
+                                className={cn(
+                                  "flex w-full items-center justify-between px-3 py-2.5 text-left text-sm text-white hover:bg-white/10",
+                                  table === selected
+                                    ? "bg-sky-400/20 font-semibold text-sky-100"
+                                    : ""
+                                )}
+                                onClick={() => {
+                                  setSelectedQrTable(table);
+                                  setTableQrMenuOpen(false);
+                                }}
+                              >
+                                <span>Masa {table}</span>
+                                {table === selected ? (
+                                  <span className="text-[10px] tracking-wide text-sky-200 uppercase">
+                                    Seçili
+                                  </span>
+                                ) : null}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
-                      <ChevronDown
-                        className={cn(
-                          "size-4 text-sky-200/70 transition",
-                          open && "rotate-180"
-                        )}
-                      />
-                    </button>
-                    {open ? (
-                      <div className="space-y-3 border-t border-white/10 px-3 py-3">
+                    </div>
+
+                    {selected ? (
+                      <div className="space-y-3 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
+                        <p className="text-xs font-medium tracking-wide text-sky-200/80 uppercase">
+                          Masa {selected} QR
+                        </p>
                         <div className="w-fit rounded-2xl bg-white p-3">
                           <QRCodeSVG
-                            id={`admin-menu-qr-svg-${table}`}
+                            id="admin-menu-qr-svg"
                             value={qrValue}
                             size={148}
                             bgColor="#ffffff"
@@ -2091,7 +2124,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                         <div className="flex flex-wrap gap-2">
                           <Button
                             className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
-                            onClick={() => void downloadAdminQr(table)}
+                            onClick={() => void downloadAdminQr(selected)}
                           >
                             <Download />
                             QR indir
@@ -2108,9 +2141,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                         </div>
                       </div>
                     ) : null}
-                  </div>
+                  </>
                 );
-              })
+              })()
             )}
           </CardContent>
         </Card>

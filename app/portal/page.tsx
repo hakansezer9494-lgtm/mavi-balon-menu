@@ -26,8 +26,8 @@ export default function PortalPage() {
             />
             <PortalCard
               href="/yonetim"
-              title="Menü yönetimi"
-              body="Kategori, ürün, açılış saatleri ve sosyal medya linkleri."
+              title="Yönetim"
+              body="Menü, görüntü ve sistem ayarlarını buradan yönetin."
             />
             <PortalCard
               href="/qr"

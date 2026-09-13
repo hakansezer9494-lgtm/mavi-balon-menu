@@ -249,6 +249,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [tableMessage, setTableMessage] = useState("");
   const [selectedQrTable, setSelectedQrTable] = useState("");
   const [tableQrMenuOpen, setTableQrMenuOpen] = useState(false);
+  const [adminSettingsTab, setAdminSettingsTab] = useState<
+    "menu" | "display" | "system"
+  >("menu");
   const menuOrigin = useSyncExternalStore(
     subscribeOrigin,
     () => window.location.origin,
@@ -391,7 +394,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   if (!unlocked) {
     return (
       <div className="relative flex min-h-full flex-1 flex-col">
-        <SiteHeader eyebrow="İşletme paneli" compact />
+        <SiteHeader eyebrow="Yönetim" compact />
         <main className="relative mx-auto flex w-full max-w-sm flex-1 flex-col px-4 pb-16">
           <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
             <CardHeader>
@@ -1025,14 +1028,14 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
-      <SiteHeader eyebrow="İşletme paneli" compact />
+      <SiteHeader eyebrow="Yönetim" compact />
 
       <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-16">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="max-w-xl text-sm text-sky-100/70">
-              Kategori, fotoğraf ve fiyat buradan kaydedilir. QR menüsü tüm
-              telefonlarda aynı listeyi gösterir.
+              Menü, görüntü ve sistem ayarlarını sekmelerden yönetin. QR menüsü
+              tüm telefonlarda aynı listeyi gösterir.
             </p>
             <p className="mt-2 text-xs text-sky-200/70">
               {saving
@@ -1085,7 +1088,34 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </div>
         </div>
 
-        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+        
+        <div className="flex flex-wrap gap-2 rounded-2xl bg-white/5 p-1.5 ring-1 ring-white/10">
+          {(
+            [
+              { id: "menu" as const, label: "Menü ayarları" },
+              { id: "display" as const, label: "Görüntü ayarları" },
+              { id: "system" as const, label: "Sistem ayarları" },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setAdminSettingsTab(tab.id)}
+              className={cn(
+                "rounded-xl px-3.5 py-2 text-sm font-medium transition",
+                adminSettingsTab === tab.id
+                  ? "bg-sky-400 text-[oklch(0.18_0.05_250)] shadow"
+                  : "text-sky-100/75 hover:bg-white/5 hover:text-white"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {adminSettingsTab === "menu" ? (
+          <div className="flex flex-col gap-6">
+            <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <CardTitle className="text-white">Kategoriler</CardTitle>
             <CardDescription className="text-sky-100/60">
@@ -1390,8 +1420,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             )}
           </CardContent>
         </Card>
+          </div>
+        ) : null}
 
-        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+        {adminSettingsTab === "display" ? (
+          <div className="flex flex-col gap-6">
+            <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <CardTitle className="text-white">Kapak (Header)</CardTitle>
             <CardDescription className="text-sky-100/60">
@@ -1969,8 +2003,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </Button>
           </CardContent>
         </Card>
+          </div>
+        ) : null}
 
-        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+        {adminSettingsTab === "system" ? (
+          <div className="flex flex-col gap-6">
+            <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <CardTitle className="text-white">Masalar</CardTitle>
             <CardDescription className="text-sky-100/60">
@@ -2377,6 +2415,9 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </Button>
           </CardContent>
         </Card>
+          </div>
+        ) : null}
+
       </main>
 
       <Dialog open={productOpen} onOpenChange={setProductOpen}>

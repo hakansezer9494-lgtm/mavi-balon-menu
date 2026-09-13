@@ -81,16 +81,12 @@ export async function POST(request: Request) {
     const order = await createOrder({ tableNumber, items });
     return NextResponse.json({ order }, { status: 201 });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Sipariş kaydedilemedi.";
-    const conflict =
-      message.includes("ödenmemiş") || message.includes("ödenmeden");
     return NextResponse.json(
       {
-        error: message,
-        detail: message,
+        error: "Sipariş kaydedilemedi.",
+        detail: error instanceof Error ? error.message : "unknown",
       },
-      { status: conflict ? 409 : 500 }
+      { status: 500 }
     );
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/menu";
@@ -61,7 +61,6 @@ export function CartDrawer({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [tableNumber, setTableNumber] = useState("");
   const [tableOpen, setTableOpen] = useState(false);
-  const [occupiedTables, setOccupiedTables] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -76,47 +75,11 @@ export function CartDrawer({
     [items]
   );
 
-  useEffect(() => {
-    if (!open) return;
-
-    let cancelled = false;
-    async function loadOccupied() {
-      try {
-        const response = await fetch("/api/orders/occupied", {
-          cache: "no-store",
-        });
-        if (!response.ok) return;
-        const data = (await response.json()) as { occupied?: string[] };
-        if (cancelled) return;
-        const next = Array.isArray(data.occupied) ? data.occupied : [];
-        setOccupiedTables(next);
-        setTableNumber((current) =>
-          current && next.includes(current) ? "" : current
-        );
-      } catch {
-        // keep last known list
-      }
-    }
-
-    void loadOccupied();
-    const timer = window.setInterval(() => {
-      void loadOccupied();
-    }, 5000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, [open]);
-
   async function placeOrder() {
     setError("");
     setSuccess("");
     if (!tableNumber) {
       setError("Sipariş vermek için masa seçin.");
-      return;
-    }
-    if (occupiedTables.includes(tableNumber)) {
-      setError("Bu masa dolu. Ödeme alınmadan yeni sipariş verilemez.");
       return;
     }
     if (items.length === 0) {
@@ -147,9 +110,6 @@ export function CartDrawer({
       setTableNumber("");
       setExpandedId(null);
       setSuccess("Siparişiniz alındı. Afiyet olsun!");
-      setOccupiedTables((current) =>
-        current.includes(tableNumber) ? current : [...current, tableNumber]
-      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sipariş gönderilemedi.");
     } finally {
@@ -321,38 +281,24 @@ export function CartDrawer({
                     Henüz masa tanımlanmamış. Yönetim panelinden masa ekleyin.
                   </p>
                 ) : (
-                  tables.map((table) => {
-                    const occupied = occupiedTables.includes(table);
-                    return (
-                      <button
-                        key={table}
-                        type="button"
-                        disabled={occupied}
-                        className={cn(
-                          "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium",
-                          occupied
-                            ? "cursor-not-allowed text-slate-400"
-                            : "hover:bg-slate-50",
-                          !occupied &&
-                            tableNumber === table &&
-                            "bg-[#007AFF]/10 text-[#007AFF]"
-                        )}
-                        onClick={() => {
-                          if (occupied) return;
-                          setTableNumber(table);
-                          setTableOpen(false);
-                          setError("");
-                        }}
-                      >
-                        <span>Masa {table}</span>
-                        {occupied ? (
-                          <span className="text-[11px] font-semibold text-amber-600">
-                            Dolu
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })
+                  tables.map((table) => (
+                    <button
+                      key={table}
+                      type="button"
+                      className={cn(
+                        "flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium hover:bg-slate-50",
+                        tableNumber === table &&
+                          "bg-[#007AFF]/10 text-[#007AFF]"
+                      )}
+                      onClick={() => {
+                        setTableNumber(table);
+                        setTableOpen(false);
+                        setError("");
+                      }}
+                    >
+                      Masa {table}
+                    </button>
+                  ))
                 )}
               </div>
             ) : null}

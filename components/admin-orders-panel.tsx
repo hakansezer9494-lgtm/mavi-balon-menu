@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Check, Send } from "lucide-react";
+import { Bell, Check, ChevronDown, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -104,6 +104,7 @@ export function AdminOrdersPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [pastOpen, setPastOpen] = useState(false);
   const knownIdsRef = useRef<Set<string> | null>(null);
 
   const activeOrders = useMemo(
@@ -279,72 +280,88 @@ export function AdminOrdersPanel() {
       </Card>
 
       <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
-        <CardHeader>
-          <CardTitle className="text-white">Geçmiş siparişler</CardTitle>
-          <CardDescription className="text-sky-100/60">
-            Ödendi işaretlenen siparişler. Sabah 08:00 – gece 03:00 arası
-            saklanır, ardından temizlenir.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {pastOrders.length === 0 ? (
-            <p className="rounded-xl bg-white/5 px-4 py-8 text-center text-sm text-sky-100/60">
-              Henüz ödenmiş sipariş yok.
-            </p>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {pastOrders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  active={selectedId === order.id}
-                  onSelect={() =>
-                    setSelectedId(selectedId === order.id ? null : order.id)
-                  }
-                />
-              ))}
-            </div>
-          )}
+        <button
+          type="button"
+          onClick={() => setPastOpen((current) => !current)}
+          className="flex w-full items-start justify-between gap-3 px-6 py-6 text-left"
+          aria-expanded={pastOpen}
+        >
+          <div className="min-w-0">
+            <CardTitle className="text-white">Geçmiş siparişler</CardTitle>
+            <CardDescription className="mt-1.5 text-sky-100/60">
+              Ödendi işaretlenen siparişler
+              {pastOrders.length > 0 ? ` · ${pastOrders.length}` : ""}. Sabah
+              08:00 – gece 03:00 arası saklanır.
+            </CardDescription>
+          </div>
+          <ChevronDown
+            className={cn(
+              "mt-1 size-5 shrink-0 text-sky-200/70 transition",
+              pastOpen && "rotate-180"
+            )}
+          />
+        </button>
+        {pastOpen ? (
+          <CardContent className="space-y-4 pt-0">
+            {pastOrders.length === 0 ? (
+              <p className="rounded-xl bg-white/5 px-4 py-8 text-center text-sm text-sky-100/60">
+                Henüz ödenmiş sipariş yok.
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {pastOrders.map((order) => (
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    active={selectedId === order.id}
+                    onSelect={() =>
+                      setSelectedId(selectedId === order.id ? null : order.id)
+                    }
+                  />
+                ))}
+              </div>
+            )}
 
-          {selected && selected.status === "paid" ? (
-            <div className="space-y-3 rounded-2xl bg-black/20 p-4 ring-1 ring-white/10">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="text-lg font-semibold text-white">
-                    Masa {selected.tableNumber}
-                  </p>
-                  <p className="text-xs text-sky-100/55">
-                    {new Date(selected.createdAt).toLocaleString("tr-TR")} ·
-                    Ödendi
+            {selected && selected.status === "paid" ? (
+              <div className="space-y-3 rounded-2xl bg-black/20 p-4 ring-1 ring-white/10">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="text-lg font-semibold text-white">
+                      Masa {selected.tableNumber}
+                    </p>
+                    <p className="text-xs text-sky-100/55">
+                      {new Date(selected.createdAt).toLocaleString("tr-TR")} ·
+                      Ödendi
+                    </p>
+                  </div>
+                  <p className="text-lg font-bold text-sky-200">
+                    {formatPrice(selected.total)}
                   </p>
                 </div>
-                <p className="text-lg font-bold text-sky-200">
-                  {formatPrice(selected.total)}
-                </p>
+                <ul className="space-y-2">
+                  {selected.items.map((item) => (
+                    <li
+                      key={`${selected.id}-${item.productId}-past-${item.note ?? ""}`}
+                      className="flex items-start justify-between gap-3 text-sm"
+                    >
+                      <span className="text-sky-50">
+                        {item.quantity}× {item.name}
+                        {item.note?.trim() ? (
+                          <span className="mt-0.5 block text-xs text-sky-200/70">
+                            Not: {item.note}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-sky-100/80">
+                        {formatPrice(item.unitPrice * item.quantity)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <ul className="space-y-2">
-                {selected.items.map((item) => (
-                  <li
-                    key={`${selected.id}-${item.productId}-past-${item.note ?? ""}`}
-                    className="flex items-start justify-between gap-3 text-sm"
-                  >
-                    <span className="text-sky-50">
-                      {item.quantity}× {item.name}
-                      {item.note?.trim() ? (
-                        <span className="mt-0.5 block text-xs text-sky-200/70">
-                          Not: {item.note}
-                        </span>
-                      ) : null}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-sky-100/80">
-                      {formatPrice(item.unitPrice * item.quantity)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </CardContent>
+            ) : null}
+          </CardContent>
+        ) : null}
       </Card>
     </div>
   );

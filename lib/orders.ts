@@ -6,7 +6,7 @@ export type OrderItem = {
   note?: string;
 };
 
-export type OrderStatus = "new" | "sent" | "paid";
+export type OrderStatus = "new" | "sent" | "paid" | "cancelled";
 
 export type Order = {
   id: string;
@@ -80,7 +80,10 @@ export function isOrder(value: unknown): value is Order {
     Array.isArray(row.items) &&
     row.items.every(isOrderItem) &&
     typeof row.total === "number" &&
-    (status === "new" || status === "sent" || status === "paid") &&
+    (status === "new" ||
+      status === "sent" ||
+      status === "paid" ||
+      status === "cancelled") &&
     typeof row.createdAt === "string" &&
     typeof row.updatedAt === "string"
   );
@@ -100,7 +103,11 @@ export function normalizeOrder(input: Partial<Order> & { items: OrderItem[] }): 
 
   const now = new Date().toISOString();
   const status: OrderStatus =
-    input.status === "sent" || input.status === "paid" ? input.status : "new";
+    input.status === "sent" ||
+    input.status === "paid" ||
+    input.status === "cancelled"
+      ? input.status
+      : "new";
 
   return {
     id: String(input.id || crypto.randomUUID()),

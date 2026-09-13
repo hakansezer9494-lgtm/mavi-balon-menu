@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AdminOrdersPanel } from "@/components/admin-orders-panel";
+import { Moon, Sun } from "lucide-react";
+import {
+  AdminOrdersPanel,
+  type OrdersTheme,
+} from "@/components/admin-orders-panel";
 import { OrdersReportPanel } from "@/components/orders-report-panel";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -26,6 +30,8 @@ import {
 } from "@/lib/order-alerts";
 import { cn } from "@/lib/utils";
 
+const THEME_KEY = "mavi-orders-theme";
+
 const lightOutline =
   "border-slate-300 bg-white text-slate-800 hover:bg-slate-100 hover:text-slate-900";
 const darkOutline =
@@ -39,6 +45,14 @@ export function OrdersPage() {
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
   const [tab, setTab] = useState<OrdersTab>("active");
+  const [theme, setTheme] = useState<OrdersTheme>("light");
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem(THEME_KEY);
+    if (saved === "dark" || saved === "light") {
+      setTheme(saved);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,6 +99,14 @@ export function OrdersPage() {
       cancelled = true;
     };
   }, []);
+
+  function toggleTheme() {
+    setTheme((current) => {
+      const next = current === "light" ? "dark" : "light";
+      window.localStorage.setItem(THEME_KEY, next);
+      return next;
+    });
+  }
 
   async function handleLogin() {
     setLoginError("");
@@ -161,16 +183,41 @@ export function OrdersPage() {
     );
   }
 
+  const light = theme === "light";
+  const outline = light ? lightOutline : darkOutline;
   const tabDescription =
     tab === "active"
-      ? "Gelen siparişler burada listelenir. Başka sekmedeyken de ses ve masaüstü bildirimi gelir."
+      ? "Gelen siparişler burada. İptal edilenler listeden düşer; başka sekmede de bildirim gelir."
       : tab === "past"
-        ? "Ödenen siparişler. Geri al ile tekrar aktif listeye çekebilirsin."
+        ? "Ödenen siparişler. Geri al ile aktife çekebilir, iptal ile kaldırabilirsin."
         : "Gün / ay / yıl bazında ciro, ürün tercihi ve yoğunluk grafikleri.";
 
   return (
-    <div className="relative flex min-h-full flex-1 flex-col">
-      <SiteHeader eyebrow="Siparişler" compact />
+    <div
+      className={cn(
+        "relative flex min-h-full flex-1 flex-col",
+        light
+          ? "bg-[linear-gradient(180deg,#f8fafc_0%,#eef2ff_48%,#f8fafc_100%)]"
+          : "bg-[linear-gradient(180deg,#07111f_0%,#0b1729_50%,#07111f_100%)]"
+      )}
+    >
+      <div className="relative">
+        <SiteHeader eyebrow="Siparişler" compact />
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label={light ? "Koyu moda geç" : "Açık moda geç"}
+          className={cn(
+            "absolute top-4 right-4 z-20 size-10 rounded-full shadow-sm sm:top-5 sm:right-6",
+            outline
+          )}
+          onClick={toggleTheme}
+        >
+          {light ? <Moon className="size-4" /> : <Sun className="size-4" />}
+        </Button>
+      </div>
+
       <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-16">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-3">
@@ -194,8 +241,10 @@ export function OrdersPage() {
                   variant={tab === value ? "default" : "outline"}
                   className={cn(
                     tab === value
-                      ? "bg-sky-500 text-white hover:bg-sky-500"
-                      : lightOutline
+                      ? light
+                        ? "bg-sky-600 text-white hover:bg-sky-600"
+                        : "bg-sky-500 text-white hover:bg-sky-500"
+                      : outline
                   )}
                   onClick={() => setTab(value)}
                 >
@@ -203,13 +252,20 @@ export function OrdersPage() {
                 </Button>
               ))}
             </div>
-            <p className="max-w-xl text-sm text-slate-600">{tabDescription}</p>
+            <p
+              className={cn(
+                "max-w-xl text-sm",
+                light ? "text-slate-600" : "text-sky-100/65"
+              )}
+            >
+              {tabDescription}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
-              className={lightOutline}
+              className={outline}
               onClick={() => {
                 unlockOrderAlerts();
                 ensureNotificationPermission();
@@ -219,19 +275,13 @@ export function OrdersPage() {
             </Button>
             <Link
               href="/yonetim"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                lightOutline
-              )}
+              className={cn(buttonVariants({ variant: "outline" }), outline)}
             >
               Menü yönetimi
             </Link>
             <Link
               href="/portal"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                lightOutline
-              )}
+              className={cn(buttonVariants({ variant: "outline" }), outline)}
             >
               Portal
             </Link>
@@ -241,7 +291,10 @@ export function OrdersPage() {
         {tab === "report" ? (
           <OrdersReportPanel />
         ) : (
-          <AdminOrdersPanel mode={tab === "past" ? "past" : "active"} />
+          <AdminOrdersPanel
+            mode={tab === "past" ? "past" : "active"}
+            theme={theme}
+          />
         )}
       </main>
     </div>

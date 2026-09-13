@@ -220,6 +220,7 @@ async function findOpenTableSession(
               FROM orders
               WHERE table_number = ?
                 AND status != 'paid'
+                AND status != 'cancelled'
                 AND created_at >= ?
               ORDER BY created_at ASC
               LIMIT 1`,
@@ -239,6 +240,7 @@ async function findOpenTableSession(
         (order) =>
           order.tableNumber === tableNumber &&
           order.status !== "paid" &&
+          order.status !== "cancelled" &&
           isWithinCurrentBusinessDay(order.createdAt)
       )
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0] ?? null

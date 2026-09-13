@@ -36,7 +36,12 @@ export async function PATCH(request: Request, { params }: Params) {
       ? (body as { status?: unknown }).status
       : undefined;
 
-  if (status !== "sent" && status !== "paid" && status !== "new") {
+  if (
+    status !== "sent" &&
+    status !== "paid" &&
+    status !== "new" &&
+    status !== "cancelled"
+  ) {
     return NextResponse.json({ error: "Geçersiz durum." }, { status: 400 });
   }
 

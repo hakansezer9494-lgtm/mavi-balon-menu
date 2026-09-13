@@ -5,7 +5,10 @@ export type OrderAlertSoundId =
   | "soft"
   | "kitchen"
   | "urgent"
-  | "bright";
+  | "bright"
+  | "tenten"
+  | "yarabbi"
+  | "kardesim";
 
 export type OrderAlertSoundOption = {
   id: OrderAlertSoundId;
@@ -52,9 +55,30 @@ export const ORDER_ALERT_SOUNDS: OrderAlertSoundOption[] = [
     label: "Parlak",
     description: "Parlak üçlü melodi — ferah bildirim.",
   },
+  {
+    id: "tenten",
+    label: "Tenten",
+    description: "Sesli: “Tenten!” diye bağırır.",
+  },
+  {
+    id: "yarabbi",
+    label: "Yarabbi şükür",
+    description: "Sesli: “Yarabbi şükür!” diye söyler.",
+  },
+  {
+    id: "kardesim",
+    label: "Kardeşim sağolsun",
+    description: "Sesli: “Kardeşim sağolsun!” diye söyler.",
+  },
 ];
 
-const WEB_PATTERNS: Record<OrderAlertSoundId, Tone[]> = {
+const VOICE_PHRASES: Partial<Record<OrderAlertSoundId, string>> = {
+  tenten: "Tenten!",
+  yarabbi: "Yarabbi şükür!",
+  kardesim: "Kardeşim sağolsun!",
+};
+
+const WEB_PATTERNS: Partial<Record<OrderAlertSoundId, Tone[]>> = {
   classic: [
     { freq: 660, type: "square", at: 0, dur: 0.22, peak: 0.42 },
     { freq: 880, type: "sawtooth", at: 0.12, dur: 0.28, peak: 0.48 },
@@ -85,60 +109,66 @@ const WEB_PATTERNS: Record<OrderAlertSoundId, Tone[]> = {
   ],
 };
 
-const WAV_PATTERNS: Record<OrderAlertSoundId, { tones: WavTone[]; totalSec: number }> =
-  {
-    classic: {
-      totalSec: 0.7,
-      tones: [
-        { freq: 880, start: 0, dur: 0.18 },
-        { freq: 1175, start: 0.16, dur: 0.2 },
-        { freq: 1568, start: 0.34, dur: 0.28 },
-      ],
-    },
-    soft: {
-      totalSec: 0.9,
-      tones: [
-        { freq: 523, start: 0, dur: 0.28, gain: 0.4 },
-        { freq: 659, start: 0.22, dur: 0.32, gain: 0.35 },
-        { freq: 784, start: 0.48, dur: 0.35, gain: 0.3 },
-      ],
-    },
-    kitchen: {
-      totalSec: 0.55,
-      tones: [
-        { freq: 1320, start: 0, dur: 0.12, gain: 0.6 },
-        { freq: 1760, start: 0.14, dur: 0.14, gain: 0.55 },
-        { freq: 1320, start: 0.32, dur: 0.16, gain: 0.4 },
-      ],
-    },
-    urgent: {
-      totalSec: 0.8,
-      tones: [
-        { freq: 880, start: 0, dur: 0.1, gain: 0.6 },
-        { freq: 880, start: 0.16, dur: 0.1, gain: 0.6 },
-        { freq: 988, start: 0.32, dur: 0.12, gain: 0.62 },
-        { freq: 1175, start: 0.5, dur: 0.2, gain: 0.55 },
-      ],
-    },
-    bright: {
-      totalSec: 0.75,
-      tones: [
-        { freq: 784, start: 0, dur: 0.14, gain: 0.45 },
-        { freq: 988, start: 0.12, dur: 0.14, gain: 0.42 },
-        { freq: 1319, start: 0.24, dur: 0.18, gain: 0.48 },
-        { freq: 1568, start: 0.42, dur: 0.26, gain: 0.4 },
-      ],
-    },
-  };
+const WAV_PATTERNS: Partial<
+  Record<OrderAlertSoundId, { tones: WavTone[]; totalSec: number }>
+> = {
+  classic: {
+    totalSec: 0.7,
+    tones: [
+      { freq: 880, start: 0, dur: 0.18 },
+      { freq: 1175, start: 0.16, dur: 0.2 },
+      { freq: 1568, start: 0.34, dur: 0.28 },
+    ],
+  },
+  soft: {
+    totalSec: 0.9,
+    tones: [
+      { freq: 523, start: 0, dur: 0.28, gain: 0.4 },
+      { freq: 659, start: 0.22, dur: 0.32, gain: 0.35 },
+      { freq: 784, start: 0.48, dur: 0.35, gain: 0.3 },
+    ],
+  },
+  kitchen: {
+    totalSec: 0.55,
+    tones: [
+      { freq: 1320, start: 0, dur: 0.12, gain: 0.6 },
+      { freq: 1760, start: 0.14, dur: 0.14, gain: 0.55 },
+      { freq: 1320, start: 0.32, dur: 0.16, gain: 0.4 },
+    ],
+  },
+  urgent: {
+    totalSec: 0.8,
+    tones: [
+      { freq: 880, start: 0, dur: 0.1, gain: 0.6 },
+      { freq: 880, start: 0.16, dur: 0.1, gain: 0.6 },
+      { freq: 988, start: 0.32, dur: 0.12, gain: 0.62 },
+      { freq: 1175, start: 0.5, dur: 0.2, gain: 0.55 },
+    ],
+  },
+  bright: {
+    totalSec: 0.75,
+    tones: [
+      { freq: 784, start: 0, dur: 0.14, gain: 0.45 },
+      { freq: 988, start: 0.12, dur: 0.14, gain: 0.42 },
+      { freq: 1319, start: 0.24, dur: 0.18, gain: 0.48 },
+      { freq: 1568, start: 0.42, dur: 0.26, gain: 0.4 },
+    ],
+  },
+};
 
 let audioCtx: AudioContext | null = null;
 let unlocked = false;
 let titleTimer: number | null = null;
 let chimeAudio: HTMLAudioElement | null = null;
 let chimeSoundId: OrderAlertSoundId | null = null;
+let voicesReady = false;
 
 function isSoundId(value: string | null): value is OrderAlertSoundId {
   return ORDER_ALERT_SOUNDS.some((sound) => sound.id === value);
+}
+
+function isVoiceSound(id: OrderAlertSoundId) {
+  return Boolean(VOICE_PHRASES[id]);
 }
 
 export function getOrderAlertSoundId(): OrderAlertSoundId {
@@ -166,9 +196,49 @@ function getAudioContext() {
   return audioCtx;
 }
 
+function ensureVoices() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  const load = () => {
+    voicesReady = window.speechSynthesis.getVoices().length > 0;
+  };
+  load();
+  if (!voicesReady) {
+    window.speechSynthesis.addEventListener("voiceschanged", load, {
+      once: true,
+    });
+  }
+}
+
+function pickTurkishVoice() {
+  if (typeof window === "undefined" || !window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((v) => v.lang.toLowerCase().startsWith("tr")) ??
+    voices.find((v) => /turkish|türk/i.test(v.name)) ??
+    voices.find((v) => v.default) ??
+    voices[0] ??
+    null
+  );
+}
+
+function speakPhrase(phrase: string) {
+  if (typeof window === "undefined" || !window.speechSynthesis) return;
+  ensureVoices();
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(phrase);
+  utter.lang = "tr-TR";
+  utter.rate = 1.05;
+  utter.pitch = 1.05;
+  utter.volume = 1;
+  const voice = pickTurkishVoice();
+  if (voice) utter.voice = voice;
+  window.speechSynthesis.speak(utter);
+}
+
 function buildWavDataUri(id: OrderAlertSoundId) {
   const sampleRate = 22050;
   const pattern = WAV_PATTERNS[id];
+  if (!pattern) return "";
   const samples = Math.floor(sampleRate * pattern.totalSec);
   const data = new Int16Array(samples);
   for (const tone of pattern.tones) {
@@ -215,8 +285,11 @@ function buildWavDataUri(id: OrderAlertSoundId) {
 }
 
 function getHtmlChime(id: OrderAlertSoundId) {
+  if (isVoiceSound(id)) return null;
   if (!chimeAudio || chimeSoundId !== id) {
-    chimeAudio = new Audio(buildWavDataUri(id));
+    const uri = buildWavDataUri(id);
+    if (!uri) return null;
+    chimeAudio = new Audio(uri);
     chimeAudio.preload = "auto";
     chimeAudio.volume = 1;
     chimeSoundId = id;
@@ -232,18 +305,28 @@ export function unlockOrderAlerts() {
   if (ctx && ctx.state === "suspended") {
     void ctx.resume();
   }
-  const audio = getHtmlChime(getOrderAlertSoundId());
-  audio.muted = true;
-  void audio
-    .play()
-    .then(() => {
-      audio.pause();
-      audio.currentTime = 0;
-      audio.muted = false;
-    })
-    .catch(() => {
-      audio.muted = false;
-    });
+  ensureVoices();
+  if (window.speechSynthesis) {
+    // Nudge speech engine on user gesture (required on some browsers).
+    window.speechSynthesis.cancel();
+  }
+  const soundId = getOrderAlertSoundId();
+  if (!isVoiceSound(soundId)) {
+    const audio = getHtmlChime(soundId);
+    if (audio) {
+      audio.muted = true;
+      void audio
+        .play()
+        .then(() => {
+          audio.pause();
+          audio.currentTime = 0;
+          audio.muted = false;
+        })
+        .catch(() => {
+          audio.muted = false;
+        });
+    }
+  }
 
   if ("Notification" in window && Notification.permission === "default") {
     void Notification.requestPermission();
@@ -258,6 +341,8 @@ export function ensureNotificationPermission() {
 }
 
 function playWebAudioChime(id: OrderAlertSoundId) {
+  const tones = WEB_PATTERNS[id];
+  if (!tones) return;
   const ctx = getAudioContext();
   if (!ctx) return;
   void ctx.resume();
@@ -266,7 +351,7 @@ function playWebAudioChime(id: OrderAlertSoundId) {
   master.gain.value = 1;
   master.connect(ctx.destination);
 
-  for (const tone of WEB_PATTERNS[id]) {
+  for (const tone of tones) {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = tone.type;
@@ -284,10 +369,21 @@ function playWebAudioChime(id: OrderAlertSoundId) {
 
 function playHtmlAudioChime(id: OrderAlertSoundId) {
   const audio = getHtmlChime(id);
+  if (!audio) return;
   audio.currentTime = 0;
   void audio.play().catch(() => {
     // ignore autoplay blocks; Notification still fires when hidden
   });
+}
+
+function playAlertSound(id: OrderAlertSoundId) {
+  const phrase = VOICE_PHRASES[id];
+  if (phrase) {
+    speakPhrase(phrase);
+    return;
+  }
+  playWebAudioChime(id);
+  playHtmlAudioChime(id);
 }
 
 function flashDocumentTitle(message: string) {
@@ -331,8 +427,7 @@ function showDesktopNotification(title: string, body: string) {
 export function previewOrderAlertSound(id?: OrderAlertSoundId) {
   const soundId = id ?? getOrderAlertSoundId();
   unlockOrderAlerts();
-  playWebAudioChime(soundId);
-  playHtmlAudioChime(soundId);
+  playAlertSound(soundId);
 }
 
 export function announceNewOrder(detail?: {
@@ -344,8 +439,7 @@ export function announceNewOrder(detail?: {
   }
 
   const soundId = getOrderAlertSoundId();
-  playWebAudioChime(soundId);
-  playHtmlAudioChime(soundId);
+  playAlertSound(soundId);
 
   const table = detail?.tableNumber
     ? `Masa ${detail.tableNumber}`

@@ -106,7 +106,7 @@ Tarayıcıda sırayla açın:
 
 Müşteri menüsünde yönetim butonu yoktur. İşletme için `/portal` adresini yer imlerine ekleyin.
 
-Sipariş sayfasında **Siparişler**, **Geçmiş siparişler** ve **Rapor** sekmeleri vardır. Aynı masa Ödendi denene kadar tek oturumda kalır; ek siparişler tutarı günceller. Ödenenler geçmişe düşer; Rapor sekmesinde gün/ay/yıl ciro, ürün tercihi ve yoğunluk grafikleri görünür. Yönetim panelinde **Sipariş bildirim sesi** seçeneklerinden (Klasik, Yumuşak, Mutfak zili, Acil, Parlak) birini seçebilirsiniz; seçim tarayıcıda saklanır.
+Sipariş sayfasında **Siparişler**, **Geçmiş siparişler** ve **Rapor** sekmeleri vardır. Aynı masa Ödendi denene kadar tek oturumda kalır; ek siparişler tutarı günceller. Ödenenler geçmişe düşer; Rapor sekmesinde gün/ay/yıl ciro, ürün tercihi ve yoğunluk grafikleri görünür. Yönetim panelinde **Sipariş bildirim sesi** seçeneklerinden (Klasik, Yumuşak, Mutfak zili, Acil, Parlak, Tenten, Yarabbi şükür, Kardeşim sağolsun) birini seçebilirsiniz; seçim tarayıcıda saklanır.
 
 Fiyat değişince sadece `/yonetim` yeterli. QR’ı yeniden basmanıza gerek yok.
 

@@ -39,7 +39,6 @@ import {
   useMenu,
 } from "@/hooks/use-menu";
 import { compressImage } from "@/lib/image";
-import { AdminOrdersPanel } from "@/components/admin-orders-panel";
 import {
   defaultSignature,
   defaultVenue,
@@ -885,6 +884,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
+              href="/yonetim/siparisler"
+              className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
+            >
+              Siparişler
+            </Link>
+            <Link
               href="/portal"
               className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
             >
@@ -1221,8 +1226,6 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             )}
           </CardContent>
         </Card>
-
-        <AdminOrdersPanel />
 
         <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>

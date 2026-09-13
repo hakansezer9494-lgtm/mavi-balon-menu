@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronDown, Download, Pencil, Plus, Trash2, Volume2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Download, History, Pencil, Plus, Trash2, Volume2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -47,6 +47,11 @@ import {
   type OrderAlertSoundId,
   unlockOrderAlerts,
 } from "@/lib/order-alerts";
+import {
+  DEFAULT_PAID_ORDER_RETENTION_DAYS,
+  PAID_ORDER_RETENTION_OPTIONS,
+  type PaidOrderRetentionDays,
+} from "@/lib/order-retention";
 import {
   defaultSignature,
   defaultVenue,
@@ -211,6 +216,14 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [savedAlertSoundId, setSavedAlertSoundId] =
     useState<OrderAlertSoundId>("classic");
   const [alertSoundMessage, setAlertSoundMessage] = useState("");
+  const [retentionDays, setRetentionDays] = useState<PaidOrderRetentionDays>(
+    DEFAULT_PAID_ORDER_RETENTION_DAYS
+  );
+  const [savedRetentionDays, setSavedRetentionDays] =
+    useState<PaidOrderRetentionDays>(DEFAULT_PAID_ORDER_RETENTION_DAYS);
+  const [retentionMessage, setRetentionMessage] = useState("");
+  const [retentionError, setRetentionError] = useState("");
+  const [retentionBusy, setRetentionBusy] = useState(false);
   const [venueForm, setVenueForm] = useState<VenueInfo>(
     () => structuredClone(initialMenu.venue ?? defaultVenue)
   );
@@ -329,6 +342,36 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     setSavedAlertSoundId(saved);
   }, []);
 
+  useEffect(() => {
+    if (!unlocked) return;
+    let cancelled = false;
+    async function loadRetention() {
+      try {
+        const response = await fetch("/api/admin/order-retention", {
+          cache: "no-store",
+          headers: {
+            "x-admin-password": getStoredAdminPassword(),
+          },
+        });
+        if (!response.ok) return;
+        const payload = (await response.json()) as { days?: number };
+        if (cancelled || typeof payload.days !== "number") return;
+        const match = PAID_ORDER_RETENTION_OPTIONS.find(
+          (option) => option.days === payload.days
+        );
+        if (!match) return;
+        setRetentionDays(match.days);
+        setSavedRetentionDays(match.days);
+      } catch {
+        // keep defaults
+      }
+    }
+    void loadRetention();
+    return () => {
+      cancelled = true;
+    };
+  }, [unlocked]);
+
   if (!authChecked) {
     return (
       <div className="flex min-h-full flex-1 items-center justify-center text-slate-600">
@@ -382,6 +425,43 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         </main>
       </div>
     );
+  }
+
+  async function handleRetentionSave(days: PaidOrderRetentionDays) {
+    setRetentionError("");
+    setRetentionMessage("");
+    setRetentionBusy(true);
+    setRetentionDays(days);
+    try {
+      const response = await fetch("/api/admin/order-retention", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": getStoredAdminPassword(),
+        },
+        body: JSON.stringify({ days }),
+      });
+      const payload = (await response.json()) as { error?: string; days?: number };
+      if (!response.ok) {
+        setRetentionError(payload.error || "Saklama süresi kaydedilemedi.");
+        return;
+      }
+      const saved =
+        typeof payload.days === "number" &&
+        PAID_ORDER_RETENTION_OPTIONS.some((option) => option.days === payload.days)
+          ? (payload.days as PaidOrderRetentionDays)
+          : days;
+      setRetentionDays(saved);
+      setSavedRetentionDays(saved);
+      const label =
+        PAID_ORDER_RETENTION_OPTIONS.find((option) => option.days === saved)
+          ?.label ?? `${saved} gün`;
+      setRetentionMessage(`Geçmiş siparişler ${label} tutulacak.`);
+    } catch {
+      setRetentionError("Saklama süresi kaydedilemedi.");
+    } finally {
+      setRetentionBusy(false);
+    }
   }
 
   async function handlePasswordChange() {
@@ -2067,6 +2147,78 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             })}
             {alertSoundMessage ? (
               <p className="text-sm text-sky-200">{alertSoundMessage}</p>
+            ) : null}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 rounded-xl bg-sky-400/15 p-2 text-sky-300">
+                <History className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-white">
+                  Geçmiş sipariş saklama süresi
+                </CardTitle>
+                <CardDescription className="mt-1 text-sky-100/60">
+                  Ödenen siparişler bu süre boyunca geçmiş ve raporlarda kalır;
+                  süre dolunca otomatik silinir. Varsayılan 2 yıldır.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {PAID_ORDER_RETENTION_OPTIONS.map((option) => {
+              const selected = retentionDays === option.days;
+              const saved = savedRetentionDays === option.days;
+              return (
+                <div
+                  key={option.days}
+                  className={`flex flex-col gap-2 rounded-xl px-3 py-3 ring-1 transition sm:flex-row sm:items-center sm:justify-between ${
+                    selected
+                      ? "bg-sky-400/15 ring-sky-400/50"
+                      : "bg-white/5 ring-white/10"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setRetentionDays(option.days)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <p
+                      className={`text-sm font-semibold ${
+                        selected ? "text-sky-200" : "text-white"
+                      }`}
+                    >
+                      {option.label}
+                      {saved ? " · Aktif" : ""}
+                    </p>
+                    <p className="mt-0.5 text-xs text-sky-100/55">
+                      {option.description}
+                    </p>
+                  </button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={retentionBusy}
+                    className={
+                      saved
+                        ? "bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                        : "bg-white/15 text-white hover:bg-white/25"
+                    }
+                    onClick={() => void handleRetentionSave(option.days)}
+                  >
+                    {saved ? "Aktif" : "Seç"}
+                  </Button>
+                </div>
+              );
+            })}
+            {retentionError ? (
+              <p className="text-sm text-red-300">{retentionError}</p>
+            ) : null}
+            {retentionMessage ? (
+              <p className="text-sm text-sky-200">{retentionMessage}</p>
             ) : null}
           </CardContent>
         </Card>

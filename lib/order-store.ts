@@ -2,6 +2,10 @@ import { createClient, type Client } from "@libsql/client";
 import { promises as fs } from "fs";
 import path from "path";
 import {
+  getPaidOrderRetentionCutoff,
+  getPaidOrderRetentionDays,
+} from "@/lib/order-retention";
+import {
   getBusinessDayStart,
   isOrder,
   isWithinCurrentBusinessDay,
@@ -121,13 +125,12 @@ export function getLastOrderStoreError() {
 
 /**
  * Drop unpaid tickets from previous service days.
- * Paid orders are kept for reports (trimmed after ~2 years).
+ * Paid orders are kept for past/history + reports until the retention window ends.
  */
 async function purgeExpiredOrders(): Promise<void> {
   const cutoff = getBusinessDayStart().toISOString();
-  const reportFloor = new Date();
-  reportFloor.setUTCFullYear(reportFloor.getUTCFullYear() - 2);
-  const reportCutoff = reportFloor.toISOString();
+  const retentionDays = await getPaidOrderRetentionDays();
+  const reportCutoff = getPaidOrderRetentionCutoff(retentionDays).toISOString();
   const client = getTurso();
   if (client) {
     try {
@@ -159,20 +162,30 @@ async function purgeExpiredOrders(): Promise<void> {
   }
 }
 
+function keepListedOrder(order: Order, paidCutoffIso: string) {
+  if (order.status === "paid") {
+    return order.createdAt >= paidCutoffIso;
+  }
+  return isWithinCurrentBusinessDay(order.createdAt);
+}
+
 export async function listOrders(): Promise<Order[]> {
   await purgeExpiredOrders();
+  const retentionDays = await getPaidOrderRetentionDays();
+  const paidCutoff = getPaidOrderRetentionCutoff(retentionDays).toISOString();
+  const dayCutoff = getBusinessDayStart().toISOString();
   const client = getTurso();
   if (client) {
     try {
       await ensureSchema(client);
-      const cutoff = getBusinessDayStart().toISOString();
       const result = await client.execute({
         sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
          FROM orders
-         WHERE created_at >= ?
+         WHERE (status = 'paid' AND created_at >= ?)
+            OR (status != 'paid' AND created_at >= ?)
          ORDER BY created_at DESC
-         LIMIT 200`,
-        args: [cutoff],
+         LIMIT 500`,
+        args: [paidCutoff, dayCutoff],
       });
       lastError = "";
       return result.rows
@@ -183,12 +196,12 @@ export async function listOrders(): Promise<Order[]> {
         error instanceof Error ? error.message : "Siparişler okunamadı.";
       console.error("Order list (Turso) failed:", lastError);
       return (await readFromFile()).filter((order) =>
-        isWithinCurrentBusinessDay(order.createdAt)
+        keepListedOrder(order, paidCutoff)
       );
     }
   }
   return (await readFromFile()).filter((order) =>
-    isWithinCurrentBusinessDay(order.createdAt)
+    keepListedOrder(order, paidCutoff)
   );
 }
 

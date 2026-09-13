@@ -102,8 +102,11 @@ Tarayıcıda sırayla açın:
 | İşletme portali | `/portal` |
 | Masa QR yazdırma | `/qr` veya portal |
 | Kategori, fotoğraf, fiyat | `/yonetim` (şifre ile) |
+| Sipariş ekranı | `/yonetim/siparisler` |
 
 Müşteri menüsünde yönetim butonu yoktur. İşletme için `/portal` adresini yer imlerine ekleyin.
+
+Siparişlerde aynı masa **Ödendi** denene kadar tek oturumda kalır; ek siparişler tutarı günceller. Ödenenler geçmişe düşer; oradan **Geri al** ile aktife çekebilirsiniz.
 
 Fiyat değişince sadece `/yonetim` yeterli. QR’ı yeniden basmanıza gerek yok.
 

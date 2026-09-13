@@ -55,12 +55,15 @@ export async function PATCH(request: Request, { params }: Params) {
     }
     return NextResponse.json({ order });
   } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Sipariş güncellenemedi.";
+    const isRule = message.includes("Gönderildi");
     return NextResponse.json(
       {
-        error: "Sipariş güncellenemedi.",
-        detail: error instanceof Error ? error.message : "unknown",
+        error: message,
+        detail: message,
       },
-      { status: 500 }
+      { status: isRule ? 400 : 500 }
     );
   }
 }

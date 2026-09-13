@@ -341,6 +341,17 @@ export async function updateOrderStatus(
   id: string,
   status: OrderStatus
 ): Promise<Order | null> {
+  const existing = await getOrder(id);
+  if (!existing) return null;
+
+  if (
+    status === "paid" &&
+    existing.status !== "sent" &&
+    existing.status !== "paid"
+  ) {
+    throw new Error("Önce Gönderildi işaretleyin.");
+  }
+
   const updatedAt = new Date().toISOString();
   const client = getTurso();
   if (client) {

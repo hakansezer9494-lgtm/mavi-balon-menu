@@ -11,6 +11,14 @@ import {
   UtensilsCrossed,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getStoredAdminPassword } from "@/hooks/use-menu";
 import { formatPrice } from "@/lib/menu";
 import type { Order } from "@/lib/orders";
@@ -208,6 +216,8 @@ function OrderDetail({
   onCancel: () => void;
 }) {
   const light = theme === "light";
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const canMarkPaid = order.status === "sent";
 
   return (
     <div
@@ -319,8 +329,21 @@ function OrderDetail({
               variant="outline"
               className={
                 light
-                  ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
-                  : "border-white/25 bg-white/10 text-white hover:bg-white/20"
+                  ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
+                  : "border-rose-300/40 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25"
+              }
+              disabled={busy}
+              onClick={() => setCancelOpen(true)}
+            >
+              <Ban className="size-4" />
+              İptal
+            </Button>
+            <Button
+              type="button"
+              className={
+                order.status === "sent"
+                  ? "bg-amber-600/70 text-white hover:bg-amber-600/70"
+                  : "bg-amber-500 text-white hover:bg-amber-400"
               }
               disabled={busy || order.status === "sent"}
               onClick={onSent}
@@ -330,22 +353,13 @@ function OrderDetail({
             </Button>
             <Button
               type="button"
-              variant="outline"
-              className={
-                light
-                  ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
-                  : "border-rose-300/40 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25"
+              className="ml-auto bg-emerald-500 text-white hover:bg-emerald-400 disabled:opacity-45"
+              disabled={busy || !canMarkPaid}
+              title={
+                canMarkPaid
+                  ? undefined
+                  : "Önce Gönderildi’ye basmalısınız."
               }
-              disabled={busy}
-              onClick={onCancel}
-            >
-              <Ban className="size-4" />
-              İptal
-            </Button>
-            <Button
-              type="button"
-              className="ml-auto bg-emerald-500 text-white hover:bg-emerald-400"
-              disabled={busy}
               onClick={onPaid}
             >
               <Check className="size-4" />
@@ -353,38 +367,68 @@ function OrderDetail({
             </Button>
           </>
         ) : (
-          <>
-            <Button
-              type="button"
-              variant="outline"
-              className={
-                light
-                  ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
-                  : "border-white/25 bg-white/10 text-white hover:bg-white/20"
-              }
-              disabled={busy}
-              onClick={onRestore}
-            >
-              <RotateCcw className="size-4" />
-              Geri al
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className={
-                light
-                  ? "border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100"
-                  : "border-rose-300/40 bg-rose-500/15 text-rose-100 hover:bg-rose-500/25"
-              }
-              disabled={busy}
-              onClick={onCancel}
-            >
-              <Ban className="size-4" />
-              İptal
-            </Button>
-          </>
+          <Button
+            type="button"
+            variant="outline"
+            className={
+              light
+                ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
+                : "border-white/25 bg-white/10 text-white hover:bg-white/20"
+            }
+            disabled={busy}
+            onClick={onRestore}
+          >
+            <RotateCcw className="size-4" />
+            Geri al
+          </Button>
         )}
       </div>
+
+      <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+        <DialogContent
+          className={
+            light
+              ? "bg-white text-slate-900 sm:max-w-md"
+              : "bg-[oklch(0.2_0.04_250)] text-white sm:max-w-md"
+          }
+        >
+          <DialogHeader>
+            <DialogTitle className={light ? "text-slate-900" : "text-white"}>
+              Siparişi iptal et
+            </DialogTitle>
+            <DialogDescription
+              className={light ? "text-slate-600" : "text-sky-100/60"}
+            >
+              Siparişi iptal etmek istediğinize emin misiniz?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className={
+                light
+                  ? "border-slate-300 bg-white text-slate-800"
+                  : "border-white/25 bg-white/10 text-white"
+              }
+              onClick={() => setCancelOpen(false)}
+            >
+              Hayır
+            </Button>
+            <Button
+              type="button"
+              className="bg-rose-600 text-white hover:bg-rose-500"
+              disabled={busy}
+              onClick={() => {
+                setCancelOpen(false);
+                onCancel();
+              }}
+            >
+              Evet
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

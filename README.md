@@ -98,13 +98,13 @@ Tarayıcıda sırayla açın:
 
 | Ne yapmak istiyorsunuz | Nereye gidin |
 | --- | --- |
-| Müşteri menüsü (QR) | `/` |
+| Müşteri menüsü (QR) | `/` veya `/?table=12` |
 | İşletme portali | `/portal` |
 | Sipariş ekranı | `/portal` → Siparişler veya `/yonetim/siparisler` |
-| Masa QR yazdırma | `/qr` veya portal |
+| Masa QR yazdırma | `/qr` veya yönetim → Masa QR (masa çekmeceleri) |
 | Kategori, fotoğraf, fiyat | `/yonetim` (şifre ile) |
 
-Müşteri menüsünde yönetim butonu yoktur. İşletme için `/portal` adresini yer imlerine ekleyin.
+Müşteri menüsünde yönetim butonu yoktur. İşletme için `/portal` adresini yer imlerine ekleyin. Her masa için ayrı QR üretilir; misafir kodu okutunca masa otomatik kilitlenir ve menüden değiştirilemez.
 
 Sipariş sayfasında **Siparişler**, **Geçmiş siparişler** ve **Rapor** sekmeleri vardır. Aynı masa Ödendi denene kadar tek oturumda kalır; ek siparişler tutarı günceller. Ödenenler geçmişe düşer; Rapor sekmesinde gün/ay/yıl ciro, ürün tercihi ve yoğunluk grafikleri görünür. Yönetim panelinde **Sipariş bildirim sesi** ve **Geçmiş sipariş saklama süresi** (7 gün–2 yıl) ayarlanabilir; saklama süresi sunucuda tutulur, bildirim sesi tarayıcıda saklanır.
 

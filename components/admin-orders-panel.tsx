@@ -435,20 +435,31 @@ function OrderDetail({
           </>
           )
         ) : (
-          <Button
-            type="button"
-            variant="outline"
-            className={
-              light
-                ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
-                : "border-white/25 bg-white/10 text-white hover:bg-white/20"
-            }
-            disabled={busy}
-            onClick={onRestore}
-          >
-            <RotateCcw className="size-4" />
-            Geri al
-          </Button>
+          <div className="flex w-full flex-col gap-2">
+            <p
+              className={cn(
+                "text-sm",
+                light ? "text-slate-600" : "text-sky-100/70"
+              )}
+            >
+              Ödenen sipariş. Geçmişte iptal yok; gerekirse Geri al ile aktif
+              listeye döndür.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              className={
+                light
+                  ? "border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
+                  : "border-white/25 bg-white/10 text-white hover:bg-white/20"
+              }
+              disabled={busy}
+              onClick={onRestore}
+            >
+              <RotateCcw className="size-4" />
+              Geri al
+            </Button>
+          </div>
         )}
       </div>
 
@@ -718,7 +729,7 @@ export function AdminOrdersPanel({
           >
             {showActive
               ? "Yeni siparişler önce onaylanır; ardından iptal / gönderildi / ödendi açılır. Onay gecikirse unutulan uyarısı çalar."
-              : "Ödenen siparişler gün gün ayrılır (08:00–03:00). Geri al ile aktife çekebilirsin."}
+              : "Ödenen siparişler hizmet gününe göre ayrılır (08:00–03:00). Burada yalnızca Geri al vardır; iptal yoktur."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -819,7 +830,7 @@ export function AdminOrdersPanel({
             >
               {showActive
                 ? "Müşteri sipariş verdiğinde burada görünecek."
-                : "Ödendi dediğin siparişler bu sekmede listelenir."}
+                : "Ödenen siparişler burada gün gün görünür. Gerekirse Geri al ile aktife döndürebilirsin."}
             </p>
           </div>
         ) : (
@@ -910,7 +921,9 @@ export function AdminOrdersPanel({
                       light ? "text-slate-500" : "text-sky-100/55"
                     )}
                   >
-                    Detay için bir sipariş seç.
+                    {showActive
+                      ? "Detay ve işlemler için bir sipariş seç."
+                      : "Detay için bir sipariş seç. Geçmişte yalnızca Geri al vardır."}
                   </p>
                 </div>
               )}

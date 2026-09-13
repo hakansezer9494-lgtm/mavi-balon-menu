@@ -195,7 +195,7 @@ export function OrdersPage() {
     tab === "active"
       ? "Gelen siparişler önce onaylanır. Onaydan sonra iptal / gönderildi / ödendi çıkar; gecikirirse unutulan uyarısı çalar."
       : tab === "past"
-        ? "Ödenen siparişler gün gün ayrılır (sabah 08:00 – gece 03:00). Geri al ile aktife çekebilirsin."
+        ? "Ödenen siparişler hizmet gününe göre ayrılır (08:00–03:00). Burada yalnızca Geri al vardır; iptal yoktur."
         : "Gün / ay / yıl bazında ciro, ürün tercihi ve yoğunluk grafikleri.";
 
   return (

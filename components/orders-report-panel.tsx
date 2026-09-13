@@ -18,6 +18,36 @@ import { cn } from "@/lib/utils";
 
 type ChartRow = { key: string; label: string; value: number };
 
+const MONTHS_TR = [
+  "Ocak",
+  "Şubat",
+  "Mart",
+  "Nisan",
+  "Mayıs",
+  "Haziran",
+  "Temmuz",
+  "Ağustos",
+  "Eylül",
+  "Ekim",
+  "Kasım",
+  "Aralık",
+] as const;
+
+function parseYearMonth(anchor: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(anchor);
+  if (!match) {
+    const now = todayAnchor("month");
+    const [y, m] = now.split("-");
+    return { year: y, month: m };
+  }
+  return { year: match[1], month: match[2] };
+}
+
+function yearOptions() {
+  const current = Number(todayAnchor("year"));
+  return Array.from({ length: 8 }, (_, i) => String(current - 5 + i));
+}
+
 function SimpleBarChart({
   title,
   description,
@@ -230,28 +260,78 @@ export function OrdersReportPanel() {
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
-            <div className="grid min-w-[12rem] flex-1 gap-1.5">
-              <label className="text-xs text-sky-100/70">
-                {range === "day" ? "Tarih" : range === "month" ? "Ay" : "Yıl"}
-              </label>
-              {range === "year" ? (
+            {range === "day" ? (
+              <div className="grid min-w-[12rem] flex-1 gap-1.5">
+                <label className="text-xs text-sky-100/70">Tarih</label>
                 <Input
-                  type="number"
-                  min={2020}
-                  max={2100}
+                  type="date"
+                  lang="tr-TR"
                   value={anchor}
                   onChange={(event) => setAnchor(event.target.value)}
                   className="h-10 border-white/20 bg-white/5 text-white"
                 />
-              ) : (
-                <Input
-                  type={range === "day" ? "date" : "month"}
+              </div>
+            ) : null}
+
+            {range === "month" ? (
+              <>
+                <div className="grid min-w-[10rem] flex-1 gap-1.5">
+                  <label className="text-xs text-sky-100/70">Ay</label>
+                  <select
+                    value={parseYearMonth(anchor).month}
+                    onChange={(event) => {
+                      const { year } = parseYearMonth(anchor);
+                      setAnchor(`${year}-${event.target.value}`);
+                    }}
+                    className="h-10 rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white outline-none"
+                  >
+                    {MONTHS_TR.map((label, index) => {
+                      const value = String(index + 1).padStart(2, "0");
+                      return (
+                        <option key={value} value={value} className="bg-slate-900 text-white">
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <div className="grid min-w-[7rem] gap-1.5">
+                  <label className="text-xs text-sky-100/70">Yıl</label>
+                  <select
+                    value={parseYearMonth(anchor).year}
+                    onChange={(event) => {
+                      const { month } = parseYearMonth(anchor);
+                      setAnchor(`${event.target.value}-${month}`);
+                    }}
+                    className="h-10 rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white outline-none"
+                  >
+                    {yearOptions().map((year) => (
+                      <option key={year} value={year} className="bg-slate-900 text-white">
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </>
+            ) : null}
+
+            {range === "year" ? (
+              <div className="grid min-w-[8rem] flex-1 gap-1.5">
+                <label className="text-xs text-sky-100/70">Yıl</label>
+                <select
                   value={anchor}
                   onChange={(event) => setAnchor(event.target.value)}
-                  className="h-10 border-white/20 bg-white/5 text-white"
-                />
-              )}
-            </div>
+                  className="h-10 rounded-md border border-white/20 bg-white/5 px-3 text-sm text-white outline-none"
+                >
+                  {yearOptions().map((year) => (
+                    <option key={year} value={year} className="bg-slate-900 text-white">
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
             <Button
               type="button"
               variant="outline"

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getUi, type Locale } from "@/lib/i18n";
 import { formatPrice } from "@/lib/menu";
 import type { OrderItem } from "@/lib/orders";
 import { cn } from "@/lib/utils";
@@ -18,10 +19,13 @@ function cartLineKey(item: Pick<CartLine, "productId" | "note">) {
 export function CartFab({
   count,
   onClick,
+  locale = "tr",
 }: {
   count: number;
   onClick: () => void;
+  locale?: Locale;
 }) {
+  const t = getUi(locale);
   return (
     <button
       type="button"
@@ -29,7 +33,7 @@ export function CartFab({
       className="fixed bottom-4 left-4 z-40 inline-flex h-12 items-center gap-2 rounded-full bg-slate-900 px-4 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(15,23,42,0.35)] ring-1 ring-white/20 transition hover:bg-slate-800 active:scale-95"
     >
       <ShoppingBag className="size-4" />
-      Sepetim
+      {t.myCart}
       {count > 0 ? (
         <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[#007AFF] px-1.5 text-[11px] font-bold">
           {count}
@@ -44,6 +48,7 @@ type CartDrawerProps = {
   onOpenChange: (open: boolean) => void;
   items: CartLine[];
   tables: string[];
+  locale?: Locale;
   onChangeQty: (productId: string, quantity: number, note?: string) => void;
   onRemove: (productId: string, note?: string) => void;
   onClear: () => void;
@@ -54,10 +59,12 @@ export function CartDrawer({
   onOpenChange,
   items,
   tables,
+  locale = "tr",
   onChangeQty,
   onRemove,
   onClear,
 }: CartDrawerProps) {
+  const t = getUi(locale);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [tableNumber, setTableNumber] = useState("");
   const [tableOpen, setTableOpen] = useState(false);
@@ -79,11 +86,11 @@ export function CartDrawer({
     setError("");
     setSuccess("");
     if (!tableNumber) {
-      setError("Sipariş vermek için masa seçin.");
+      setError(t.selectTableError);
       return;
     }
     if (items.length === 0) {
-      setError("Sepet boş.");
+      setError(t.emptyCartError);
       return;
     }
     setSubmitting(true);
@@ -104,14 +111,14 @@ export function CartDrawer({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        throw new Error(data.error || "Sipariş gönderilemedi.");
+        throw new Error(data.error || t.orderFailed);
       }
       onClear();
       setTableNumber("");
       setExpandedId(null);
-      setSuccess("Siparişiniz alındı. Afiyet olsun!");
+      setSuccess(t.orderSuccess);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sipariş gönderilemedi.");
+      setError(err instanceof Error ? err.message : t.orderFailed);
     } finally {
       setSubmitting(false);
     }
@@ -123,21 +130,22 @@ export function CartDrawer({
     <div className="fixed inset-0 z-50 flex items-end justify-start sm:items-stretch">
       <button
         type="button"
-        aria-label="Sepeti kapat"
+        aria-label={t.closeCart}
         className="absolute inset-0 bg-slate-950/40"
         onClick={() => onOpenChange(false)}
       />
       <aside className="relative z-10 flex max-h-[88vh] w-full max-w-md flex-col rounded-t-3xl bg-white shadow-2xl sm:h-full sm:max-h-none sm:rounded-none sm:rounded-r-3xl">
         <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
           <div>
-            <p className="text-sm font-semibold text-slate-900">Sepetim</p>
+            <p className="text-sm font-semibold text-slate-900">{t.myCart}</p>
             <p className="text-xs text-slate-500">
-              {count > 0 ? `${count} ürün` : "Henüz ürün yok"}
+              {count > 0 ? t.cartItemsCount(count) : t.cartEmpty}
             </p>
           </div>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
+            aria-label={t.closeCart}
             className="inline-flex size-9 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100"
           >
             <X className="size-4" />
@@ -147,7 +155,7 @@ export function CartDrawer({
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {items.length === 0 ? (
             <p className="rounded-2xl bg-slate-50 px-4 py-10 text-center text-sm text-slate-500">
-              {success || "Ürün eklemek için menüden bir yemek seçin."}
+              {success || t.cartEmptyHint}
             </p>
           ) : (
             <ul className="space-y-2">
@@ -171,7 +179,7 @@ export function CartDrawer({
                         </p>
                         {item.note?.trim() ? (
                           <p className="mt-1 line-clamp-1 text-xs text-[#007AFF]">
-                            Not: {item.note}
+                            {t.noteLabel}: {item.note}
                           </p>
                         ) : null}
                       </div>
@@ -192,19 +200,19 @@ export function CartDrawer({
                         {item.note?.trim() ? (
                           <p className="rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-slate-700 ring-1 ring-slate-200">
                             <span className="font-medium text-slate-900">
-                              Açıklama:{" "}
+                              {t.noteLabel}:{" "}
                             </span>
                             {item.note}
                           </p>
                         ) : null}
                         <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
-                          {item.description?.trim() ||
-                            "Bu ürün için menü açıklaması yok."}
+                          {item.description?.trim() || t.noProductDescription}
                         </p>
                         <div className="flex items-center justify-between gap-2">
                           <div className="inline-flex items-center gap-1 rounded-full bg-white p-1 ring-1 ring-slate-200">
                             <button
                               type="button"
+                              aria-label={t.decrease}
                               className="inline-flex size-8 items-center justify-center rounded-full hover:bg-slate-100"
                               onClick={() =>
                                 onChangeQty(
@@ -221,6 +229,7 @@ export function CartDrawer({
                             </span>
                             <button
                               type="button"
+                              aria-label={t.increase}
                               className="inline-flex size-8 items-center justify-center rounded-full hover:bg-slate-100"
                               onClick={() =>
                                 onChangeQty(
@@ -240,7 +249,7 @@ export function CartDrawer({
                               onRemove(item.productId, item.note)
                             }
                           >
-                            Kaldır
+                            {t.remove}
                           </button>
                         </div>
                       </div>
@@ -261,10 +270,12 @@ export function CartDrawer({
             >
               <div>
                 <p className="text-[11px] font-medium tracking-wide text-slate-500 uppercase">
-                  Masa no
+                  {t.tableNo}
                 </p>
                 <p className="text-sm font-semibold text-slate-900">
-                  {tableNumber ? `Masa ${tableNumber}` : "Masa seçin"}
+                  {tableNumber
+                    ? t.tableOption(tableNumber)
+                    : t.selectTable}
                 </p>
               </div>
               <ChevronDown
@@ -278,7 +289,7 @@ export function CartDrawer({
               <div className="absolute bottom-full left-0 z-20 mb-2 max-h-48 w-full overflow-y-auto rounded-2xl bg-white p-2 shadow-xl ring-1 ring-slate-200">
                 {tables.length === 0 ? (
                   <p className="px-3 py-2 text-sm text-slate-500">
-                    Henüz masa tanımlanmamış. Yönetim panelinden masa ekleyin.
+                    {t.noTablesDefined}
                   </p>
                 ) : (
                   tables.map((table) => (
@@ -296,7 +307,7 @@ export function CartDrawer({
                         setError("");
                       }}
                     >
-                      Masa {table}
+                      {t.tableOption(table)}
                     </button>
                   ))
                 )}
@@ -305,7 +316,7 @@ export function CartDrawer({
           </div>
 
           <div className="flex items-center justify-between text-sm">
-            <span className="font-medium text-slate-600">Toplam</span>
+            <span className="font-medium text-slate-600">{t.total}</span>
             <span className="text-lg font-bold text-slate-900">
               {formatPrice(total)}
             </span>
@@ -321,7 +332,7 @@ export function CartDrawer({
             disabled={submitting || items.length === 0}
             onClick={() => void placeOrder()}
           >
-            {submitting ? "Gönderiliyor…" : "Sipariş Ver"}
+            {submitting ? t.placingOrder : t.placeOrder}
           </Button>
         </div>
       </aside>

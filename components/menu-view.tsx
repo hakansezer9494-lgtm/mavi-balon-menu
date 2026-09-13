@@ -521,7 +521,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
               </div>
               <div className="shrink-0 space-y-3 border-t border-slate-100 p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-medium text-slate-600">Adet</span>
+                  <span className="text-sm font-medium text-slate-600">{t.qty}</span>
                   <div className="inline-flex items-center gap-1 rounded-full bg-slate-50 p-1 ring-1 ring-slate-200">
                     <button
                       type="button"
@@ -529,7 +529,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                       onClick={() =>
                         setSelectedQty((current) => Math.max(1, current - 1))
                       }
-                      aria-label="Azalt"
+                      aria-label={t.decrease}
                     >
                       <Minus className="size-4" />
                     </button>
@@ -540,7 +540,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                       type="button"
                       className="inline-flex size-9 items-center justify-center rounded-full hover:bg-white"
                       onClick={() => setSelectedQty((current) => current + 1)}
-                      aria-label="Artır"
+                      aria-label={t.increase}
                     >
                       <Plus className="size-4" />
                     </button>
@@ -551,14 +551,14 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     htmlFor="product-order-note"
                     className="text-sm font-medium text-slate-600"
                   >
-                    Açıklama
+                    {t.note}
                   </label>
                   <textarea
                     id="product-order-note"
                     value={selectedNote}
                     onChange={(event) => setSelectedNote(event.target.value)}
                     rows={2}
-                    placeholder="Örn. az pişmiş, soğansız…"
+                    placeholder={t.notePlaceholder}
                     className="min-h-[4rem] w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#007AFF]/50 focus:bg-white focus:ring-2 focus:ring-[#007AFF]/20"
                   />
                 </div>
@@ -567,7 +567,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                   onClick={addSelectedToCart}
                   className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#007AFF] text-base font-semibold text-white transition hover:bg-[#0066d6]"
                 >
-                  Sepete at · {formatPrice(selected.price * selectedQty)}
+                  {t.addToCart} · {formatPrice(selected.price * selectedQty)}
                 </button>
               </div>
             </div>
@@ -575,12 +575,17 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         </DialogContent>
       </Dialog>
 
-      <CartFab count={cartCount} onClick={() => setCartOpen(true)} />
+      <CartFab
+        count={cartCount}
+        locale={locale}
+        onClick={() => setCartOpen(true)}
+      />
       <CartDrawer
         open={cartOpen}
         onOpenChange={setCartOpen}
         items={cartItems}
         tables={venue.tables ?? []}
+        locale={locale}
         onChangeQty={changeCartQty}
         onRemove={(productId, note) =>
           setCartItems((current) =>

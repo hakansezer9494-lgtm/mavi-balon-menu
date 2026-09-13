@@ -23,6 +23,31 @@ type UiCopy = {
   noPhoto: string;
   langSwitch: string;
   langSwitchAria: string;
+  myCart: string;
+  qty: string;
+  decrease: string;
+  increase: string;
+  note: string;
+  notePlaceholder: string;
+  addToCart: string;
+  cartItemsCount: (count: number) => string;
+  cartEmpty: string;
+  cartEmptyHint: string;
+  closeCart: string;
+  noteLabel: string;
+  noProductDescription: string;
+  remove: string;
+  tableNo: string;
+  selectTable: string;
+  tableOption: (n: string) => string;
+  noTablesDefined: string;
+  total: string;
+  placeOrder: string;
+  placingOrder: string;
+  selectTableError: string;
+  emptyCartError: string;
+  orderFailed: string;
+  orderSuccess: string;
 };
 
 const ui: Record<Locale, UiCopy> = {
@@ -49,6 +74,32 @@ const ui: Record<Locale, UiCopy> = {
     noPhoto: "Fotoğraf yok",
     langSwitch: "EN",
     langSwitchAria: "Switch to English",
+    myCart: "Sepetim",
+    qty: "Adet",
+    decrease: "Azalt",
+    increase: "Artır",
+    note: "Açıklama",
+    notePlaceholder: "Örn. az pişmiş, soğansız…",
+    addToCart: "Sepete at",
+    cartItemsCount: (count) => `${count} ürün`,
+    cartEmpty: "Henüz ürün yok",
+    cartEmptyHint: "Ürün eklemek için menüden bir yemek seçin.",
+    closeCart: "Sepeti kapat",
+    noteLabel: "Açıklama",
+    noProductDescription: "Bu ürün için menü açıklaması yok.",
+    remove: "Kaldır",
+    tableNo: "Masa no",
+    selectTable: "Masa seçin",
+    tableOption: (n) => `Masa ${n}`,
+    noTablesDefined:
+      "Henüz masa tanımlanmamış. Yönetim panelinden masa ekleyin.",
+    total: "Toplam",
+    placeOrder: "Sipariş Ver",
+    placingOrder: "Gönderiliyor…",
+    selectTableError: "Sipariş vermek için masa seçin.",
+    emptyCartError: "Sepet boş.",
+    orderFailed: "Sipariş gönderilemedi.",
+    orderSuccess: "Siparişiniz alındı. Afiyet olsun!",
   },
   en: {
     menuExplore: "Explore Menu",
@@ -73,6 +124,33 @@ const ui: Record<Locale, UiCopy> = {
     noPhoto: "No photo",
     langSwitch: "TR",
     langSwitchAria: "Türkçeye geç",
+    myCart: "My cart",
+    qty: "Qty",
+    decrease: "Decrease",
+    increase: "Increase",
+    note: "Note",
+    notePlaceholder: "e.g. medium rare, no onion…",
+    addToCart: "Add to cart",
+    cartItemsCount: (count) =>
+      count === 1 ? "1 item" : `${count} items`,
+    cartEmpty: "No items yet",
+    cartEmptyHint: "Pick a dish from the menu to add it here.",
+    closeCart: "Close cart",
+    noteLabel: "Note",
+    noProductDescription: "No menu description for this item.",
+    remove: "Remove",
+    tableNo: "Table no",
+    selectTable: "Select a table",
+    tableOption: (n) => `Table ${n}`,
+    noTablesDefined:
+      "No tables yet. Add tables from the admin panel.",
+    total: "Total",
+    placeOrder: "Place order",
+    placingOrder: "Sending…",
+    selectTableError: "Select a table to place an order.",
+    emptyCartError: "Cart is empty.",
+    orderFailed: "Could not send the order.",
+    orderSuccess: "Order received. Enjoy!",
   },
 };
 

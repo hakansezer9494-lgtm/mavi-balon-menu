@@ -947,7 +947,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
                     : "Yerel kayıt. Yayında Turso bağlayın."}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:min-w-72 sm:justify-end">
             <Link
               href="/yonetim/siparisler"
               className={cn(buttonVariants({ variant: "outline" }), lightOutline)}
@@ -974,7 +974,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
             </Link>
             <Button
               variant="ghost"
-              className={lightGhost}
+              className={cn(lightGhost, "ml-auto")}
               onClick={() => {
                 clearStoredAdminPassword();
                 setUnlocked(false);

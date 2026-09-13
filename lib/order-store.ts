@@ -3,8 +3,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import {
   getPaidOrderRetentionCutoff,
-  getPaidOrderRetentionDays,
 } from "@/lib/order-retention";
+import { getPaidOrderRetentionDays } from "@/lib/order-retention-store";
 import {
   getBusinessDayStart,
   isOrder,

@@ -1,7 +1,3 @@
-import { getAppSetting, setAppSetting } from "@/lib/menu-store";
-
-const RETENTION_KEY = "paid_order_retention_days";
-
 export const DEFAULT_PAID_ORDER_RETENTION_DAYS = 730;
 
 export const PAID_ORDER_RETENTION_OPTIONS = [
@@ -53,19 +49,4 @@ export function getPaidOrderRetentionCutoff(
   const cutoff = new Date(now.getTime());
   cutoff.setUTCDate(cutoff.getUTCDate() - days);
   return cutoff;
-}
-
-export async function getPaidOrderRetentionDays(): Promise<PaidOrderRetentionDays> {
-  const raw = await getAppSetting(RETENTION_KEY);
-  const parsed = Number(raw);
-  return isPaidOrderRetentionDays(parsed)
-    ? parsed
-    : DEFAULT_PAID_ORDER_RETENTION_DAYS;
-}
-
-export async function setPaidOrderRetentionDays(days: number) {
-  if (!isPaidOrderRetentionDays(days)) {
-    throw new Error("Geçersiz saklama süresi.");
-  }
-  await setAppSetting(RETENTION_KEY, String(days));
 }

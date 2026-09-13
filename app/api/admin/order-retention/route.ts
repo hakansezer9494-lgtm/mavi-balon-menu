@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthorized } from "@/lib/admin-auth";
 import {
-  getPaidOrderRetentionDays,
   isPaidOrderRetentionDays,
   PAID_ORDER_RETENTION_OPTIONS,
-  setPaidOrderRetentionDays,
 } from "@/lib/order-retention";
+import {
+  getPaidOrderRetentionDays,
+  setPaidOrderRetentionDays,
+} from "@/lib/order-retention-store";
 
 export const dynamic = "force-dynamic";
 

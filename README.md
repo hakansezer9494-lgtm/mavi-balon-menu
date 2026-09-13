@@ -100,9 +100,9 @@ Tarayıcıda sırayla açın:
 | --- | --- |
 | Müşteri menüsü (QR) | `/` |
 | İşletme portali | `/portal` |
+| Sipariş ekranı | `/portal` → Siparişler veya `/yonetim/siparisler` |
 | Masa QR yazdırma | `/qr` veya portal |
 | Kategori, fotoğraf, fiyat | `/yonetim` (şifre ile) |
-| Sipariş ekranı | `/yonetim/siparisler` |
 
 Müşteri menüsünde yönetim butonu yoktur. İşletme için `/portal` adresini yer imlerine ekleyin.
 

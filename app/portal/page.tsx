@@ -14,15 +14,20 @@ export default function PortalPage() {
         <main className="relative mx-auto flex w-full max-w-lg flex-1 flex-col px-4 pb-16">
           <p className="mb-6 text-sm leading-relaxed text-slate-600">
             Bu sayfa yalnızca işletme içindir. Müşteri menüsünde görünmez.
-            Kategori, fiyat, fotoğraf, iletişim ve masa QR’sini buradan yönetin.
+            Siparişler, menü, iletişim ve masa QR’sini buradan yönetin.
           </p>
 
           <div className="space-y-3">
             <PortalCard
+              href="/yonetim/siparisler"
+              title="Siparişler"
+              body="Aktif siparişler, geçmiş ve günlük/aylık raporlar."
+              primary
+            />
+            <PortalCard
               href="/yonetim"
               title="Menü yönetimi"
               body="Kategori, ürün, açılış saatleri ve sosyal medya linkleri."
-              primary
             />
             <PortalCard
               href="/qr"

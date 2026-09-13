@@ -16,9 +16,31 @@ export type Order = {
   items: OrderItem[];
   total: number;
   status: OrderStatus;
+  /** Set when staff confirms a new ticket; actions unlock after this. */
+  confirmedAt?: string;
   createdAt: string;
   updatedAt: string;
 };
+
+/** Staff has acknowledged the ticket (or it already moved past new). */
+export function isOrderConfirmed(order: Pick<Order, "confirmedAt" | "status">) {
+  if (order.confirmedAt) return true;
+  return order.status === "sent" || order.status === "paid";
+}
+
+/** Still waiting for confirm, and older than the reminder window. */
+export function isOrderForgotten(
+  order: Pick<Order, "confirmedAt" | "status" | "createdAt" | "updatedAt">,
+  reminderMinutes: number,
+  now = Date.now()
+) {
+  if (isOrderConfirmed(order)) return false;
+  if (order.status === "cancelled") return false;
+  const minutes = Math.max(1, reminderMinutes || 1);
+  const since = Date.parse(order.updatedAt || order.createdAt);
+  if (!Number.isFinite(since)) return false;
+  return now - since >= minutes * 60_000;
+}
 
 /** Default selectable tables for guests. Empty selection until user picks one. */
 export const DEFAULT_TABLE_NUMBERS = Array.from({ length: 20 }, (_, i) =>
@@ -89,7 +111,8 @@ export function isOrder(value: unknown): value is Order {
     typeof row.createdAt === "string" &&
     typeof row.updatedAt === "string" &&
     (row.customerName === undefined ||
-      typeof row.customerName === "string")
+      typeof row.customerName === "string") &&
+    (row.confirmedAt === undefined || typeof row.confirmedAt === "string")
   );
 }
 
@@ -115,6 +138,8 @@ export function normalizeOrder(input: Partial<Order> & { items: OrderItem[] }): 
 
   const customerName = String(input.customerName || "").trim().replace(/\s+/g, " ");
 
+  const confirmedAtRaw = String(input.confirmedAt || "").trim();
+
   return {
     id: String(input.id || crypto.randomUUID()),
     tableNumber: String(input.tableNumber || "").trim(),
@@ -122,6 +147,7 @@ export function normalizeOrder(input: Partial<Order> & { items: OrderItem[] }): 
     items,
     total: orderItemsTotal(items),
     status,
+    confirmedAt: confirmedAtRaw || undefined,
     createdAt: String(input.createdAt || now),
     updatedAt: String(input.updatedAt || now),
   };

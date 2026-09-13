@@ -8,6 +8,7 @@ import {
   Clock3,
   RotateCcw,
   Send,
+  ShieldCheck,
   Sparkles,
   UtensilsCrossed,
 } from "lucide-react";
@@ -22,9 +23,12 @@ import {
 } from "@/components/ui/dialog";
 import { getStoredAdminPassword } from "@/hooks/use-menu";
 import { formatPrice } from "@/lib/menu";
+import { DEFAULT_ORDER_CONFIRM_REMINDER_MINUTES } from "@/lib/order-confirm-reminder";
 import {
   formatServiceDayLabel,
   getServiceDayKey,
+  isOrderConfirmed,
+  isOrderForgotten,
   type Order,
 } from "@/lib/orders";
 import { cn } from "@/lib/utils";
@@ -53,15 +57,18 @@ function OrderCard({
   onSelect,
   tone,
   theme,
+  forgotten = false,
 }: {
   order: Order;
   active: boolean;
   onSelect: () => void;
   tone: "active" | "past";
   theme: OrdersTheme;
+  forgotten?: boolean;
   }) {
   const light = theme === "light";
-  const isNew = order.status === "new";
+  const isNew = order.status === "new" && !isOrderConfirmed(order);
+  const awaitingConfirm = tone === "active" && !isOrderConfirmed(order) && order.status === "new";
 
   return (
     <button
@@ -89,7 +96,13 @@ function OrderCard({
         isNew &&
           tone === "active" &&
           !active &&
-          "animate-[pulse_2.8s_ease-in-out_infinite]"
+          !forgotten &&
+          "animate-[pulse_2.8s_ease-in-out_infinite]",
+        forgotten &&
+          tone === "active" &&
+          (light
+            ? "ring-2 ring-rose-400 bg-rose-50 shadow-[0_12px_28px_rgba(244,63,94,0.18)]"
+            : "ring-2 ring-rose-300/70 from-rose-500/25 to-rose-600/10")
       )}
     >
       {active ? (
@@ -141,10 +154,19 @@ function OrderCard({
             order.status === "paid" &&
               (light
                 ? "bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200"
-                : "bg-emerald-300/20 text-emerald-100 ring-1 ring-emerald-200/30")
+                : "bg-emerald-300/20 text-emerald-100 ring-1 ring-emerald-200/30"),
+            forgotten &&
+              (light
+                ? "bg-rose-600 text-white ring-1 ring-rose-700"
+                : "bg-rose-500 text-white ring-1 ring-rose-300/40"),
+            awaitingConfirm &&
+              !forgotten &&
+              (light
+                ? "bg-violet-100 text-violet-800 ring-1 ring-violet-200"
+                : "bg-violet-300/20 text-violet-100 ring-1 ring-violet-200/30")
           )}
         >
-          {statusLabel(order.status)}
+          {forgotten ? "Unutuldu" : awaitingConfirm ? "Onay bekliyor" : statusLabel(order.status)}
         </span>
       </div>
       <p
@@ -206,6 +228,8 @@ function OrderDetail({
   mode,
   busy,
   theme,
+  forgotten = false,
+  onConfirm,
   onSent,
   onPaid,
   onRestore,
@@ -215,6 +239,8 @@ function OrderDetail({
   mode: "active" | "past";
   busy: boolean;
   theme: OrdersTheme;
+  forgotten?: boolean;
+  onConfirm: () => void;
   onSent: () => void;
   onPaid: () => void;
   onRestore: () => void;
@@ -222,6 +248,7 @@ function OrderDetail({
 }) {
   const light = theme === "light";
   const [cancelOpen, setCancelOpen] = useState(false);
+  const confirmed = isOrderConfirmed(order);
   const canMarkPaid = order.status === "sent";
 
   return (
@@ -328,6 +355,41 @@ function OrderDetail({
 
       <div className="mt-5 flex flex-wrap gap-2">
         {mode === "active" ? (
+          !confirmed ? (
+            <>
+              {forgotten ? (
+                <p
+                  className={cn(
+                    "w-full rounded-xl px-3 py-2 text-sm font-medium",
+                    light
+                      ? "bg-rose-50 text-rose-800 ring-1 ring-rose-200"
+                      : "bg-rose-500/15 text-rose-100 ring-1 ring-rose-300/30"
+                  )}
+                >
+                  Onay süresi doldu — sipariş unutulmuş görünüyor. Lütfen onaylayın.
+                </p>
+              ) : (
+                <p
+                  className={cn(
+                    "w-full text-sm",
+                    light ? "text-slate-600" : "text-sky-100/70"
+                  )}
+                >
+                  Yeni sipariş. Önce onaylayın; ardından iptal / gönderildi / ödendi
+                  görünür.
+                </p>
+              )}
+              <Button
+                type="button"
+                className="bg-violet-600 text-white hover:bg-violet-500"
+                disabled={busy}
+                onClick={onConfirm}
+              >
+                <ShieldCheck className="size-4" />
+                Siparişi onayla
+              </Button>
+            </>
+          ) : (
           <>
             <Button
               type="button"
@@ -371,6 +433,7 @@ function OrderDetail({
               Ödendi
             </Button>
           </>
+          )
         ) : (
           <Button
             type="button"
@@ -451,6 +514,10 @@ export function AdminOrdersPanel({
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const knownVersionsRef = useRef<Map<string, string> | null>(null);
+  const [reminderMinutes, setReminderMinutes] = useState(
+    DEFAULT_ORDER_CONFIRM_REMINDER_MINUTES
+  );
+  const [nowTick, setNowTick] = useState(() => Date.now());
   const light = theme === "light";
 
   const activeOrders = useMemo(
@@ -557,6 +624,35 @@ export function AdminOrdersPanel({
     }
   }
 
+  async function confirmOrder(id: string) {
+    setBusyId(id);
+    try {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": getStoredAdminPassword(),
+        },
+        body: JSON.stringify({ confirm: true }),
+      });
+      const data = (await response.json()) as { order?: Order; error?: string };
+      if (!response.ok || !data.order) {
+        throw new Error(data.error || "Onaylanamadı.");
+      }
+      setOrders((current) =>
+        current.map((order) => (order.id === id ? data.order! : order))
+      );
+      if (knownVersionsRef.current && data.order) {
+        knownVersionsRef.current.set(data.order.id, data.order.updatedAt);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Onaylanamadı.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+
   return (
     <div
       className={cn(
@@ -621,8 +717,8 @@ export function AdminOrdersPanel({
             )}
           >
             {showActive
-              ? "Masa ödenene kadar aynı oturumda kalır. İptal edilenler listeden düşer."
-              : "Ödenen siparişler gün gün ayrılır (08:00–03:00). Geri al ile aktife çekebilir, iptal ile silebilirsin."}
+              ? "Yeni siparişler önce onaylanır; ardından iptal / gönderildi / ödendi açılır. Onay gecikirse unutulan uyarısı çalar."
+              : "Ödenen siparişler gün gün ayrılır (08:00–03:00). Geri al ile aktife çekebilirsin."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -734,7 +830,8 @@ export function AdminOrdersPanel({
                   <OrderCard
                     key={order.id}
                     order={order}
-                    tone="active"
+                    forgotten={isOrderForgotten(order, reminderMinutes, nowTick)}
+                          tone="active"
                     theme={theme}
                     active={selectedId === order.id}
                     onSelect={() =>
@@ -791,6 +888,8 @@ export function AdminOrdersPanel({
                   mode={showActive ? "active" : "past"}
                   theme={theme}
                   busy={busyId === selected.id}
+                  forgotten={isOrderForgotten(selected, reminderMinutes, nowTick)}
+                  onConfirm={() => void confirmOrder(selected.id)}
                   onSent={() => void patchStatus(selected.id, "sent")}
                   onPaid={() => void patchStatus(selected.id, "paid")}
                   onRestore={() => void patchStatus(selected.id, "new")}

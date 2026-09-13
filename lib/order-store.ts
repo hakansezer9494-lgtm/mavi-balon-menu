@@ -68,6 +68,7 @@ async function ensureSchema(client: Client) {
       items_json TEXT NOT NULL,
       total REAL NOT NULL,
       status TEXT NOT NULL,
+      confirmed_at TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
@@ -75,6 +76,13 @@ async function ensureSchema(client: Client) {
   try {
     await client.execute(
       `ALTER TABLE orders ADD COLUMN customer_name TEXT NOT NULL DEFAULT ''`
+    );
+  } catch {
+    // column already exists
+  }
+  try {
+    await client.execute(
+      `ALTER TABLE orders ADD COLUMN confirmed_at TEXT NOT NULL DEFAULT ''`
     );
   } catch {
     // column already exists
@@ -90,6 +98,7 @@ function rowToOrder(row: Record<string, unknown>): Order | null {
     const itemsJson = row.items_json;
     const items =
       typeof itemsJson === "string" ? JSON.parse(itemsJson) : [];
+    const confirmedAt = String(row.confirmed_at ?? "").trim();
     const order = normalizeOrder({
       id: String(row.id ?? ""),
       tableNumber: String(row.table_number ?? ""),
@@ -97,6 +106,7 @@ function rowToOrder(row: Record<string, unknown>): Order | null {
       items: Array.isArray(items) ? items : [],
       total: Number(row.total) || 0,
       status: row.status as OrderStatus,
+      confirmedAt: confirmedAt || undefined,
       createdAt: String(row.created_at ?? ""),
       updatedAt: String(row.updated_at ?? ""),
     });
@@ -189,7 +199,7 @@ export async function listOrders(): Promise<Order[]> {
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, confirmed_at, created_at, updated_at
          FROM orders
          WHERE (status = 'paid' AND created_at >= ?)
             OR (status != 'paid' AND created_at >= ?)
@@ -226,6 +236,7 @@ function buildMergedSession(
     items,
     total: orderItemsTotal(items),
     status: "new",
+    confirmedAt: undefined,
     updatedAt: now,
   };
 }
@@ -239,7 +250,7 @@ async function findOpenTableSession(
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, confirmed_at, created_at, updated_at
               FROM orders
               WHERE table_number = ?
                 AND status != 'paid'
@@ -304,12 +315,13 @@ export async function createOrder(
           await ensureSchema(client);
           await client.execute({
             sql: `UPDATE orders
-                  SET items_json = ?, total = ?, status = ?, updated_at = ?
+                  SET items_json = ?, total = ?, status = ?, confirmed_at = ?, updated_at = ?
                   WHERE id = ?`,
             args: [
               JSON.stringify(merged.items),
               merged.total,
               merged.status,
+              merged.confirmedAt ?? "",
               merged.updatedAt,
               merged.id,
             ],
@@ -338,8 +350,8 @@ export async function createOrder(
         await client.execute({
           sql: `
             INSERT INTO orders
-              (id, table_number, customer_name, items_json, total, status, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+              (id, table_number, customer_name, items_json, total, status, confirmed_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `,
           args: [
             incoming.id,
@@ -348,6 +360,7 @@ export async function createOrder(
             JSON.stringify(incoming.items),
             incoming.total,
             incoming.status,
+            incoming.confirmedAt ?? "",
             incoming.createdAt,
             incoming.updatedAt,
           ],
@@ -367,12 +380,63 @@ export async function createOrder(
   });
 }
 
+export async function confirmOrder(id: string): Promise<Order | null> {
+  return withOrderLock(async () => {
+    const existing = await getOrder(id);
+    if (!existing) return null;
+    if (existing.status === "paid" || existing.status === "cancelled") {
+      throw new Error("Bu sipariş onaylanamaz.");
+    }
+    if (existing.confirmedAt) {
+      return existing;
+    }
+
+    const confirmedAt = new Date().toISOString();
+    const updatedAt = confirmedAt;
+    const client = getTurso();
+    if (client) {
+      try {
+        await ensureSchema(client);
+        await client.execute({
+          sql: `UPDATE orders SET confirmed_at = ?, updated_at = ? WHERE id = ?`,
+          args: [confirmedAt, updatedAt, id],
+        });
+        lastError = "";
+        return {
+          ...existing,
+          confirmedAt,
+          updatedAt,
+        };
+      } catch (error) {
+        lastError =
+          error instanceof Error ? error.message : "Sipariş onaylanamadı.";
+        throw new Error(lastError);
+      }
+    }
+
+    const current = await readFromFile();
+    const next = current.map((order) =>
+      order.id === id ? { ...order, confirmedAt, updatedAt } : order
+    );
+    await writeToFile(next);
+    return next.find((order) => order.id === id) ?? null;
+  });
+}
+
 export async function updateOrderStatus(
   id: string,
   status: OrderStatus
 ): Promise<Order | null> {
   const existing = await getOrder(id);
   if (!existing) return null;
+
+  if (
+    (status === "sent" || status === "paid") &&
+    !existing.confirmedAt &&
+    existing.status === "new"
+  ) {
+    throw new Error("Önce siparişi onaylayın.");
+  }
 
   if (
     status === "paid" &&
@@ -383,16 +447,21 @@ export async function updateOrderStatus(
   }
 
   const updatedAt = new Date().toISOString();
+  const confirmedAt =
+    status === "new" && existing.status === "paid"
+      ? undefined
+      : existing.confirmedAt;
+
   const client = getTurso();
   if (client) {
     try {
       await ensureSchema(client);
       await client.execute({
-        sql: `UPDATE orders SET status = ?, updated_at = ? WHERE id = ?`,
-        args: [status, updatedAt, id],
+        sql: `UPDATE orders SET status = ?, confirmed_at = ?, updated_at = ? WHERE id = ?`,
+        args: [status, confirmedAt ?? "", updatedAt, id],
       });
       const result = await client.execute({
-        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, confirmed_at, created_at, updated_at
               FROM orders WHERE id = ?`,
         args: [id],
       });
@@ -408,7 +477,14 @@ export async function updateOrderStatus(
 
   const current = await readFromFile();
   const next = current.map((order) =>
-    order.id === id ? { ...order, status, updatedAt } : order
+    order.id === id
+      ? {
+          ...order,
+          status,
+          confirmedAt,
+          updatedAt,
+        }
+      : order
   );
   await writeToFile(next);
   return next.find((order) => order.id === id) ?? null;
@@ -420,7 +496,7 @@ export async function getOrder(id: string): Promise<Order | null> {
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, confirmed_at, created_at, updated_at
               FROM orders WHERE id = ?`,
         args: [id],
       });
@@ -444,7 +520,7 @@ export async function listPaidOrdersInRange(
     try {
       await ensureSchema(client);
       const result = await client.execute({
-        sql: `SELECT id, table_number, customer_name, items_json, total, status, created_at, updated_at
+        sql: `SELECT id, table_number, customer_name, items_json, total, status, confirmed_at, created_at, updated_at
               FROM orders
               WHERE status = 'paid'
                 AND created_at >= ?

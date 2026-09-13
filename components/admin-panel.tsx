@@ -2,7 +2,18 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUp, ChevronDown, Download, History, Pencil, Plus, Trash2, Volume2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ChevronDown,
+  Clock3,
+  Download,
+  History,
+  Pencil,
+  Plus,
+  Trash2,
+  Volume2,
+} from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -58,6 +69,11 @@ import {
   PAID_ORDER_RETENTION_OPTIONS,
   type PaidOrderRetentionDays,
 } from "@/lib/order-retention";
+import {
+  DEFAULT_ORDER_CONFIRM_REMINDER_MINUTES,
+  ORDER_CONFIRM_REMINDER_OPTIONS,
+} from "@/lib/order-confirm-reminder";
+
 import {
   defaultSignature,
   defaultVenue,
@@ -222,6 +238,15 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
   const [savedAlertSoundId, setSavedAlertSoundId] =
     useState<OrderAlertSoundId>("classic");
   const [alertSoundMessage, setAlertSoundMessage] = useState("");
+  const [reminderMinutes, setReminderMinutes] = useState(
+    DEFAULT_ORDER_CONFIRM_REMINDER_MINUTES
+  );
+  const [reminderDraft, setReminderDraft] = useState(
+    String(DEFAULT_ORDER_CONFIRM_REMINDER_MINUTES)
+  );
+  const [reminderBusy, setReminderBusy] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState("");
+  const [reminderError, setReminderError] = useState("");
   const [retentionDays, setRetentionDays] = useState<PaidOrderRetentionDays>(
     DEFAULT_PAID_ORDER_RETENTION_DAYS
   );
@@ -372,12 +397,44 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
         );
         if (!match) return;
         setRetentionDays(match.days);
+
+        try {
+          const reminderRes = await fetch("/api/admin/order-confirm-reminder", {
+            cache: "no-store",
+            headers: { "x-admin-password": getStoredAdminPassword() },
+          });
+          if (reminderRes.ok) {
+            const reminderData = (await reminderRes.json()) as { minutes?: number };
+            if (typeof reminderData.minutes === "number") {
+              setReminderMinutes(reminderData.minutes);
+              setReminderDraft(String(reminderData.minutes));
+            }
+          }
+        } catch {
+          // keep default
+        }
         setSavedRetentionDays(match.days);
       } catch {
         // keep defaults
       }
     }
     void loadRetention();
+    void (async () => {
+      try {
+        const response = await fetch("/api/admin/order-confirm-reminder", {
+          cache: "no-store",
+          headers: { "x-admin-password": getStoredAdminPassword() },
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { minutes?: number };
+        if (typeof data.minutes === "number") {
+          setReminderMinutes(data.minutes);
+          setReminderDraft(String(data.minutes));
+        }
+      } catch {
+        // keep default
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -1028,6 +1085,44 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     }));
     setTableMessage("Masalar kaydedildi.");
     setVenueMessage("");
+  }
+
+
+  async function saveReminderMinutes(minutes?: number) {
+    const value = minutes ?? Number(reminderDraft);
+    setReminderBusy(true);
+    setReminderError("");
+    setReminderMessage("");
+    try {
+      const response = await fetch("/api/admin/order-confirm-reminder", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-password": getStoredAdminPassword(),
+        },
+        body: JSON.stringify({ minutes: value }),
+      });
+      const data = (await response.json()) as {
+        minutes?: number;
+        error?: string;
+      };
+      if (!response.ok || typeof data.minutes !== "number") {
+        throw new Error(data.error || "Hatırlatma süresi kaydedilemedi.");
+      }
+      setReminderMinutes(data.minutes);
+      setReminderDraft(String(data.minutes));
+      setReminderMessage(
+        `Onaylanmayan siparişler ${data.minutes} dakika sonra unutulan uyarısı verir.`
+      );
+    } catch (error) {
+      setReminderError(
+        error instanceof Error
+          ? error.message
+          : "Hatırlatma süresi kaydedilemedi."
+      );
+    } finally {
+      setReminderBusy(false);
+    }
   }
 
   return (
@@ -2314,7 +2409,83 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           </CardContent>
         </Card>
 
+        
         <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
+          <CardHeader>
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 rounded-xl bg-sky-400/15 p-2 text-sky-300">
+                <Clock3 className="h-5 w-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CardTitle className="text-white">
+                  Sipariş onay hatırlatıcısı
+                </CardTitle>
+                <CardDescription className="mt-1 text-sky-100/60">
+                  Yeni sipariş bu süre içinde onaylanmazsa farklı bir unutulan
+                  bildirimi çalar ve listede kırmızı görünür.
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {ORDER_CONFIRM_REMINDER_OPTIONS.map((option) => {
+                const selected = reminderMinutes === option.minutes;
+                return (
+                  <Button
+                    key={option.minutes}
+                    type="button"
+                    size="sm"
+                    disabled={reminderBusy}
+                    className={
+                      selected
+                        ? "bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                        : "bg-white/15 text-white hover:bg-white/25"
+                    }
+                    onClick={() => {
+                      setReminderDraft(String(option.minutes));
+                      void saveReminderMinutes(option.minutes);
+                    }}
+                  >
+                    {option.label}
+                  </Button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="grid gap-1.5">
+                <Label htmlFor="confirm-reminder-minutes" className="text-sky-100/70">
+                  Dakika (1–60)
+                </Label>
+                <Input
+                  id="confirm-reminder-minutes"
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={reminderDraft}
+                  onChange={(event) => setReminderDraft(event.target.value)}
+                  className="h-10 w-28 bg-white/5 text-white"
+                />
+              </div>
+              <Button
+                type="button"
+                disabled={reminderBusy}
+                className="bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
+                onClick={() => void saveReminderMinutes()}
+              >
+                Kaydet
+              </Button>
+            </div>
+            {reminderError ? (
+              <p className="text-sm text-red-300">{reminderError}</p>
+            ) : null}
+            {reminderMessage ? (
+              <p className="text-sm text-sky-200">{reminderMessage}</p>
+            ) : null}
+          </CardContent>
+        </Card>
+
+<Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
           <CardHeader>
             <div className="flex items-start gap-3">
               <div className="mt-0.5 rounded-xl bg-sky-400/15 p-2 text-sky-300">

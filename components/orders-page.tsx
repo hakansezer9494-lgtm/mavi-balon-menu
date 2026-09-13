@@ -46,6 +46,12 @@ export function OrdersPage() {
   const [loginError, setLoginError] = useState("");
   const [tab, setTab] = useState<OrdersTab>("active");
   const [theme, setTheme] = useState<OrdersTheme>("light");
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    setNotificationsEnabled(Notification.permission === "granted");
+  }, []);
 
   useEffect(() => {
     const saved = window.localStorage.getItem(THEME_KEY);
@@ -187,9 +193,9 @@ export function OrdersPage() {
   const outline = light ? lightOutline : darkOutline;
   const tabDescription =
     tab === "active"
-      ? "Gelen siparişler burada. İptal edilenler listeden düşer; başka sekmede de bildirim gelir."
+      ? "Gelen siparişler önce onaylanır. Onaydan sonra iptal / gönderildi / ödendi çıkar; gecikirirse unutulan uyarısı çalar."
       : tab === "past"
-        ? "Ödenen siparişler gün gün ayrılır (sabah 08:00 – gece 03:00). Geri al / iptal burada."
+        ? "Ödenen siparişler gün gün ayrılır (sabah 08:00 – gece 03:00). Geri al ile aktife çekebilirsin."
         : "Gün / ay / yıl bazında ciro, ürün tercihi ve yoğunluk grafikleri.";
 
   return (
@@ -265,13 +271,22 @@ export function OrdersPage() {
             <Button
               type="button"
               variant="outline"
-              className={outline}
+              className={cn(
+                outline,
+                notificationsEnabled &&
+                  (light
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+                    : "border-emerald-300/40 bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30")
+              )}
               onClick={() => {
                 unlockOrderAlerts();
                 ensureNotificationPermission();
+                if (typeof window !== "undefined" && "Notification" in window) {
+                  setNotificationsEnabled(Notification.permission === "granted");
+                }
               }}
             >
-              Bildirimi aç
+              {notificationsEnabled ? "Bildirim açık" : "Bildirimi aç"}
             </Button>
             <Link
               href="/yonetim"

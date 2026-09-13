@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminPasswordConfigured, isAdminAuthorized } from "@/lib/admin-auth";
-import { updateOrderStatus } from "@/lib/order-store";
+import { confirmOrder, updateOrderStatus } from "@/lib/order-store";
 import type { OrderStatus } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +31,28 @@ export async function PATCH(request: Request, { params }: Params) {
     return NextResponse.json({ error: "Geçersiz veri." }, { status: 400 });
   }
 
+  const confirm =
+    body && typeof body === "object"
+      ? Boolean((body as { confirm?: unknown }).confirm)
+      : false;
+
+  if (confirm) {
+    try {
+      const order = await confirmOrder(id);
+      if (!order) {
+        return NextResponse.json(
+          { error: "Sipariş bulunamadı." },
+          { status: 404 }
+        );
+      }
+      return NextResponse.json({ order });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Sipariş onaylanamadı.";
+      return NextResponse.json({ error: message, detail: message }, { status: 400 });
+    }
+  }
+
   const status =
     body && typeof body === "object"
       ? (body as { status?: unknown }).status
@@ -57,7 +79,8 @@ export async function PATCH(request: Request, { params }: Params) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Sipariş güncellenemedi.";
-    const isRule = message.includes("Gönderildi");
+    const isRule =
+      message.includes("Gönderildi") || message.includes("onaylayın");
     return NextResponse.json(
       {
         error: message,

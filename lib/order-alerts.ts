@@ -431,6 +431,86 @@ export function previewOrderAlertSound(id?: OrderAlertSoundId) {
   playAlertSound(soundId);
 }
 
+
+function playForgottenAlertSound() {
+  // Distinct from new-order chime: three sharp rising bursts.
+  if (typeof window === "undefined") return;
+  try {
+    const Ctx =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext })
+        .webkitAudioContext;
+    const ctx = new Ctx();
+    void ctx.resume();
+    const now = ctx.currentTime;
+    const bursts = [
+      [0, 720],
+      [0.28, 880],
+      [0.56, 1100],
+      [0.9, 1320],
+    ] as const;
+    for (const [at, freq] of bursts) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.value = freq;
+      const start = now + at;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.55, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.22);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.24);
+    }
+    window.setTimeout(() => {
+      void ctx.close();
+    }, 1600);
+  } catch {
+    // fall back to urgent voice if available
+    playAlertSound("urgent");
+  }
+  if (typeof window !== "undefined" && window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance("Sipariş unutuldu!");
+      utter.lang = "tr-TR";
+      utter.rate = 1.05;
+      utter.volume = 1;
+      window.speechSynthesis.speak(utter);
+    } catch {
+      // ignore
+    }
+  }
+}
+
+export function announceForgottenOrder(detail?: {
+  tableNumber?: string;
+  customerName?: string;
+  totalLabel?: string;
+}) {
+  if (!unlocked) {
+    unlocked = true;
+  }
+
+  playForgottenAlertSound();
+
+  const table = detail?.tableNumber
+    ? detail.customerName
+      ? `${tableDisplayName(detail.tableNumber)} · ${detail.customerName}`
+      : tableDisplayName(detail.tableNumber)
+    : "Unutulan sipariş";
+  const body = detail?.totalLabel
+    ? `${table} · ${detail.totalLabel}`
+    : table;
+
+  flashDocumentTitle("⚠️ Unutulan sipariş!");
+
+  if (typeof document !== "undefined" && document.hidden) {
+    showDesktopNotification("Unutulan sipariş", body);
+  }
+}
+
 export function announceNewOrder(detail?: {
   tableNumber?: string;
   customerName?: string;

@@ -125,7 +125,7 @@ const ui: Record<Locale, UiCopy> = {
     langSwitch: "TR",
     langSwitchAria: "Türkçeye geç",
     myCart: "My cart",
-    qty: "Qty",
+    qty: "Quantity",
     decrease: "Decrease",
     increase: "Increase",
     note: "Note",

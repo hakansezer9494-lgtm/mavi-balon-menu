@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AdminOrdersPanel } from "@/components/admin-orders-panel";
+import { OrdersReportPanel } from "@/components/orders-report-panel";
 import { SiteHeader } from "@/components/site-header";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
@@ -26,11 +27,14 @@ const lightOutline =
 const darkOutline =
   "border-white/30 bg-white/15 text-white hover:bg-white/25 hover:text-white";
 
+type OrdersTab = "active" | "past" | "report";
+
 export function OrdersPage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [tab, setTab] = useState<OrdersTab>("active");
 
   useEffect(() => {
     let cancelled = false;
@@ -153,17 +157,49 @@ export function OrdersPage() {
     );
   }
 
+  const tabDescription =
+    tab === "active"
+      ? "Gelen siparişler burada listelenir. Yeni siparişte bildirim sesi çalar."
+      : tab === "past"
+        ? "Ödenen siparişler. Geri al ile tekrar aktif listeye çekebilirsin."
+        : "Gün / ay / yıl bazında ciro, ürün tercihi ve yoğunluk grafikleri.";
+
   return (
     <div className="relative flex min-h-full flex-1 flex-col">
       <SiteHeader eyebrow="Siparişler" compact />
       <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 pb-16">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="font-heading text-2xl text-slate-900">Siparişler</h2>
-            <p className="mt-1 max-w-xl text-sm text-slate-600">
-              Gelen siparişler burada listelenir. Yeni siparişte bildirim sesi
-              çalar.
-            </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-3">
+            <div
+              className="flex flex-wrap gap-2"
+              role="tablist"
+              aria-label="Sipariş sekmeleri"
+            >
+              {(
+                [
+                  ["active", "Siparişler"],
+                  ["past", "Geçmiş siparişler"],
+                  ["report", "Rapor"],
+                ] as const
+              ).map(([value, label]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === value}
+                  variant={tab === value ? "default" : "outline"}
+                  className={cn(
+                    tab === value
+                      ? "bg-sky-500 text-white hover:bg-sky-500"
+                      : lightOutline
+                  )}
+                  onClick={() => setTab(value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+            <p className="max-w-xl text-sm text-slate-600">{tabDescription}</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Link
@@ -187,7 +223,11 @@ export function OrdersPage() {
           </div>
         </div>
 
-        <AdminOrdersPanel />
+        {tab === "report" ? (
+          <OrdersReportPanel />
+        ) : (
+          <AdminOrdersPanel mode={tab === "past" ? "past" : "active"} />
+        )}
       </main>
     </div>
   );

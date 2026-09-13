@@ -106,7 +106,7 @@ Tarayıcıda sırayla açın:
 
 Müşteri menüsünde yönetim butonu yoktur. İşletme için `/portal` adresini yer imlerine ekleyin.
 
-Siparişlerde aynı masa **Ödendi** denene kadar tek oturumda kalır; ek siparişler tutarı günceller. Ödenenler geçmişe düşer; oradan **Geri al** ile aktife çekebilirsiniz.
+Sipariş sayfasında **Siparişler**, **Geçmiş siparişler** ve **Rapor** sekmeleri vardır. Aynı masa Ödendi denene kadar tek oturumda kalır; ek siparişler tutarı günceller. Ödenenler geçmişe düşer; Rapor sekmesinde gün/ay/yıl ciro, ürün tercihi ve yoğunluk grafikleri görünür.
 
 Fiyat değişince sadece `/yonetim` yeterli. QR’ı yeniden basmanıza gerek yok.
 

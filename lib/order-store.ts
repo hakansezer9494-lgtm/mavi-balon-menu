@@ -119,15 +119,24 @@ export function getLastOrderStoreError() {
   return lastError;
 }
 
+/**
+ * Drop unpaid tickets from previous service days.
+ * Paid orders are kept for reports (trimmed after ~2 years).
+ */
 async function purgeExpiredOrders(): Promise<void> {
   const cutoff = getBusinessDayStart().toISOString();
+  const reportFloor = new Date();
+  reportFloor.setUTCFullYear(reportFloor.getUTCFullYear() - 2);
+  const reportCutoff = reportFloor.toISOString();
   const client = getTurso();
   if (client) {
     try {
       await ensureSchema(client);
       await client.execute({
-        sql: `DELETE FROM orders WHERE created_at < ?`,
-        args: [cutoff],
+        sql: `DELETE FROM orders
+              WHERE (status != 'paid' AND created_at < ?)
+                 OR (status = 'paid' AND created_at < ?)`,
+        args: [cutoff, reportCutoff],
       });
       lastError = "";
       return;
@@ -139,9 +148,12 @@ async function purgeExpiredOrders(): Promise<void> {
   }
 
   const current = await readFromFile();
-  const next = current.filter((order) =>
-    isWithinCurrentBusinessDay(order.createdAt)
-  );
+  const next = current.filter((order) => {
+    if (order.status === "paid") {
+      return order.createdAt >= reportCutoff;
+    }
+    return isWithinCurrentBusinessDay(order.createdAt);
+  });
   if (next.length !== current.length) {
     await writeToFile(next);
   }
@@ -377,4 +389,45 @@ export async function getOrder(id: string): Promise<Order | null> {
   }
   const all = await readFromFile();
   return all.find((order) => order.id === id) ?? null;
+}
+
+/** Paid orders in [fromIso, toIso) for analytics — does not purge unpaid tickets. */
+export async function listPaidOrdersInRange(
+  fromIso: string,
+  toIso: string
+): Promise<Order[]> {
+  const client = getTurso();
+  if (client) {
+    try {
+      await ensureSchema(client);
+      const result = await client.execute({
+        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
+              FROM orders
+              WHERE status = 'paid'
+                AND created_at >= ?
+                AND created_at < ?
+              ORDER BY created_at ASC
+              LIMIT 5000`,
+        args: [fromIso, toIso],
+      });
+      lastError = "";
+      return result.rows
+        .map((row) => rowToOrder(row as Record<string, unknown>))
+        .filter((row): row is Order => row !== null);
+    } catch (error) {
+      lastError =
+        error instanceof Error ? error.message : "Rapor siparişleri okunamadı.";
+      console.error("Order report list (Turso) failed:", lastError);
+    }
+  }
+
+  const all = await readFromFile();
+  return all
+    .filter(
+      (order) =>
+        order.status === "paid" &&
+        order.createdAt >= fromIso &&
+        order.createdAt < toIso
+    )
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }

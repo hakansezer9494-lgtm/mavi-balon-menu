@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Check, ChevronDown, RotateCcw, Send } from "lucide-react";
+import { Bell, Check, RotateCcw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -109,13 +109,12 @@ function OrderCard({
   );
 }
 
-export function AdminOrdersPanel() {
+export function AdminOrdersPanel({ mode = "active" }: { mode?: "active" | "past" }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [pastOpen, setPastOpen] = useState(false);
   /** id → updatedAt; merge updates keep the same id so we track timestamps. */
   const knownVersionsRef = useRef<Map<string, string> | null>(null);
 
@@ -172,6 +171,10 @@ export function AdminOrdersPanel() {
     return () => window.clearInterval(timer);
   }, [fetchOrders]);
 
+  useEffect(() => {
+    setSelectedId(null);
+  }, [mode]);
+
   async function patchStatus(id: string, status: Order["status"]) {
     setBusyId(id);
     try {
@@ -200,31 +203,38 @@ export function AdminOrdersPanel() {
     }
   }
 
+  const showActive = mode === "active";
+  const list = showActive ? activeOrders : pastOrders;
+
   return (
     <div className="space-y-6">
       <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
-            <Bell className="size-4 text-sky-300" />
-            Aktif siparişler
+            {showActive ? (
+              <Bell className="size-4 text-sky-300" />
+            ) : (
+              <RotateCcw className="size-4 text-sky-300" />
+            )}
+            {showActive ? "Aktif siparişler" : "Geçmiş siparişler"}
           </CardTitle>
           <CardDescription className="text-sky-100/60">
-            Masa ödenene kadar aynı oturumda tutulur; ek siparişler tutarı
-            günceller ve durumu Yeniyi getirir. Ödenenler geçmişe düşer.
-            Liste sabah 08:00 – gece 03:00 arası tutulur, sonra sıfırlanır.
+            {showActive
+              ? "Masa ödenene kadar aynı oturumda tutulur; ek siparişler tutarı günceller. Ödenenler Geçmiş sekmesine düşer."
+              : "Ödendi işaretlenen siparişler. İstersen geri alıp aktif listeye çekebilirsin. Sabah 08:00 – gece 03:00 arası saklanır."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error ? <p className="text-sm text-red-300">{error}</p> : null}
           {loading ? (
             <p className="text-sm text-sky-100/60">Siparişler yükleniyor…</p>
-          ) : activeOrders.length === 0 ? (
+          ) : list.length === 0 ? (
             <p className="rounded-xl bg-white/5 px-4 py-8 text-center text-sm text-sky-100/60">
-              Aktif sipariş yok.
+              {showActive ? "Aktif sipariş yok." : "Henüz ödenmiş sipariş yok."}
             </p>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {activeOrders.map((order) => (
+              {list.map((order) => (
                 <OrderCard
                   key={order.id}
                   order={order}
@@ -237,7 +247,7 @@ export function AdminOrdersPanel() {
             </div>
           )}
 
-          {selected && selected.status !== "paid" ? (
+          {selected && showActive && selected.status !== "paid" ? (
             <div className="space-y-3 rounded-2xl bg-black/20 p-4 ring-1 ring-white/10">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -296,106 +306,60 @@ export function AdminOrdersPanel() {
               </div>
             </div>
           ) : null}
-        </CardContent>
-      </Card>
 
-      <Card className="bg-[oklch(0.22_0.04_250)] text-white ring-white/10">
-        <button
-          type="button"
-          onClick={() => setPastOpen((current) => !current)}
-          className="flex w-full items-start justify-between gap-3 px-6 py-6 text-left"
-          aria-expanded={pastOpen}
-        >
-          <div className="min-w-0">
-            <CardTitle className="text-white">Geçmiş siparişler</CardTitle>
-            <CardDescription className="mt-1.5 text-sky-100/60">
-              Ödendi işaretlenen siparişler
-              {pastOrders.length > 0 ? ` · ${pastOrders.length}` : ""}. İstersen
-              geri alıp aktif listeye çekebilirsin. Sabah 08:00 – gece 03:00
-              arası saklanır.
-            </CardDescription>
-          </div>
-          <ChevronDown
-            className={cn(
-              "mt-1 size-5 shrink-0 text-sky-200/70 transition",
-              pastOpen && "rotate-180"
-            )}
-          />
-        </button>
-        {pastOpen ? (
-          <CardContent className="space-y-4 pt-0">
-            {pastOrders.length === 0 ? (
-              <p className="rounded-xl bg-white/5 px-4 py-8 text-center text-sm text-sky-100/60">
-                Henüz ödenmiş sipariş yok.
-              </p>
-            ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {pastOrders.map((order) => (
-                  <OrderCard
-                    key={order.id}
-                    order={order}
-                    active={selectedId === order.id}
-                    onSelect={() =>
-                      setSelectedId(selectedId === order.id ? null : order.id)
-                    }
-                  />
-                ))}
-              </div>
-            )}
-
-            {selected && selected.status === "paid" ? (
-              <div className="space-y-3 rounded-2xl bg-black/20 p-4 ring-1 ring-white/10">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-lg font-semibold text-white">
-                      Masa {selected.tableNumber}
-                    </p>
-                    <p className="text-xs text-sky-100/55">
-                      {new Date(selected.createdAt).toLocaleString("tr-TR")} ·
-                      Ödendi
-                    </p>
-                  </div>
-                  <p className="text-lg font-bold text-sky-200">
-                    {formatPrice(selected.total)}
+          {selected && !showActive && selected.status === "paid" ? (
+            <div className="space-y-3 rounded-2xl bg-black/20 p-4 ring-1 ring-white/10">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="text-lg font-semibold text-white">
+                    Masa {selected.tableNumber}
+                  </p>
+                  <p className="text-xs text-sky-100/55">
+                    {new Date(selected.createdAt).toLocaleString("tr-TR")} ·
+                    Ödendi
                   </p>
                 </div>
-                <ul className="space-y-2">
-                  {selected.items.map((item) => (
-                    <li
-                      key={`${selected.id}-${item.productId}-past-${item.note ?? ""}`}
-                      className="flex items-start justify-between gap-3 text-sm"
-                    >
-                      <span className="text-sky-50">
-                        {item.quantity}× {item.name}
-                        {item.note?.trim() ? (
-                          <span className="mt-0.5 block text-xs text-sky-200/70">
-                            Not: {item.note}
-                          </span>
-                        ) : null}
-                      </span>
-                      <span className="shrink-0 tabular-nums text-sky-100/80">
-                        {formatPrice(item.unitPrice * item.quantity)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-white/30 bg-white/10 text-white hover:bg-white/20"
-                    disabled={busyId === selected.id}
-                    onClick={() => void patchStatus(selected.id, "new")}
-                  >
-                    <RotateCcw className="size-4" />
-                    Geri al
-                  </Button>
-                </div>
+                <p className="text-lg font-bold text-sky-200">
+                  {formatPrice(selected.total)}
+                </p>
               </div>
-            ) : null}
-          </CardContent>
-        ) : null}
+              <ul className="space-y-2">
+                {selected.items.map((item) => (
+                  <li
+                    key={`${selected.id}-${item.productId}-past-${item.note ?? ""}`}
+                    className="flex items-start justify-between gap-3 text-sm"
+                  >
+                    <span className="text-sky-50">
+                      {item.quantity}× {item.name}
+                      {item.note?.trim() ? (
+                        <span className="mt-0.5 block text-xs text-sky-200/70">
+                          Not: {item.note}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="shrink-0 tabular-nums text-sky-100/80">
+                      {formatPrice(item.unitPrice * item.quantity)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                  disabled={busyId === selected.id}
+                  onClick={() => void patchStatus(selected.id, "new")}
+                >
+                  <RotateCcw className="size-4" />
+                  Geri al
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
       </Card>
     </div>
   );
+
 }

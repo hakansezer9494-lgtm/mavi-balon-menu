@@ -58,6 +58,7 @@ type CartDrawerProps = {
   onChangeQty: (productId: string, quantity: number, note?: string) => void;
   onRemove: (productId: string, note?: string) => void;
   onClear: () => void;
+  onOrderComplete?: () => void;
 };
 
 export function CartDrawer({
@@ -69,6 +70,7 @@ export function CartDrawer({
   onChangeQty,
   onRemove,
   onClear,
+  onOrderComplete,
 }: CartDrawerProps) {
   const t = getUi(locale);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -146,6 +148,7 @@ export function CartDrawer({
       setCustomerName("");
       setExpandedId(null);
       setSuccess(t.orderSuccess);
+      onOrderComplete?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : t.orderFailed);
     } finally {

@@ -74,19 +74,50 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const [lockedTableNumber, setLockedTableNumber] = useState("");
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const fromUrl = sanitizeTableParam(params.get("table"));
-    const tables = menu.venue?.tables ?? [];
-    if (
-      fromUrl &&
-      (isTakeawayTable(fromUrl) ||
-        tables.length === 0 ||
-        tables.includes(fromUrl))
-    ) {
-      setLockedTableNumber(fromUrl);
-      return;
+    let cancelled = false;
+    async function syncGuestTable() {
+      const params = new URLSearchParams(window.location.search);
+      const fromUrl = sanitizeTableParam(params.get("table"));
+      const tables = menu.venue?.tables ?? [];
+      if (
+        fromUrl &&
+        (isTakeawayTable(fromUrl) ||
+          tables.length === 0 ||
+          tables.includes(fromUrl))
+      ) {
+        if (!cancelled) setLockedTableNumber(fromUrl);
+        return;
+      }
+      try {
+        const response = await fetch("/api/guest-session", { cache: "no-store" });
+        if (!response.ok) {
+          if (!cancelled) setLockedTableNumber("");
+          return;
+        }
+        const data = (await response.json()) as {
+          active?: boolean;
+          tableNumber?: string;
+        };
+        const fromSession = sanitizeTableParam(data.tableNumber);
+        if (
+          data.active &&
+          fromSession &&
+          (isTakeawayTable(fromSession) ||
+            tables.length === 0 ||
+            tables.includes(fromSession))
+        ) {
+          if (!cancelled) setLockedTableNumber(fromSession);
+          return;
+        }
+      } catch {
+        // ignore
+      }
+      if (!cancelled) setLockedTableNumber("");
     }
-    setLockedTableNumber("");
+    void syncGuestTable();
+    return () => {
+      cancelled = true;
+    };
   }, [menu.venue?.tables]);
   const scrollingToRef = useRef<string | null>(null);
   const t = getUi(locale);
@@ -134,6 +165,13 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
     setSelected(null);
     setSelectedNote("");
     setCartOpen(true);
+  }
+
+  function handleOrderComplete() {
+    setCartItems([]);
+    setLockedTableNumber("");
+    setCartOpen(false);
+    window.location.replace("/qr-gerekli");
   }
 
   function changeCartQty(
@@ -618,6 +656,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           )
         }
         onClear={() => setCartItems([])}
+        onOrderComplete={handleOrderComplete}
       />
     </div>
   );

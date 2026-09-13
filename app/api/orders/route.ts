@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { adminPasswordConfigured, isAdminAuthorized } from "@/lib/admin-auth";
+import {
+  clearGuestSessionCookieOptions,
+  GUEST_SESSION_COOKIE,
+  readGuestSessionCookie,
+  verifyGuestSession,
+} from "@/lib/guest-session";
 import { createOrder, listOrders } from "@/lib/order-store";
 import { isOrderItem, type OrderItem } from "@/lib/orders";
 import {
@@ -62,6 +68,29 @@ export async function POST(request: Request) {
     );
   }
 
+  const guestToken = readGuestSessionCookie(request.headers.get("cookie"));
+  const guestSession = await verifyGuestSession(guestToken);
+  if (!guestSession) {
+    return NextResponse.json(
+      {
+        error:
+          "Oturum yok veya süresi doldu. Sipariş için masadaki QR kodu tekrar okutun.",
+        code: "guest_session_required",
+      },
+      { status: 401 }
+    );
+  }
+  if (guestSession.tableNumber !== tableNumber) {
+    return NextResponse.json(
+      {
+        error:
+          "QR oturumu bu masa ile uyuşmuyor. Lütfen doğru QR kodu okutun.",
+        code: "guest_session_mismatch",
+      },
+      { status: 403 }
+    );
+  }
+
   const customerName = sanitizeCustomerName(
     typeof payload.customerName === "string" ? payload.customerName : ""
   );
@@ -99,7 +128,17 @@ export async function POST(request: Request) {
       customerName: customerName || undefined,
       items,
     });
-    return NextResponse.json({ order }, { status: 201 });
+    const response = NextResponse.json(
+      { order, sessionEnded: true },
+      { status: 201 }
+    );
+    // Sipariş sonrası oturumu kapat — yeni sipariş için QR tekrar gerekir.
+    response.cookies.set(
+      GUEST_SESSION_COOKIE,
+      "",
+      clearGuestSessionCookieOptions()
+    );
+    return response;
   } catch (error) {
     return NextResponse.json(
       {

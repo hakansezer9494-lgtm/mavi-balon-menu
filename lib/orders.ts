@@ -30,6 +30,32 @@ export function orderItemsTotal(items: OrderItem[]) {
   );
 }
 
+/** Same product + note lines stack; different notes stay separate. */
+export function mergeOrderItems(
+  existing: OrderItem[],
+  incoming: OrderItem[]
+): OrderItem[] {
+  const map = new Map<string, OrderItem>();
+  const keyOf = (item: OrderItem) =>
+    `${item.productId}::${(item.note || "").trim()}`;
+
+  for (const item of [...existing, ...incoming]) {
+    const key = keyOf(item);
+    const prev = map.get(key);
+    if (prev) {
+      map.set(key, {
+        ...prev,
+        quantity: prev.quantity + item.quantity,
+        unitPrice: item.unitPrice || prev.unitPrice,
+        name: item.name || prev.name,
+      });
+    } else {
+      map.set(key, { ...item });
+    }
+  }
+  return Array.from(map.values());
+}
+
 export function isOrderItem(value: unknown): value is OrderItem {
   if (!value || typeof value !== "object") return false;
   const row = value as Record<string, unknown>;
@@ -129,8 +155,10 @@ function istanbulWallTimeToDate(
 }
 
 /**
- * Service day starts at 08:00 Istanbul and runs until 03:00 next calendar day.
- * Between 03:00–08:00 the previous day is cleared (start = today's 08:00).
+ * Retention window for orders (Istanbul):
+ * - Before 03:00: still the previous service day (from that day's 08:00).
+ * - From 03:00 onward: previous day is cleared; keep orders since today's 03:00
+ *   so early-morning tickets are not wiped before the 08:00 service open.
  */
 export function getBusinessDayStart(now = new Date()): Date {
   const parts = istanbulParts(now);
@@ -145,9 +173,11 @@ export function getBusinessDayStart(now = new Date()): Date {
     year = prevParts.year;
     month = prevParts.month;
     day = prevParts.day;
+    return istanbulWallTimeToDate(year, month, day, 8);
   }
 
-  return istanbulWallTimeToDate(year, month, day, 8);
+  // Overnight clear at 03:00 — retain anything placed after that.
+  return istanbulWallTimeToDate(year, month, day, 3);
 }
 
 export function isWithinCurrentBusinessDay(

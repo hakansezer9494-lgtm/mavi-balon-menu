@@ -5,15 +5,28 @@ import {
   getBusinessDayStart,
   isOrder,
   isWithinCurrentBusinessDay,
+  mergeOrderItems,
   normalizeOrder,
+  orderItemsTotal,
   type Order,
+  type OrderItem,
   type OrderStatus,
 } from "@/lib/orders";
 
 const ordersFile = path.join(process.cwd(), "data", "orders.json");
 let writeChain: Promise<unknown> = Promise.resolve();
+let orderMutex: Promise<unknown> = Promise.resolve();
 let tursoClient: Client | null | undefined;
 let lastError = "";
+
+function withOrderLock<T>(fn: () => Promise<T>): Promise<T> {
+  const run = orderMutex.then(fn, fn);
+  orderMutex = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
+}
 
 function cleanEnv(value: string | undefined) {
   if (!value) return "";
@@ -167,54 +180,147 @@ export async function listOrders(): Promise<Order[]> {
   );
 }
 
+function buildMergedSession(
+  existing: Order,
+  incomingItems: OrderItem[]
+): Order {
+  const items = mergeOrderItems(existing.items, incomingItems);
+  const now = new Date().toISOString();
+  return {
+    ...existing,
+    items,
+    total: orderItemsTotal(items),
+    status: "new",
+    updatedAt: now,
+  };
+}
+
+async function findOpenTableSession(
+  tableNumber: string
+): Promise<Order | null> {
+  const cutoff = getBusinessDayStart().toISOString();
+  const client = getTurso();
+  if (client) {
+    try {
+      await ensureSchema(client);
+      const result = await client.execute({
+        sql: `SELECT id, table_number, items_json, total, status, created_at, updated_at
+              FROM orders
+              WHERE table_number = ?
+                AND status != 'paid'
+                AND created_at >= ?
+              ORDER BY created_at ASC
+              LIMIT 1`,
+        args: [tableNumber, cutoff],
+      });
+      const row = result.rows[0];
+      return row ? rowToOrder(row as Record<string, unknown>) : null;
+    } catch {
+      // fall through to file
+    }
+  }
+
+  const current = await readFromFile();
+  return (
+    current
+      .filter(
+        (order) =>
+          order.tableNumber === tableNumber &&
+          order.status !== "paid" &&
+          isWithinCurrentBusinessDay(order.createdAt)
+      )
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))[0] ?? null
+  );
+}
+
 export async function createOrder(
   input: Omit<Order, "id" | "createdAt" | "updatedAt" | "status" | "total"> & {
     status?: OrderStatus;
   }
 ): Promise<Order> {
-  const order = normalizeOrder({
-    ...input,
-    status: input.status ?? "new",
-  });
-  if (!order.tableNumber) {
-    throw new Error("Masa numarası gerekli.");
-  }
-  if (order.items.length === 0) {
-    throw new Error("Sepet boş.");
-  }
-
-  const client = getTurso();
-  if (client) {
-    try {
-      await ensureSchema(client);
-      await client.execute({
-        sql: `
-          INSERT INTO orders
-            (id, table_number, items_json, total, status, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
-        `,
-        args: [
-          order.id,
-          order.tableNumber,
-          JSON.stringify(order.items),
-          order.total,
-          order.status,
-          order.createdAt,
-          order.updatedAt,
-        ],
-      });
-      lastError = "";
-      return order;
-    } catch (error) {
-      lastError =
-        error instanceof Error ? error.message : "Sipariş kaydedilemedi.";
-      throw new Error(lastError);
+  return withOrderLock(async () => {
+    const incoming = normalizeOrder({
+      ...input,
+      status: input.status ?? "new",
+    });
+    if (!incoming.tableNumber) {
+      throw new Error("Masa numarası gerekli.");
     }
-  }
+    if (incoming.items.length === 0) {
+      throw new Error("Sepet boş.");
+    }
 
-  const current = await readFromFile();
-  await writeToFile([order, ...current]);
-  return order;
+    await purgeExpiredOrders();
+
+    const openSession = await findOpenTableSession(incoming.tableNumber);
+    if (openSession) {
+      const merged = buildMergedSession(openSession, incoming.items);
+      const client = getTurso();
+      if (client) {
+        try {
+          await ensureSchema(client);
+          await client.execute({
+            sql: `UPDATE orders
+                  SET items_json = ?, total = ?, status = ?, updated_at = ?
+                  WHERE id = ?`,
+            args: [
+              JSON.stringify(merged.items),
+              merged.total,
+              merged.status,
+              merged.updatedAt,
+              merged.id,
+            ],
+          });
+          lastError = "";
+          return merged;
+        } catch (error) {
+          lastError =
+            error instanceof Error ? error.message : "Sipariş güncellenemedi.";
+          throw new Error(lastError);
+        }
+      }
+
+      const current = await readFromFile();
+      const next = current.map((order) =>
+        order.id === merged.id ? merged : order
+      );
+      await writeToFile(next);
+      return merged;
+    }
+
+    const client = getTurso();
+    if (client) {
+      try {
+        await ensureSchema(client);
+        await client.execute({
+          sql: `
+            INSERT INTO orders
+              (id, table_number, items_json, total, status, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `,
+          args: [
+            incoming.id,
+            incoming.tableNumber,
+            JSON.stringify(incoming.items),
+            incoming.total,
+            incoming.status,
+            incoming.createdAt,
+            incoming.updatedAt,
+          ],
+        });
+        lastError = "";
+        return incoming;
+      } catch (error) {
+        lastError =
+          error instanceof Error ? error.message : "Sipariş kaydedilemedi.";
+        throw new Error(lastError);
+      }
+    }
+
+    const current = await readFromFile();
+    await writeToFile([incoming, ...current]);
+    return incoming;
+  });
 }
 
 export async function updateOrderStatus(

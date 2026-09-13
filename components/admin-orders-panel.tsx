@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Check, ChevronDown, Send } from "lucide-react";
+import { Bell, Check, ChevronDown, RotateCcw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,20 +23,31 @@ function playOrderChime() {
         .webkitAudioContext;
     const ctx = new Ctx();
     const now = ctx.currentTime;
-    const tones = [880, 1174.7, 1568];
-    tones.forEach((freq, index) => {
+    const master = ctx.createGain();
+    master.gain.value = 1;
+    master.connect(ctx.destination);
+
+    const pattern: Array<{ freq: number; type: OscillatorType; at: number; dur: number; peak: number }> = [
+      { freq: 660, type: "square", at: 0, dur: 0.22, peak: 0.38 },
+      { freq: 880, type: "sawtooth", at: 0.12, dur: 0.28, peak: 0.42 },
+      { freq: 1175, type: "square", at: 0.26, dur: 0.32, peak: 0.48 },
+      { freq: 1568, type: "triangle", at: 0.4, dur: 0.4, peak: 0.36 },
+    ];
+
+    for (const tone of pattern) {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.08, now + 0.02 + index * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28 + index * 0.08);
+      osc.type = tone.type;
+      osc.frequency.value = tone.freq;
+      const start = now + tone.at;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(tone.peak, start + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + tone.dur);
       osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now + index * 0.08);
-      osc.stop(now + 0.35 + index * 0.08);
-    });
+      gain.connect(master);
+      osc.start(start);
+      osc.stop(start + tone.dur + 0.02);
+    }
   } catch {
     // ignore audio failures
   }
@@ -105,7 +116,8 @@ export function AdminOrdersPanel() {
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pastOpen, setPastOpen] = useState(false);
-  const knownIdsRef = useRef<Set<string> | null>(null);
+  /** id → updatedAt; merge updates keep the same id so we track timestamps. */
+  const knownVersionsRef = useRef<Map<string, string> | null>(null);
 
   const activeOrders = useMemo(
     () => orders.filter((order) => order.status !== "paid"),
@@ -130,15 +142,19 @@ export function AdminOrdersPanel() {
       }
       const data = (await response.json()) as { orders?: Order[] };
       const next = Array.isArray(data.orders) ? data.orders : [];
-      if (announceNew && knownIdsRef.current) {
-        const fresh = next.filter(
-          (order) => !knownIdsRef.current!.has(order.id)
-        );
-        if (fresh.some((order) => order.status === "new")) {
+      if (announceNew && knownVersionsRef.current) {
+        const shouldChime = next.some((order) => {
+          if (order.status !== "new") return false;
+          const prev = knownVersionsRef.current!.get(order.id);
+          return prev === undefined || prev !== order.updatedAt;
+        });
+        if (shouldChime) {
           playOrderChime();
         }
       }
-      knownIdsRef.current = new Set(next.map((order) => order.id));
+      knownVersionsRef.current = new Map(
+        next.map((order) => [order.id, order.updatedAt])
+      );
       setOrders(next);
       setError("");
     } catch (err) {
@@ -174,6 +190,9 @@ export function AdminOrdersPanel() {
       setOrders((current) =>
         current.map((order) => (order.id === id ? data.order! : order))
       );
+      if (knownVersionsRef.current && data.order) {
+        knownVersionsRef.current.set(data.order.id, data.order.updatedAt);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Güncellenemedi.");
     } finally {
@@ -190,7 +209,8 @@ export function AdminOrdersPanel() {
             Aktif siparişler
           </CardTitle>
           <CardDescription className="text-sky-100/60">
-            Yeni ve gönderilmiş siparişler. Ödenenler aşağıda geçmişe düşer.
+            Masa ödenene kadar aynı oturumda tutulur; ek siparişler tutarı
+            günceller ve durumu Yeniyi getirir. Ödenenler geçmişe düşer.
             Liste sabah 08:00 – gece 03:00 arası tutulur, sonra sıfırlanır.
           </CardDescription>
         </CardHeader>
@@ -290,8 +310,9 @@ export function AdminOrdersPanel() {
             <CardTitle className="text-white">Geçmiş siparişler</CardTitle>
             <CardDescription className="mt-1.5 text-sky-100/60">
               Ödendi işaretlenen siparişler
-              {pastOrders.length > 0 ? ` · ${pastOrders.length}` : ""}. Sabah
-              08:00 – gece 03:00 arası saklanır.
+              {pastOrders.length > 0 ? ` · ${pastOrders.length}` : ""}. İstersen
+              geri alıp aktif listeye çekebilirsin. Sabah 08:00 – gece 03:00
+              arası saklanır.
             </CardDescription>
           </div>
           <ChevronDown
@@ -358,6 +379,18 @@ export function AdminOrdersPanel() {
                     </li>
                   ))}
                 </ul>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                    disabled={busyId === selected.id}
+                    onClick={() => void patchStatus(selected.id, "new")}
+                  >
+                    <RotateCcw className="size-4" />
+                    Geri al
+                  </Button>
+                </div>
               </div>
             ) : null}
           </CardContent>

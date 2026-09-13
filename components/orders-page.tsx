@@ -275,15 +275,14 @@ export function OrdersPage() {
                 outline,
                 notificationsEnabled &&
                   (light
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-                    : "border-emerald-300/40 bg-emerald-500/20 text-emerald-100 hover:bg-emerald-500/30")
+                    ? "border-emerald-400 bg-emerald-500 text-white hover:bg-emerald-500 hover:text-white"
+                    : "border-emerald-400/50 bg-emerald-500 text-white hover:bg-emerald-400 hover:text-white")
               )}
               onClick={() => {
                 unlockOrderAlerts();
-                ensureNotificationPermission();
-                if (typeof window !== "undefined" && "Notification" in window) {
-                  setNotificationsEnabled(Notification.permission === "granted");
-                }
+                void ensureNotificationPermission().then((permission) => {
+                  setNotificationsEnabled(permission === "granted");
+                });
               }}
             >
               {notificationsEnabled ? "Bildirim açık" : "Bildirimi aç"}

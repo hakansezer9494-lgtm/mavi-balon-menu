@@ -334,11 +334,14 @@ export function unlockOrderAlerts() {
   }
 }
 
-export function ensureNotificationPermission() {
-  if (typeof window === "undefined" || !("Notification" in window)) return;
-  if (Notification.permission === "default") {
-    void Notification.requestPermission();
+export function ensureNotificationPermission(): Promise<NotificationPermission | null> {
+  if (typeof window === "undefined" || !("Notification" in window)) {
+    return Promise.resolve(null);
   }
+  if (Notification.permission === "default") {
+    return Notification.requestPermission();
+  }
+  return Promise.resolve(Notification.permission);
 }
 
 function playWebAudioChime(id: OrderAlertSoundId) {

@@ -6,6 +6,7 @@ import { ChevronDown, Download } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { SiteHeader } from "@/components/site-header";
 import { buttonVariants } from "@/components/ui/button";
+import { MENU_UPDATED_EVENT } from "@/lib/menu";
 import { tableMenuUrl } from "@/lib/table-qr";
 import { cn } from "@/lib/utils";
 
@@ -83,8 +84,22 @@ export function QrPage() {
       }
     }
     void loadTables();
+    const onUpdate = () => {
+      void loadTables();
+    };
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void loadTables();
+      }
+    };
+    window.addEventListener(MENU_UPDATED_EVENT, onUpdate);
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onUpdate);
     return () => {
       cancelled = true;
+      window.removeEventListener(MENU_UPDATED_EVENT, onUpdate);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onUpdate);
     };
   }, []);
 

@@ -963,6 +963,36 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
     }));
   }
 
+  function sortTables(tables: string[]) {
+    return [...tables].sort((a, b) => {
+      const na = Number(a);
+      const nb = Number(b);
+      if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+      return a.localeCompare(b, "tr");
+    });
+  }
+
+  /** Keep Masalar + QR + /qr in sync by persisting immediately. */
+  function persistTables(tables: string[], message: string) {
+    const nextTables = [...tables];
+    setVenueForm((current) => ({
+      ...current,
+      tables: nextTables,
+    }));
+    setSelectedQrTable((selected) =>
+      selected && nextTables.includes(selected) ? selected : nextTables[0] ?? ""
+    );
+    updateMenu((current) => ({
+      ...current,
+      venue: {
+        ...current.venue,
+        tables: nextTables,
+      },
+    }));
+    setTableMessage(message);
+    setVenueMessage("");
+  }
+
   function addTable() {
     const table = newTableNumber.trim();
     setTableMessage("");
@@ -974,37 +1004,18 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
       setTableMessage("Bu masa zaten var.");
       return;
     }
-    setVenueForm((current) => ({
-      ...current,
-      tables: [...(current.tables ?? []), table].sort((a, b) => {
-        const na = Number(a);
-        const nb = Number(b);
-        if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
-        return a.localeCompare(b, "tr");
-      }),
-    }));
+    const nextTables = sortTables([...(venueForm.tables ?? []), table]);
     setNewTableNumber("");
-    setVenueMessage("");
+    persistTables(nextTables, "Masa eklendi ve kaydedildi.");
   }
 
   function removeTable(table: string) {
-    setVenueForm((current) => ({
-      ...current,
-      tables: (current.tables ?? []).filter((row) => row !== table),
-    }));
-    setTableMessage("");
-    setVenueMessage("");
+    const nextTables = (venueForm.tables ?? []).filter((row) => row !== table);
+    persistTables(nextTables, "Masa silindi ve kaydedildi.");
   }
 
   function saveTables() {
-    updateMenu((current) => ({
-      ...current,
-      venue: {
-        ...current.venue,
-        tables: [...(venueForm.tables ?? [])],
-      },
-    }));
-    setTableMessage("Masalar kaydedildi.");
+    persistTables([...(venueForm.tables ?? [])], "Masalar kaydedildi.");
   }
 
   return (
@@ -1958,8 +1969,8 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardHeader>
             <CardTitle className="text-white">Masalar</CardTitle>
             <CardDescription className="text-sky-100/60">
-              Buradan eklediğiniz masalar QR çekmecelerinde görünür. Misafir
-              masadaki QR’ı okutunca o masa otomatik seçilir.
+              Eklenen veya silinen masalar hemen kaydedilir ve QR listesinden
+              düşer. Misafir masadaki QR’ı okutunca o masa otomatik seçilir.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -2016,7 +2027,12 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
 
             {tableMessage ? (
               <p className="text-sm text-sky-200">{tableMessage}</p>
-            ) : null}
+            ) : (
+              <p className="text-xs text-sky-100/55">
+                Masa ekleyince veya silince otomatik kaydedilir; QR listesi de
+                aynı anda güncellenir.
+              </p>
+            )}
             <Button
               className="w-fit bg-sky-400 text-[oklch(0.18_0.05_250)] hover:bg-sky-300"
               onClick={saveTables}
@@ -2038,7 +2054,7 @@ export function AdminPanel({ initialMenu }: { initialMenu: MenuData }) {
           <CardContent className="space-y-4">
             {(venueForm.tables ?? []).length === 0 ? (
               <p className="rounded-xl bg-white/5 px-4 py-6 text-center text-sm text-sky-100/60">
-                Önce yukarıdan masa ekleyip kaydedin.
+                Önce yukarıdan masa ekleyin.
               </p>
             ) : (
               (() => {

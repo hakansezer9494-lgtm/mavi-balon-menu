@@ -20,6 +20,10 @@ import {
   getStoredAdminPassword,
   setStoredAdminPassword,
 } from "@/hooks/use-menu";
+import {
+  ensureNotificationPermission,
+  unlockOrderAlerts,
+} from "@/lib/order-alerts";
 import { cn } from "@/lib/utils";
 
 const lightOutline =
@@ -159,7 +163,7 @@ export function OrdersPage() {
 
   const tabDescription =
     tab === "active"
-      ? "Gelen siparişler burada listelenir. Yeni siparişte bildirim sesi çalar."
+      ? "Gelen siparişler burada listelenir. Başka sekmedeyken de ses ve masaüstü bildirimi gelir."
       : tab === "past"
         ? "Ödenen siparişler. Geri al ile tekrar aktif listeye çekebilirsin."
         : "Gün / ay / yıl bazında ciro, ürün tercihi ve yoğunluk grafikleri.";
@@ -202,6 +206,17 @@ export function OrdersPage() {
             <p className="max-w-xl text-sm text-slate-600">{tabDescription}</p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className={lightOutline}
+              onClick={() => {
+                unlockOrderAlerts();
+                ensureNotificationPermission();
+              }}
+            >
+              Bildirimi aç
+            </Button>
             <Link
               href="/yonetim"
               className={cn(

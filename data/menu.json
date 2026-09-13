@@ -52,7 +52,7 @@
       "descriptionEn": "2x 60g beef patties, 2x cheddar, grilled onion and pepper, pickle relish and burger sauce.",
       "allergens": "Gluten, süt ürünleri, yumurta",
       "allergensEn": "Gluten, dairy, egg",
-      "price": 495,
+      "price": 495.25,
       "image": "/products/smash.webp",
       "categoryId": "burgerler",
       "featured": true
@@ -333,6 +333,132 @@
     "instagram": "https://instagram.com/maviballoon",
     "statusLabel": "Açık · 11:00 - 01:30",
     "heroImage": "/brand/hero.webp",
+    "logoImage": "/brand/logo-banner.webp",
+    "showBalloons": true,
+    "pageBackground": "#fdfcfb",
+    "productCardColor": "#e9ecef",
+    "heroCorners": {
+      "topLeft": {
+        "badgeText": "",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "title": "",
+        "titleStyle": {
+          "size": "2xl",
+          "color": "#ffffff"
+        },
+        "subtitle": "",
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "description": "",
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressText": "",
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "logoImage": "",
+        "showLogo": false,
+        "linkMaps": false
+      },
+      "topRight": {
+        "badgeText": "",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "title": "",
+        "titleStyle": {
+          "size": "xl",
+          "color": "#ffffff"
+        },
+        "subtitle": "",
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "description": "",
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressText": "",
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "logoImage": "",
+        "showLogo": true,
+        "linkMaps": false
+      },
+      "bottomLeft": {
+        "badgeText": "Açık · 11:00 - 01:30",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "title": "Mavi Balloon",
+        "titleStyle": {
+          "size": "3xl",
+          "color": "#ffffff"
+        },
+        "subtitle": "",
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "description": "",
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressText": "",
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "logoImage": "",
+        "showLogo": false,
+        "linkMaps": false
+      },
+      "bottomRight": {
+        "badgeText": "",
+        "badgeStyle": {
+          "size": "sm",
+          "color": "#007AFF"
+        },
+        "title": "",
+        "titleStyle": {
+          "size": "2xl",
+          "color": "#ffffff"
+        },
+        "subtitle": "",
+        "subtitleStyle": {
+          "size": "sm",
+          "color": "#ffffff"
+        },
+        "description": "",
+        "descriptionStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "addressText": "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
+        "addressStyle": {
+          "size": "xs",
+          "color": "#ffffff"
+        },
+        "logoImage": "",
+        "showLogo": false,
+        "linkMaps": true
+      }
+    },
     "hours": [
       {
         "id": "mon",
@@ -355,132 +481,18 @@
         "value": "12:00 - 23:00"
       }
     ],
-    "logoImage": "/brand/logo-banner.webp",
-    "showBalloons": true,
-    "pageBackground": "#fdfcfb",
-    "productCardColor": "#e9ecef",
-    "heroCorners": {
-      "topLeft": {
-        "badgeText": "",
-        "title": "",
-        "subtitle": "",
-        "showLogo": false,
-        "linkMaps": false,
-        "addressText": "",
-        "logoImage": "",
-        "description": "",
-        "badgeStyle": {
-          "size": "sm",
-          "color": "#007AFF"
-        },
-        "titleStyle": {
-          "size": "2xl",
-          "color": "#ffffff"
-        },
-        "subtitleStyle": {
-          "size": "sm",
-          "color": "#ffffff"
-        },
-        "descriptionStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        },
-        "addressStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        }
-      },
-      "topRight": {
-        "badgeText": "",
-        "title": "",
-        "subtitle": "",
-        "showLogo": true,
-        "linkMaps": false,
-        "addressText": "",
-        "logoImage": "",
-        "description": "",
-        "badgeStyle": {
-          "size": "sm",
-          "color": "#007AFF"
-        },
-        "titleStyle": {
-          "size": "xl",
-          "color": "#ffffff"
-        },
-        "subtitleStyle": {
-          "size": "sm",
-          "color": "#ffffff"
-        },
-        "descriptionStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        },
-        "addressStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        }
-      },
-      "bottomLeft": {
-        "badgeText": "Açık · 11:00 - 01:30",
-        "title": "Mavi Balloon",
-        "subtitle": "",
-        "showLogo": false,
-        "linkMaps": false,
-        "addressText": "",
-        "logoImage": "",
-        "description": "",
-        "badgeStyle": {
-          "size": "sm",
-          "color": "#007AFF"
-        },
-        "titleStyle": {
-          "size": "3xl",
-          "color": "#ffffff"
-        },
-        "subtitleStyle": {
-          "size": "sm",
-          "color": "#ffffff"
-        },
-        "descriptionStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        },
-        "addressStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        }
-      },
-      "bottomRight": {
-        "badgeText": "",
-        "title": "",
-        "subtitle": "",
-        "showLogo": false,
-        "linkMaps": true,
-        "addressText": "Caferağa, Neşet Ömer Sk. No:16 B\nKadıköy, Istanbul",
-        "logoImage": "",
-        "description": "",
-        "badgeStyle": {
-          "size": "sm",
-          "color": "#007AFF"
-        },
-        "titleStyle": {
-          "size": "2xl",
-          "color": "#ffffff"
-        },
-        "subtitleStyle": {
-          "size": "sm",
-          "color": "#ffffff"
-        },
-        "descriptionStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        },
-        "addressStyle": {
-          "size": "xs",
-          "color": "#ffffff"
-        }
-      }
-    }
+    "tables": [
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10"
+    ]
   },
   "signature": {
     "name": "İmza Seçkisi",

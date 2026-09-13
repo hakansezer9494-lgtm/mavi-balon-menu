@@ -67,6 +67,7 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   const [activeCategory, setActiveCategory] = useState<string>("imza");
   const [selected, setSelected] = useState<Product | null>(null);
   const [selectedQty, setSelectedQty] = useState(1);
+  const [selectedNote, setSelectedNote] = useState("");
   const [cartItems, setCartItems] = useState<CartLine[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const scrollingToRef = useRef<string | null>(null);
@@ -80,16 +81,22 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
   function openProduct(product: Product) {
     setSelected(product);
     setSelectedQty(1);
+    setSelectedNote("");
   }
 
   function addSelectedToCart() {
     if (!selected) return;
     const localized = localizedProduct(selected, locale);
+    const note = selectedNote.trim();
     setCartItems((current) => {
-      const existing = current.find((item) => item.productId === selected.id);
+      const existing = current.find(
+        (item) =>
+          item.productId === selected.id &&
+          (item.note ?? "") === note
+      );
       if (existing) {
         return current.map((item) =>
-          item.productId === selected.id
+          item.productId === selected.id && (item.note ?? "") === note
             ? { ...item, quantity: item.quantity + selectedQty }
             : item
         );
@@ -102,18 +109,26 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
           unitPrice: selected.price,
           quantity: selectedQty,
           description: localized.description,
+          note: note || undefined,
         },
       ];
     });
     setSelected(null);
+    setSelectedNote("");
     setCartOpen(true);
   }
 
-  function changeCartQty(productId: string, quantity: number) {
+  function changeCartQty(
+    productId: string,
+    quantity: number,
+    note?: string
+  ) {
     setCartItems((current) =>
       current
         .map((item) =>
-          item.productId === productId ? { ...item, quantity } : item
+          item.productId === productId && (item.note ?? "") === (note ?? "")
+            ? { ...item, quantity }
+            : item
         )
         .filter((item) => item.quantity > 0)
     );
@@ -531,6 +546,22 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
                     </button>
                   </div>
                 </div>
+                <div className="grid gap-1.5">
+                  <label
+                    htmlFor="product-order-note"
+                    className="text-sm font-medium text-slate-600"
+                  >
+                    Açıklama
+                  </label>
+                  <textarea
+                    id="product-order-note"
+                    value={selectedNote}
+                    onChange={(event) => setSelectedNote(event.target.value)}
+                    rows={2}
+                    placeholder="Örn. az pişmiş, soğansız…"
+                    className="min-h-[4rem] w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-[#007AFF]/50 focus:bg-white focus:ring-2 focus:ring-[#007AFF]/20"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={addSelectedToCart}
@@ -551,9 +582,15 @@ export function MenuView({ initialMenu }: { initialMenu: MenuData }) {
         items={cartItems}
         tables={venue.tables ?? []}
         onChangeQty={changeCartQty}
-        onRemove={(productId) =>
+        onRemove={(productId, note) =>
           setCartItems((current) =>
-            current.filter((item) => item.productId !== productId)
+            current.filter(
+              (item) =>
+                !(
+                  item.productId === productId &&
+                  (item.note ?? "") === (note ?? "")
+                )
+            )
           )
         }
         onClear={() => setCartItems([])}

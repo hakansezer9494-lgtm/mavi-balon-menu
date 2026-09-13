@@ -167,6 +167,23 @@ export async function listOrders(): Promise<Order[]> {
   );
 }
 
+/** Tables that still have unpaid orders in the current business day. */
+export async function listOccupiedTables(): Promise<string[]> {
+  const orders = await listOrders();
+  const occupied = new Set<string>();
+  for (const order of orders) {
+    if (order.status !== "paid" && order.tableNumber) {
+      occupied.add(order.tableNumber);
+    }
+  }
+  return [...occupied].sort((a, b) => {
+    const na = Number(a);
+    const nb = Number(b);
+    if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+    return a.localeCompare(b, "tr");
+  });
+}
+
 export async function createOrder(
   input: Omit<Order, "id" | "createdAt" | "updatedAt" | "status" | "total"> & {
     status?: OrderStatus;
@@ -181,6 +198,17 @@ export async function createOrder(
   }
   if (order.items.length === 0) {
     throw new Error("Sepet boş.");
+  }
+
+  const openOrders = await listOrders();
+  const tableBusy = openOrders.some(
+    (existing) =>
+      existing.tableNumber === order.tableNumber && existing.status !== "paid"
+  );
+  if (tableBusy) {
+    throw new Error(
+      "Bu masada ödenmemiş sipariş var. Ödenmeden yeni sipariş alınamaz."
+    );
   }
 
   const client = getTurso();

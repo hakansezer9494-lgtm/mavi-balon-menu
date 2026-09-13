@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/menu";
@@ -10,6 +10,10 @@ import { cn } from "@/lib/utils";
 export type CartLine = OrderItem & {
   description?: string;
 };
+
+function cartLineKey(item: Pick<CartLine, "productId" | "note">) {
+  return `${item.productId}::${item.note ?? ""}`;
+}
 
 export function CartFab({
   count,
@@ -40,8 +44,8 @@ type CartDrawerProps = {
   onOpenChange: (open: boolean) => void;
   items: CartLine[];
   tables: string[];
-  onChangeQty: (productId: string, quantity: number) => void;
-  onRemove: (productId: string) => void;
+  onChangeQty: (productId: string, quantity: number, note?: string) => void;
+  onRemove: (productId: string, note?: string) => void;
   onClear: () => void;
 };
 
@@ -57,6 +61,7 @@ export function CartDrawer({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [tableNumber, setTableNumber] = useState("");
   const [tableOpen, setTableOpen] = useState(false);
+  const [occupiedTables, setOccupiedTables] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -71,11 +76,47 @@ export function CartDrawer({
     [items]
   );
 
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+    async function loadOccupied() {
+      try {
+        const response = await fetch("/api/orders/occupied", {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { occupied?: string[] };
+        if (cancelled) return;
+        const next = Array.isArray(data.occupied) ? data.occupied : [];
+        setOccupiedTables(next);
+        setTableNumber((current) =>
+          current && next.includes(current) ? "" : current
+        );
+      } catch {
+        // keep last known list
+      }
+    }
+
+    void loadOccupied();
+    const timer = window.setInterval(() => {
+      void loadOccupied();
+    }, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [open]);
+
   async function placeOrder() {
     setError("");
     setSuccess("");
     if (!tableNumber) {
       setError("Sipariş vermek için masa seçin.");
+      return;
+    }
+    if (occupiedTables.includes(tableNumber)) {
+      setError("Bu masa dolu. Ödeme alınmadan yeni sipariş verilemez.");
       return;
     }
     if (items.length === 0) {
@@ -94,6 +135,7 @@ export function CartDrawer({
             name: item.name,
             unitPrice: item.unitPrice,
             quantity: item.quantity,
+            note: item.note,
           })),
         }),
       });
@@ -105,6 +147,9 @@ export function CartDrawer({
       setTableNumber("");
       setExpandedId(null);
       setSuccess("Siparişiniz alındı. Afiyet olsun!");
+      setOccupiedTables((current) =>
+        current.includes(tableNumber) ? current : [...current, tableNumber]
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sipariş gönderilemedi.");
     } finally {
@@ -147,24 +192,28 @@ export function CartDrawer({
           ) : (
             <ul className="space-y-2">
               {items.map((item) => {
-                const descOpen = expandedId === item.productId;
+                const key = cartLineKey(item);
+                const descOpen = expandedId === key;
                 return (
                   <li
-                    key={item.productId}
+                    key={key}
                     className="rounded-2xl bg-slate-50 ring-1 ring-slate-200/80"
                   >
                     <button
                       type="button"
                       className="flex w-full items-start justify-between gap-3 px-3 py-3 text-left"
-                      onClick={() =>
-                        setExpandedId(descOpen ? null : item.productId)
-                      }
+                      onClick={() => setExpandedId(descOpen ? null : key)}
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-slate-900">{item.name}</p>
                         <p className="text-xs text-slate-500">
                           {formatPrice(item.unitPrice)} × {item.quantity}
                         </p>
+                        {item.note?.trim() ? (
+                          <p className="mt-1 line-clamp-1 text-xs text-[#007AFF]">
+                            Not: {item.note}
+                          </p>
+                        ) : null}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-[#007AFF]">
@@ -180,9 +229,17 @@ export function CartDrawer({
                     </button>
                     {descOpen ? (
                       <div className="space-y-3 border-t border-slate-200/80 px-3 py-3">
+                        {item.note?.trim() ? (
+                          <p className="rounded-xl bg-white px-3 py-2 text-sm leading-relaxed text-slate-700 ring-1 ring-slate-200">
+                            <span className="font-medium text-slate-900">
+                              Açıklama:{" "}
+                            </span>
+                            {item.note}
+                          </p>
+                        ) : null}
                         <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                           {item.description?.trim() ||
-                            "Bu ürün için açıklama eklenmemiş."}
+                            "Bu ürün için menü açıklaması yok."}
                         </p>
                         <div className="flex items-center justify-between gap-2">
                           <div className="inline-flex items-center gap-1 rounded-full bg-white p-1 ring-1 ring-slate-200">
@@ -190,7 +247,11 @@ export function CartDrawer({
                               type="button"
                               className="inline-flex size-8 items-center justify-center rounded-full hover:bg-slate-100"
                               onClick={() =>
-                                onChangeQty(item.productId, item.quantity - 1)
+                                onChangeQty(
+                                  item.productId,
+                                  item.quantity - 1,
+                                  item.note
+                                )
                               }
                             >
                               <Minus className="size-3.5" />
@@ -202,7 +263,11 @@ export function CartDrawer({
                               type="button"
                               className="inline-flex size-8 items-center justify-center rounded-full hover:bg-slate-100"
                               onClick={() =>
-                                onChangeQty(item.productId, item.quantity + 1)
+                                onChangeQty(
+                                  item.productId,
+                                  item.quantity + 1,
+                                  item.note
+                                )
                               }
                             >
                               <Plus className="size-3.5" />
@@ -211,7 +276,9 @@ export function CartDrawer({
                           <button
                             type="button"
                             className="text-xs font-medium text-red-500 hover:underline"
-                            onClick={() => onRemove(item.productId)}
+                            onClick={() =>
+                              onRemove(item.productId, item.note)
+                            }
                           >
                             Kaldır
                           </button>
@@ -254,24 +321,38 @@ export function CartDrawer({
                     Henüz masa tanımlanmamış. Yönetim panelinden masa ekleyin.
                   </p>
                 ) : (
-                  tables.map((table) => (
-                    <button
-                      key={table}
-                      type="button"
-                      className={cn(
-                        "flex w-full items-center rounded-xl px-3 py-2 text-left text-sm font-medium hover:bg-slate-50",
-                        tableNumber === table &&
-                          "bg-[#007AFF]/10 text-[#007AFF]"
-                      )}
-                      onClick={() => {
-                        setTableNumber(table);
-                        setTableOpen(false);
-                        setError("");
-                      }}
-                    >
-                      Masa {table}
-                    </button>
-                  ))
+                  tables.map((table) => {
+                    const occupied = occupiedTables.includes(table);
+                    return (
+                      <button
+                        key={table}
+                        type="button"
+                        disabled={occupied}
+                        className={cn(
+                          "flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm font-medium",
+                          occupied
+                            ? "cursor-not-allowed text-slate-400"
+                            : "hover:bg-slate-50",
+                          !occupied &&
+                            tableNumber === table &&
+                            "bg-[#007AFF]/10 text-[#007AFF]"
+                        )}
+                        onClick={() => {
+                          if (occupied) return;
+                          setTableNumber(table);
+                          setTableOpen(false);
+                          setError("");
+                        }}
+                      >
+                        <span>Masa {table}</span>
+                        {occupied ? (
+                          <span className="text-[11px] font-semibold text-amber-600">
+                            Dolu
+                          </span>
+                        ) : null}
+                      </button>
+                    );
+                  })
                 )}
               </div>
             ) : null}
